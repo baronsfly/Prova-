@@ -1,13 +1,16 @@
-PilotLog v4.1
+PilotLog v4.2
 
-Fixes:
-- Rewritten bottom navigation using delegated click handling.
-- All app setup waits for DOMContentLoaded.
-- Old PilotLog service workers are automatically unregistered.
-- Old PilotLog caches are automatically deleted.
-- Visible v4.1 badge added to the header.
-- Existing locally saved flights/roster/duty remain in localStorage.
+NEW: Import Calendar (.ics)
+1. Export your roster/calendar as an .ics file.
+2. Open PilotLog > Roster.
+3. Tap "Import Calendar (.ics)" and choose the exported file.
+4. Flight sectors such as "3O457 • CMN → BGY" are added to the planned roster.
+5. DUTY events are added to Duty history.
+6. STBY / Simulator / Ground Course / DHD are classified when recognisable.
+7. Duplicate imports are skipped.
 
-GitHub Pages update:
-Upload and replace index.html, app.js, styles.css, manifest.webmanifest and sw.js in the repository root, then commit.
-Open https://baronsfly.github.io/Prova-/ in Safari. You should see v4.1 at the top.
+For Air Arabia-style events, Zulu schedule times in the DESCRIPTION are preferred over the displayed calendar event time.
+
+GitHub update:
+Upload/replace index.html, app.js, styles.css, manifest.webmanifest and sw.js in the repository root and commit.
+PilotLog shows v4.2 in the header when the new build is loaded.

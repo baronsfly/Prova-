@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • currency</p></div><span class="version-badge">v4.1</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • currency</p></div><span class="version-badge">v4.2</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="grid">
@@ -66,8 +66,14 @@
 
 <section id="rosterView" class="hidden">
   <div class="section-title">Duty / Roster</div>
-  <div class="card"><div class="hint">Import a CSV roster. Recognised headers include: date, flight/flightNo, dep/from, arr/to, report/reporting, departure/std, arrival/sta, endDuty/end, type, registration/reg. Unknown columns are ignored.</div>
-    <div class="actions"><label class="filebtn primary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden"><button class="secondary" id="exportRoster">Export roster CSV</button><button class="danger" id="clearRoster">Clear roster</button></div>
+  <div class="card">
+    <div class="hint"><b>Calendar import:</b> export your roster/calendar as an <b>.ics</b> file, then import it here. PilotLog recognises flight sectors such as “3O457 • CMN → BGY”, DUTY events, STBY, SIM, Ground Course and DHD. When Zulu schedule times are present in the event description, those are preferred.</div>
+    <div class="actions">
+      <label class="filebtn primary" for="calendarFile">Import Calendar (.ics)</label><input id="calendarFile" type="file" accept=".ics,text/calendar" class="hidden">
+      <label class="filebtn secondary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden">
+      <button class="secondary" id="exportRoster">Export roster CSV</button><button class="danger" id="clearRoster">Clear roster</button>
+    </div>
+    <div class="hint" id="calendarImportStatus" style="margin-top:10px">No calendar imported yet.</div>
   </div>
   <div class="card" id="rosterList" style="margin-top:12px"></div>
 </section>
@@ -82,6 +88,6 @@
 </section>
 </main>
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add Entry</button><button data-view="flightsView">Flights</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button></nav>
-<script src="app.js?v=4.1" defer></script>
+<script src="app.js?v=4.2" defer></script>
 </body>
 </html>

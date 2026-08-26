@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '4.1';
+  const VERSION = '4.2';
   const FLIGHTS_KEY = 'pilotlog_flights_v1';
   const ROSTER_KEY = 'pilotlog_roster_v2';
   const DUTY_KEY = 'pilotlog_duties_v2';
@@ -133,6 +133,148 @@
     setTimeout(()=>URL.revokeObjectURL(a.href),500);
   }
 
+
+
+  // ---- iCalendar (.ics) import -------------------------------------------------
+  function unfoldIcs(text) {
+    return String(text || '').replace(/\r\n[ \t]/g, '').replace(/\n[ \t]/g, '');
+  }
+
+  function unescapeIcs(v) {
+    return String(v || '')
+      .replace(/\\n/gi, '\n')
+      .replace(/\\,/g, ',')
+      .replace(/\\;/g, ';')
+      .replace(/\\\\/g, '\\');
+  }
+
+  function parseIcsDateTime(raw) {
+    const value = String(raw || '').trim();
+    if (!value) return null;
+    // DATE values (all-day): YYYYMMDD
+    let m = value.match(/^(\d{4})(\d{2})(\d{2})$/);
+    if (m) return { date:`${m[1]}-${m[2]}-${m[3]}`, time:'', isAllDay:true };
+    // DATE-TIME values: YYYYMMDDTHHMMSS[Z]
+    m = value.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(Z)?$/);
+    if (!m) return null;
+    return { date:`${m[1]}-${m[2]}-${m[3]}`, time:`${m[4]}:${m[5]}`, isUtc:!!m[7], isAllDay:false };
+  }
+
+  function parseIcs(text) {
+    const src = unfoldIcs(text);
+    const blocks = src.split(/BEGIN:VEVENT\r?\n/i).slice(1);
+    return blocks.map(block => {
+      block = block.split(/END:VEVENT/i)[0];
+      const ev = {};
+      block.split(/\r?\n/).forEach(line => {
+        const idx = line.indexOf(':');
+        if (idx < 0) return;
+        const left = line.slice(0, idx);
+        const value = unescapeIcs(line.slice(idx + 1));
+        const key = left.split(';')[0].toUpperCase();
+        if (['SUMMARY','DESCRIPTION','DTSTART','DTEND','UID','LOCATION'].includes(key)) ev[key] = value;
+      });
+      ev._start = parseIcsDateTime(ev.DTSTART);
+      ev._end = parseIcsDateTime(ev.DTEND);
+      return ev;
+    }).filter(ev => ev.SUMMARY && ev._start);
+  }
+
+  function zuluTimesFromDescription(desc) {
+    const t = String(desc || '');
+    const dep = t.match(/Scheduled(?: take-off\/departure| departure| take[- ]?off)?\s+(\d{1,2}:\d{2})Z/i);
+    const arr = t.match(/Scheduled arrival\s+(\d{1,2}:\d{2})Z/i);
+    return { std: dep ? dep[1].padStart(5,'0') : '', sta: arr ? arr[1].padStart(5,'0') : '' };
+  }
+
+  function dutyTimesFromDescription(desc) {
+    const t = String(desc || '');
+    const rpt = t.match(/Reporting\s+(\d{1,2}:\d{2})Z/i);
+    const rel = t.match(/Release\s+(\d{1,2}:\d{2})Z/i);
+    return { report:rpt ? rpt[1].padStart(5,'0') : '', end:rel ? rel[1].padStart(5,'0') : '' };
+  }
+
+  function classifyCalendarEvent(ev) {
+    const summary = String(ev.SUMMARY || '').trim();
+    const upper = summary.toUpperCase();
+    // Air Arabia-style sector title: 3O457 • CMN → BGY (also accepts -, >, / separators)
+    const sector = summary.match(/^([A-Z0-9]{2,3}\s*\d{1,4}[A-Z]?)\s*[•\-:]?\s*([A-Z]{3,4})\s*(?:→|->|>|–|—|-)\s*([A-Z]{3,4})/i);
+    if (sector) return { kind:'flight', flightNo:sector[1].replace(/\s+/g,''), dep:sector[2].toUpperCase(), arr:sector[3].toUpperCase(), dutyType:'Flight' };
+    if (/^DUTY\b/i.test(summary)) return {kind:'duty', dutyType:'Flight Duty'};
+    if (/\b(STBY|STANDBY|SBY)\b/i.test(upper)) return {kind:'duty', dutyType:'Standby'};
+    if (/\b(DHD|DEADHEAD|DEAD HEADING|POSITIONING)\b/i.test(upper)) return {kind:'entry', dutyType:'DHD'};
+    if (/\b(SIM|SIMULATOR|OPC|LPC)\b/i.test(upper)) return {kind:'entry', dutyType:'Simulator'};
+    if (/\b(GROUND|COURSE|TRAINING|CRM|REFRESHER)\b/i.test(upper)) return {kind:'entry', dutyType:'Ground Course'};
+    if (/^OFF\b/i.test(summary)) return {kind:'off'};
+    return {kind:'other'};
+  }
+
+  function rosterSignature(r) {
+    return [r.date,r.flightNo,r.dep,r.arr,r.std,r.sta].map(x=>String(x||'').toUpperCase()).join('|');
+  }
+
+  function dutySignature(d) {
+    return [d.date,d.type,d.report,d.end,d.notes].map(x=>String(x||'').toUpperCase()).join('|');
+  }
+
+  function importCalendarEvents(events) {
+    const roster = loadKey(ROSTER_KEY);
+    const duties = loadKey(DUTY_KEY);
+    const flights = loadKey(FLIGHTS_KEY);
+    const rosterSeen = new Set(roster.map(rosterSignature));
+    const dutySeen = new Set(duties.map(dutySignature));
+    const flightSeen = new Set(flights.map(f => [f.date,f.dutyType,f.flightNo,f.dep,f.arr,f.schedOut,f.schedIn].map(x=>String(x||'').toUpperCase()).join('|')));
+    let sectors=0, dutyCount=0, otherEntries=0, skipped=0;
+
+    events.forEach(ev => {
+      const c = classifyCalendarEvent(ev);
+      const date = ev._start.date;
+      if (c.kind === 'off' || c.kind === 'other') { skipped++; return; }
+
+      if (c.kind === 'flight') {
+        const z = zuluTimesFromDescription(ev.DESCRIPTION);
+        const r = {
+          id:makeId(), date, flightNo:c.flightNo, dep:c.dep, arr:c.arr,
+          report:'', std:z.std || ev._start.time || '', sta:z.sta || (ev._end ? ev._end.time : ''), endDuty:'',
+          type:'', reg:'', status:'planned', source:'calendar'
+        };
+        const sig = rosterSignature(r);
+        if (!rosterSeen.has(sig)) { roster.push(r); rosterSeen.add(sig); sectors++; } else skipped++;
+        return;
+      }
+
+      if (c.kind === 'duty') {
+        const z = dutyTimesFromDescription(ev.DESCRIPTION);
+        const d = {
+          id:makeId(), date, type:c.dutyType,
+          report:z.report || ev._start.time || '', end:z.end || (ev._end ? ev._end.time : ''),
+          minutes:diff(mins(z.report || ev._start.time || ''), mins(z.end || (ev._end ? ev._end.time : ''))),
+          notes:ev.SUMMARY || '', source:'calendar'
+        };
+        const sig=dutySignature(d);
+        if (!dutySeen.has(sig)) { duties.push(d); dutySeen.add(sig); dutyCount++; } else skipped++;
+        return;
+      }
+
+      if (c.kind === 'entry') {
+        // Planned non-flight item. Save it in log entries so it appears immediately and can be edited/replaced later.
+        const f = {
+          id:makeId(), dutyType:c.dutyType, date, flightNo:'', dep:'', arr:'', type:'', reg:'',
+          schedOut:ev._start.time || '', schedIn:ev._end ? ev._end.time : '', out:'', off:'', on:'', in:'',
+          block:0, flight:0, credit:0, role:'PIC', instructionType:'', landings:0, night:'00:00', sim:c.dutyType==='Simulator'?'yes':'no', ifr:'no',
+          remarks:`Imported from calendar: ${ev.SUMMARY || ''}`, source:'calendar'
+        };
+        const sig=[f.date,f.dutyType,f.flightNo,f.dep,f.arr,f.schedOut,f.schedIn].map(x=>String(x||'').toUpperCase()).join('|');
+        if (!flightSeen.has(sig)) { flights.push(f); flightSeen.add(sig); otherEntries++; } else skipped++;
+      }
+    });
+
+    saveKey(ROSTER_KEY, roster);
+    saveKey(DUTY_KEY, duties);
+    saveKey(FLIGHTS_KEY, flights);
+    return {sectors,dutyCount,otherEntries,skipped};
+  }
+
   function parseCsv(text) {
     const rows=[]; let row=[], cell='', quoted=false;
     for (let i=0;i<text.length;i++) {
@@ -214,6 +356,26 @@
       const d=loadKey(ROSTER_KEY); if(!d.length) return alert('No roster to export');
       const cols=['date','flightNo','dep','arr','report','std','sta','endDuty','type','reg','status'];
       downloadCsv('pilotlog_roster.csv',[cols.join(','),...d.map(r=>cols.map(c=>csvEsc(r[c])).join(','))].join('\n'));
+    });
+
+
+
+    $('calendarFile').addEventListener('change', async e => {
+      const file=e.target.files[0]; if(!file) return;
+      try {
+        const text=await file.text();
+        const events=parseIcs(text);
+        if(!events.length) throw new Error('No calendar events found in this .ics file.');
+        const result=importCalendarEvents(events);
+        e.target.value='';
+        render();
+        $('calendarImportStatus').textContent = `Imported ${result.sectors} flight sectors, ${result.dutyCount} duties and ${result.otherEntries} other roster entries. ${result.skipped} duplicates/unsupported events skipped.`;
+        alert(`Calendar imported: ${result.sectors} sectors • ${result.dutyCount} duties • ${result.otherEntries} other entries`);
+      } catch(err) {
+        console.error(err);
+        $('calendarImportStatus').textContent = 'Import failed: ' + (err.message || err);
+        alert('Calendar import failed: ' + (err.message || err));
+      }
     });
 
     $('rosterFile').addEventListener('change', async e => {
