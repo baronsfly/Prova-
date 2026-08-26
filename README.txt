@@ -1,4 +1,4 @@
-PilotLog v4.2
+PilotLog v4.3
 
 NEW: Import Calendar (.ics)
 1. Export your roster/calendar as an .ics file.
@@ -13,4 +13,4 @@ For Air Arabia-style events, Zulu schedule times in the DESCRIPTION are preferre
 
 GitHub update:
 Upload/replace index.html, app.js, styles.css, manifest.webmanifest and sw.js in the repository root and commit.
-PilotLog shows v4.2 in the header when the new build is loaded.
+PilotLog shows v4.3 in the header when the new build is loaded.

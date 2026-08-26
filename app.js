@@ -203,7 +203,12 @@
     if (/^DUTY\b/i.test(summary)) return {kind:'duty', dutyType:'Flight Duty'};
     if (/\b(STBY|STANDBY|SBY)\b/i.test(upper)) return {kind:'duty', dutyType:'Standby'};
     if (/\b(DHD|DEADHEAD|DEAD HEADING|POSITIONING)\b/i.test(upper)) return {kind:'entry', dutyType:'DHD'};
-    if (/\b(SIM|SIMULATOR|OPC|LPC)\b/i.test(upper)) return {kind:'entry', dutyType:'Simulator'};
+    // Simulator/recurrent-training codes used by airline rosters. Match these before generic TRAINING.
+    const simMatch = upper.match(/(?:^|\b)(?:RT[ -]?(A32[01])|RECURRENT\s+TRAINING|SIMULATOR|SIM|OPC|LPC)(?:\b|$)/i);
+    if (simMatch) {
+      const ac = (upper.match(/\bA32[01]\b/) || [])[0] || (simMatch[1] ? 'A' + simMatch[1] : '');
+      return {kind:'entry', dutyType:'Simulator', aircraftType:ac};
+    }
     if (/\b(GROUND|COURSE|TRAINING|CRM|REFRESHER)\b/i.test(upper)) return {kind:'entry', dutyType:'Ground Course'};
     if (/^OFF\b/i.test(summary)) return {kind:'off'};
     return {kind:'other'};
@@ -259,7 +264,7 @@
       if (c.kind === 'entry') {
         // Planned non-flight item. Save it in log entries so it appears immediately and can be edited/replaced later.
         const f = {
-          id:makeId(), dutyType:c.dutyType, date, flightNo:'', dep:'', arr:'', type:'', reg:'',
+          id:makeId(), dutyType:c.dutyType, date, flightNo:'', dep:'', arr:'', type:c.aircraftType || '', reg:'',
           schedOut:ev._start.time || '', schedIn:ev._end ? ev._end.time : '', out:'', off:'', on:'', in:'',
           block:0, flight:0, credit:0, role:'PIC', instructionType:'', landings:0, night:'00:00', sim:c.dutyType==='Simulator'?'yes':'no', ifr:'no',
           remarks:`Imported from calendar: ${ev.SUMMARY || ''}`, source:'calendar'
