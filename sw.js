@@ -1,3 +1,2 @@
-// PilotLog v4.1: service worker intentionally disabled while stabilising navigation.
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', event => event.waitUntil(self.registration.unregister()));
+// PilotLog v4.4 intentionally does not register a service worker yet.
+// This avoids stale-cache problems while the app is under active development.

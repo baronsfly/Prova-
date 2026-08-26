@@ -1,16 +1,19 @@
-PilotLog v4.3
+PilotLog Airline v4.4
 
-NEW: Import Calendar (.ics)
-1. Export your roster/calendar as an .ics file.
-2. Open PilotLog > Roster.
-3. Tap "Import Calendar (.ics)" and choose the exported file.
-4. Flight sectors such as "3O457 • CMN → BGY" are added to the planned roster.
-5. DUTY events are added to Duty history.
-6. STBY / Simulator / Ground Course / DHD are classified when recognisable.
-7. Duplicate imports are skipped.
+Included:
+- Add/Edit log entries
+- Duty types: Flight, Simulator, Ground Course, STBY, DHD
+- Block and Credit Hours automatic calculation (ceil to next 30 min)
+- Calendar .ics import including RT A320 / OPC / LPC / SIM recognition
+- Totals / Statistics page
+- Block, Credit, Simulator, Duty, PIC, TRI/Instruction totals
+- This Month / This Year / 28 / 90 / 365 day Block totals
+- Aircraft and Duty breakdown
+- Export for LogTen Pro (tab-delimited .txt with LogTen field names)
+- Trip / Layover module
+  Paid Layover Hours = Trip Time - Total Duty Time
+  Fields: Base, Trip Start, Trip End, Trip Time, Total Duty Time, Paid Layover Hours, Total Block, Layover Stations, Remarks
+- Existing localStorage keys retained for compatibility with previous PilotLog builds
 
-For Air Arabia-style events, Zulu schedule times in the DESCRIPTION are preferred over the displayed calendar event time.
-
-GitHub update:
-Upload/replace index.html, app.js, styles.css, manifest.webmanifest and sw.js in the repository root and commit.
-PilotLog shows v4.3 in the header when the new build is loaded.
+GitHub Pages:
+Upload/replace index.html, app.js, styles.css, manifest.webmanifest and sw.js in the repository root, then Commit changes.
