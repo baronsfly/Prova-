@@ -1,21 +1,13 @@
-PilotLog v4
+PilotLog v4.1
 
-New Add Entry fields:
-Duty Type: Flight / Simulator / Ground Course / STBY / DHD
-Date
-Flight number
-Aircraft ID
-Aircraft type
-From / To
-OUT / OFF / ON / IN
-Schedule OUT / Schedule IN
-Block (automatic)
-Credit Hours (automatic: block rounded UP to the next 30 minutes)
-
-Examples:
-2:30 block = 2:30 credit
-2:31 block = 3:00 credit
-5:01 block = 5:30 credit
+Fixes:
+- Rewritten bottom navigation using delegated click handling.
+- All app setup waits for DOMContentLoaded.
+- Old PilotLog service workers are automatically unregistered.
+- Old PilotLog caches are automatically deleted.
+- Visible v4.1 badge added to the header.
+- Existing locally saved flights/roster/duty remain in localStorage.
 
 GitHub Pages update:
-Upload/replace index.html, app.js, styles.css, manifest.webmanifest and sw.js in the root of your repository.
+Upload and replace index.html, app.js, styles.css, manifest.webmanifest and sw.js in the repository root, then commit.
+Open https://baronsfly.github.io/Prova-/ in Safari. You should see v4.1 at the top.
