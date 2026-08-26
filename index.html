@@ -32,18 +32,32 @@
 </section>
 
 <section id="addView" class="hidden">
-  <div class="section-title">Add flight</div>
+  <div class="section-title">Add log entry</div>
   <div class="card"><form id="flightForm"><div class="form-grid">
-    <div><label>Date</label><input id="date" type="date" required></div><div><label>Flight number</label><input id="flightNo" placeholder="3O 471"></div>
-    <div><label>Departure</label><input id="dep" maxlength="4" placeholder="CMN" required></div><div><label>Arrival</label><input id="arr" maxlength="4" placeholder="BGY" required></div>
-    <div><label>Aircraft type</label><input id="type" placeholder="A320"></div><div><label>Registration</label><input id="reg" placeholder="CN-N.."></div>
-    <div><label>OUT</label><input id="out" type="time"></div><div><label>OFF</label><input id="off" type="time"></div><div><label>ON</label><input id="on" type="time"></div><div><label>IN</label><input id="in" type="time"></div>
+    <div><label>Duty type</label><select id="dutyTypeFlight"><option value="Flight">Flight</option><option value="Simulator">Simulator</option><option value="Ground Course">Ground Course</option><option value="STBY">STBY</option><option value="DHD">DHD</option></select></div>
+    <div><label>Date</label><input id="date" type="date" required></div>
+    <div><label>Flight number</label><input id="flightNo" placeholder="3O 471"></div>
+    <div><label>Aircraft ID</label><input id="reg" placeholder="CN-N.."></div>
+    <div><label>Aircraft type</label><input id="type" placeholder="A320"></div>
+    <div><label>From</label><input id="dep" maxlength="4" placeholder="CMN"></div>
+    <div><label>To</label><input id="arr" maxlength="4" placeholder="BGY"></div>
+    <div><label>Schedule OUT</label><input id="schedOut" type="time"></div>
+    <div><label>Schedule IN</label><input id="schedIn" type="time"></div>
+    <div><label>OUT</label><input id="out" type="time"></div>
+    <div><label>OFF</label><input id="off" type="time"></div>
+    <div><label>ON</label><input id="on" type="time"></div>
+    <div><label>IN</label><input id="in" type="time"></div>
+    <div><label>Block</label><input id="blockDisplay" type="text" value="0:00" readonly></div>
+    <div><label>Credit Hours</label><input id="creditDisplay" type="text" value="0:00" readonly></div>
     <div><label>Role</label><select id="role"><option>PIC</option><option>SIC</option><option>Instructor</option><option>Examiner</option></select></div>
     <div><label>Instruction type</label><select id="instructionType"><option value="">None</option><option>TRI</option><option>LTC</option><option>Examiner</option></select></div>
-    <div><label>Landings</label><input id="landings" type="number" min="0" value="1"></div><div><label>Night time</label><input id="night" type="time" value="00:00"></div>
-    <div><label>Simulator</label><select id="sim"><option value="no">No</option><option value="yes">Yes</option></select></div><div><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
+    <div><label>Landings</label><input id="landings" type="number" min="0" value="1"></div>
+    <div><label>Night time</label><input id="night" type="time" value="00:00"></div>
+    <div><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
     <div class="full"><label>Remarks</label><textarea id="remarks" placeholder="Training, route checks, notes..."></textarea></div>
-  </div><div class="totals" id="calcPreview">Block 0:00 • Flight 0:00</div><div class="actions"><button class="primary" type="submit">Save flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div></form></div>
+  </div>
+  <div class="totals" id="calcPreview">Block 0:00 • Flight 0:00 • Credit 0:00</div>
+  <div class="actions"><button class="primary" type="submit">Save entry</button><button class="secondary" type="button" id="clearForm">Clear</button></div></form></div>
 </section>
 
 <section id="flightsView" class="hidden">
@@ -67,7 +81,7 @@
   <div class="section-title">Duty history</div><div class="card" id="dutyList"></div>
 </section>
 </main>
-<nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add Flight</button><button data-view="flightsView">Flights</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button></nav>
+<nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add Entry</button><button data-view="flightsView">Flights</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button></nav>
 <script src="app.js" defer></script>
 </body>
 </html>

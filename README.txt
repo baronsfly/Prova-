@@ -1,12 +1,21 @@
-PilotLog PWA v3
+PilotLog v4
 
-IMPORTANT: This is a real web app/PWA and must be served over HTTP/HTTPS. Do not open index.html directly from the iPhone Files preview.
+New Add Entry fields:
+Duty Type: Flight / Simulator / Ground Course / STBY / DHD
+Date
+Flight number
+Aircraft ID
+Aircraft type
+From / To
+OUT / OFF / ON / IN
+Schedule OUT / Schedule IN
+Block (automatic)
+Credit Hours (automatic: block rounded UP to the next 30 minutes)
 
-Quick test on a Mac:
-1. Unzip this folder.
-2. Open Terminal in the folder.
-3. Run: python3 -m http.server 8080
-4. On the Mac open http://localhost:8080
-5. On an iPhone on the same Wi-Fi, open http://MAC-IP-ADDRESS:8080 in Safari.
+Examples:
+2:30 block = 2:30 credit
+2:31 block = 3:00 credit
+5:01 block = 5:30 credit
 
-For permanent iPhone use, deploy this folder to any HTTPS static host, then open the HTTPS address in Safari and choose Share > Add to Home Screen.
+GitHub Pages update:
+Upload/replace index.html, app.js, styles.css, manifest.webmanifest and sw.js in the root of your repository.
