@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="PilotLog">
+<title>PilotLog Airline</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header><h1>PilotLog</h1><p>Airline logbook • roster • duty • currency</p></header>
+<main>
+<section id="dashboardView">
+  <div class="grid">
+    <div class="card metric"><b id="mBlock">0:00</b><span>Total Block</span></div>
+    <div class="card metric"><b id="mPic">0:00</b><span>PIC</span></div>
+    <div class="card metric"><b id="mTri">0:00</b><span>TRI / Instruction</span></div>
+    <div class="card metric"><b id="mFlights">0</b><span>Flights</span></div>
+  </div>
+  <div class="section-title">Rolling totals</div>
+  <div class="card"><div class="period-grid">
+    <div class="period"><b id="p28">0:00</b><span>Block • 28 days</span></div>
+    <div class="period"><b id="p90">0:00</b><span>Block • 90 days</span></div>
+    <div class="period"><b id="p365">0:00</b><span>Block • 365 days</span></div>
+  </div></div>
+  <div class="section-title">Upcoming roster</div><div class="card" id="upcomingRoster"></div>
+  <div class="section-title">Recent flights</div><div class="card" id="recentFlights"></div>
+</section>
+
+<section id="addView" class="hidden">
+  <div class="section-title">Add flight</div>
+  <div class="card"><form id="flightForm"><div class="form-grid">
+    <div><label>Date</label><input id="date" type="date" required></div><div><label>Flight number</label><input id="flightNo" placeholder="3O 471"></div>
+    <div><label>Departure</label><input id="dep" maxlength="4" placeholder="CMN" required></div><div><label>Arrival</label><input id="arr" maxlength="4" placeholder="BGY" required></div>
+    <div><label>Aircraft type</label><input id="type" placeholder="A320"></div><div><label>Registration</label><input id="reg" placeholder="CN-N.."></div>
+    <div><label>OUT</label><input id="out" type="time"></div><div><label>OFF</label><input id="off" type="time"></div><div><label>ON</label><input id="on" type="time"></div><div><label>IN</label><input id="in" type="time"></div>
+    <div><label>Role</label><select id="role"><option>PIC</option><option>SIC</option><option>Instructor</option><option>Examiner</option></select></div>
+    <div><label>Instruction type</label><select id="instructionType"><option value="">None</option><option>TRI</option><option>LTC</option><option>Examiner</option></select></div>
+    <div><label>Landings</label><input id="landings" type="number" min="0" value="1"></div><div><label>Night time</label><input id="night" type="time" value="00:00"></div>
+    <div><label>Simulator</label><select id="sim"><option value="no">No</option><option value="yes">Yes</option></select></div><div><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
+    <div class="full"><label>Remarks</label><textarea id="remarks" placeholder="Training, route checks, notes..."></textarea></div>
+  </div><div class="totals" id="calcPreview">Block 0:00 • Flight 0:00</div><div class="actions"><button class="primary" type="submit">Save flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div></form></div>
+</section>
+
+<section id="flightsView" class="hidden">
+  <div class="section-title">Flights</div><div class="card"><div class="actions" style="margin-top:0"><button class="secondary" id="exportCsv">Export logbook CSV</button><button class="danger" id="deleteAll">Delete all flights</button></div></div><div class="card" id="allFlights" style="margin-top:12px"></div>
+</section>
+
+<section id="rosterView" class="hidden">
+  <div class="section-title">Duty / Roster</div>
+  <div class="card"><div class="hint">Import a CSV roster. Recognised headers include: date, flight/flightNo, dep/from, arr/to, report/reporting, departure/std, arrival/sta, endDuty/end, type, registration/reg. Unknown columns are ignored.</div>
+    <div class="actions"><label class="filebtn primary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden"><button class="secondary" id="exportRoster">Export roster CSV</button><button class="danger" id="clearRoster">Clear roster</button></div>
+  </div>
+  <div class="card" id="rosterList" style="margin-top:12px"></div>
+</section>
+
+<section id="dutyView" class="hidden">
+  <div class="section-title">Add duty</div>
+  <div class="card"><form id="dutyForm"><div class="form-grid">
+    <div><label>Date</label><input id="dutyDate" type="date" required></div><div><label>Duty type</label><select id="dutyType"><option>Flight Duty</option><option>Simulator</option><option>Standby</option><option>Ground Training</option><option>Office</option></select></div>
+    <div><label>Report</label><input id="reportTime" type="time"></div><div><label>End duty</label><input id="endDuty" type="time"></div><div class="full"><label>Notes</label><input id="dutyNotes" placeholder="OPC, TRI course, standby..."></div>
+  </div><div class="actions"><button class="primary" type="submit">Save duty</button></div></form></div>
+  <div class="section-title">Duty history</div><div class="card" id="dutyList"></div>
+</section>
+</main>
+<nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add Flight</button><button data-view="flightsView">Flights</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button></nav>
+<script src="app.js" defer></script>
+</body>
+</html>
