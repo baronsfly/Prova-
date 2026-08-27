@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=4.5">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • trips • payroll</p></div><span class="version-badge">v4.6</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • trips • payroll</p></div><span class="version-badge">v4.7</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="grid">
@@ -84,6 +84,7 @@
 
 <section id="tripsView" class="hidden">
   <div class="section-title">Trip / Layover</div>
+  <div class="card"><div class="actions"><button class="primary" type="button" id="detectTripsBtn">Detect Trips automatically</button></div><div class="hint">Uses Home Base from Settings. A DHD leaving base opens a trip; PilotLog follows subsequent out-of-base duties until the return to base and calculates Paid Layover = Trip Time − Total Duty Time.</div></div>
   <div class="card"><form id="tripForm"><input type="hidden" id="tripEditId"><div class="form-grid">
     <div><label>Base</label><input id="tripBase" maxlength="4" placeholder="CMN"></div>
     <div><label>Layover station(s)</label><input id="tripStations" placeholder="TNG, SAW..."></div>
@@ -170,7 +171,19 @@
   </details>
 </section>
 
+<section id="settingsView" class="hidden">
+  <div class="section-title">Settings</div>
+  <div class="card"><form id="appSettingsForm"><div class="form-grid">
+    <div><label>Home Base</label><input id="setHomeBase" maxlength="4" placeholder="CMN"></div>
+    <div><label>Google Sheet name</label><input id="setSpreadsheetName" placeholder="PilotLog Database"></div>
+    <div class="full"><label>Google OAuth Client ID</label><input id="setGoogleClientId" placeholder="xxxxxxxx.apps.googleusercontent.com" autocomplete="off"></div>
+    <div class="full"><label>Spreadsheet ID <span class="small">(created automatically on first sync)</span></label><input id="setSpreadsheetId" placeholder="Leave empty for first setup"></div>
+  </div><div class="actions"><button class="primary" type="submit">Save Settings</button></div></form></div>
+  <div class="section-title">Google Sheets Sync</div>
+  <div class="card"><div class="sync-status" id="cloudStatus">Google not configured</div><div class="actions"><button class="secondary" id="connectGoogleBtn" type="button">Connect Google</button><button class="primary" id="syncGoogleBtn" type="button">Sync now</button><button class="secondary" id="clearSheetIdBtn" type="button">Disconnect Sheet</button></div><div class="hint">The spreadsheet stays in your Google Drive. Sync merges data from this device with the cloud copy, then writes the merged database back to the same sheet.</div></div>
+</section>
+
 </main>
-<nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button></nav>
-<script src="app.js?v=4.6" defer></script>
+<nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
+<script src="app.js?v=4.7" defer></script>
 </body></html>
