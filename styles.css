@@ -3,3 +3,14 @@
 .payroll-action{display:flex;align-items:flex-end}.payroll-action button{width:100%;min-height:44px}.payroll-total-card{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}.payroll-total,.payroll-eur{display:flex;flex-direction:column;gap:4px}.payroll-total b{font-size:28px}.payroll-eur b{font-size:22px}.payroll-settings summary{cursor:pointer;padding:2px 0}.payroll-settings[open] summary{margin-bottom:14px}.section-title.inner{font-size:13px;margin-top:14px}.money{font-variant-numeric:tabular-nums}.fx-lock{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#166534;font-size:10px;font-weight:800}.fx-live{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:10px;font-weight:800}@media(max-width:520px){.payroll-total-card{grid-template-columns:1fr}.payroll-total b{font-size:25px}}
 
 .sync-status{padding:12px 14px;border:1px solid var(--line,#dbe1ea);border-radius:12px;margin-bottom:12px;font-weight:700}.sync-status[data-state="ok"]{background:#ecfdf5}.sync-status[data-state="busy"]{background:#eff6ff}.sync-status[data-state="error"]{background:#fff1f2}.nav{overflow-x:auto;white-space:nowrap}.nav button{flex:0 0 auto}
+
+/* v4.9 vertical navigation */
+body{padding-bottom:0;padding-left:84px}
+header{margin-left:-84px;padding-left:calc(84px + 18px)}
+.nav{position:fixed;top:0;bottom:0;left:0;right:auto;width:84px;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;background:#fff;border-top:0;border-right:1px solid #e5e7eb;padding:calc(10px + env(safe-area-inset-top)) 6px 10px;z-index:30;white-space:normal}
+.nav button{flex:0 0 auto;width:100%;min-height:48px;background:#fff;color:#6b7280;border-radius:10px;padding:9px 4px;font-size:10px;line-height:1.15;margin-bottom:3px}
+.nav button.active{color:#2563eb;background:#eff6ff}
+.nav button:first-child{margin-top:58px}
+button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.62;cursor:not-allowed}
+#entryLockStatus.success{background:#ecfdf5;color:#166534;padding:9px;border-radius:10px;margin-top:10px;font-weight:700}
+@media(max-width:520px){body{padding-left:74px}header{margin-left:-74px;padding-left:calc(74px + 14px)}.nav{width:74px;padding-left:4px;padding-right:4px}.nav button{font-size:9px;min-height:45px}main{padding:12px}.form-grid{grid-template-columns:1fr}.full{grid-column:1}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

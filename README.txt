@@ -1,11 +1,3 @@
-PilotLog v4.8
+PilotLog v4.9
 
-Supabase cloud sync enabled for the configured PilotLog project.
-1. Upload index.html, app.js, styles.css, manifest.webmanifest and sw.js to GitHub Pages.
-2. Open Settings.
-3. Create a PilotLog account with email/password (or sign in if already created).
-4. Confirm the email if Supabase asks for confirmation.
-5. Press Sync now.
-6. On the second device, sign in with the same PilotLog email/password and press Sync now.
-
-The app continues to keep a local browser copy. Supabase uses RLS so authenticated users can access only their own rows.
+Changes: vertical left navigation; Payroll Rates and all import/export tools moved to Settings; Home Base only in Settings; Schedule Block and Credit based on scheduled block; On Duty defaults STD-1:00 and Off Duty STA+0:30; entry locking protection; Supabase sync retained.

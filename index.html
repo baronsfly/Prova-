@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=4.5">
+<link rel="stylesheet" href="styles.css?v=4.9">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • trips • payroll</p></div><span class="version-badge">v4.8</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • trips • payroll</p></div><span class="version-badge">v4.9</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="grid">
@@ -38,6 +38,9 @@
     <div><label>To</label><input id="arr" maxlength="4" placeholder="BGY"></div>
     <div><label>Schedule OUT</label><input id="schedOut" type="time"></div>
     <div><label>Schedule IN</label><input id="schedIn" type="time"></div>
+    <div><label>Schedule Block</label><input id="schedBlockDisplay" readonly></div>
+    <div><label>On Duty</label><input id="onDuty" type="time"></div>
+    <div><label>Off Duty</label><input id="offDuty" type="time"></div>
     <div><label>OUT</label><input id="out" type="time"></div>
     <div><label>OFF</label><input id="off" type="time"></div>
     <div><label>ON</label><input id="on" type="time"></div>
@@ -51,20 +54,17 @@
     <div><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
     <div class="full"><label>Remarks</label><textarea id="remarks"></textarea></div>
   </div><div class="totals" id="calcPreview">Block 0:00 • Flight 0:00 • Credit 0:00</div>
-  <div class="actions"><button class="primary" type="submit" id="saveEntryBtn">Save entry</button><button class="secondary" type="button" id="clearForm">Clear</button></div></form></div>
+  <div class="actions"><button class="primary" type="submit" id="saveEntryBtn">Save entry</button><button class="secondary" type="button" id="lockEntryBtn">Save & Lock</button><button class="secondary" type="button" id="clearForm">Clear</button></div><div class="hint" id="entryLockStatus">Unlocked. Lock the entry when all data are final.</div></form></div>
 </section>
 
 <section id="flightsView" class="hidden">
   <div class="section-title">Log entries</div>
-  <div class="card"><div class="actions top"><label class="filebtn primary" for="logTenFile">Import from LogTen Pro</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden"><button class="secondary" id="exportCsv">Export CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button><button class="danger" id="deleteAll">Delete all entries</button></div><div class="hint" id="logTenImportStatus">Use LogTen Pro → Export Flights (Tab).</div></div>
-  <div class="card spaced" id="allFlights"></div>
+  <div class="card" id="allFlights"></div>
 </section>
 
 <section id="rosterView" class="hidden">
   <div class="section-title">Duty / Roster</div>
-  <div class="card"><div class="hint"><b>Calendar import:</b> imports flight sectors, DUTY, STBY, DHD, Ground Course and Simulator. Titles such as <b>RT A320</b>, RT-A320, OPC, LPC, SIM and Recurrent Training are recognised as Simulator.</div>
-    <div class="actions"><label class="filebtn primary" for="calendarFile">Import Calendar (.ics)</label><input id="calendarFile" type="file" accept=".ics,text/calendar" class="hidden"><label class="filebtn secondary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden"><button class="secondary" id="exportRoster">Export roster CSV</button><button class="danger" id="clearRoster">Clear roster</button></div>
-    <div class="hint" id="calendarImportStatus">No calendar imported yet.</div></div>
+  <div class="card"><div class="hint">Roster data are managed from <b>Settings → Import / Export</b>. Open a planned sector here to complete the actual flight.</div></div>
   <div class="card spaced" id="rosterList"></div>
 </section>
 
@@ -86,7 +86,6 @@
   <div class="section-title">Trip / Layover</div>
   <div class="card"><div class="actions"><button class="primary" type="button" id="detectTripsBtn">Detect Trips automatically</button></div><div class="hint">Uses Home Base from Settings. A DHD leaving base opens a trip; PilotLog follows subsequent out-of-base duties until the return to base and calculates Paid Layover = Trip Time − Total Duty Time.</div></div>
   <div class="card"><form id="tripForm"><input type="hidden" id="tripEditId"><div class="form-grid">
-    <div><label>Base</label><input id="tripBase" maxlength="4" placeholder="CMN"></div>
     <div><label>Layover station(s)</label><input id="tripStations" placeholder="TNG, SAW..."></div>
     <div><label>Trip Start</label><input id="tripStart" type="datetime-local" required></div>
     <div><label>Trip End</label><input id="tripEnd" type="datetime-local" required></div>
@@ -128,9 +127,28 @@
   <div class="section-title">Breakdown</div>
   <div class="card" id="payBreakdown"></div>
 
-  <details class="card spaced payroll-settings">
-    <summary><b>Payroll Settings / Rates</b><span class="small"> Edit rates without changing formulas</span></summary>
-    <form id="paySettingsForm">
+</section>
+
+<section id="settingsView" class="hidden">
+  <div class="section-title">Settings</div>
+  <div class="card"><form id="appSettingsForm"><div class="form-grid">
+    <div><label>Home Base</label><input id="setHomeBase" maxlength="4" placeholder="CMN"></div>
+  </div><div class="actions"><button class="primary" type="submit">Save Settings</button></div></form></div>
+
+  <div class="section-title">Import / Export</div>
+  <div class="card">
+    <div class="section-title inner">Logbook</div>
+    <div class="actions top"><label class="filebtn primary" for="logTenFile">Import from LogTen Pro</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden"><button class="secondary" id="exportCsv">Export CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button></div>
+    <div class="hint" id="logTenImportStatus">Use LogTen Pro → Export Flights (Tab).</div>
+    <div class="section-title inner">Duty / Roster</div>
+    <div class="actions"><label class="filebtn primary" for="calendarFile">Import Calendar (.ics)</label><input id="calendarFile" type="file" accept=".ics,text/calendar" class="hidden"><label class="filebtn secondary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden"><button class="secondary" id="exportRoster">Export roster CSV</button></div>
+    <div class="hint" id="calendarImportStatus">No calendar imported yet.</div>
+    <div class="section-title inner">Data maintenance</div>
+    <div class="actions"><button class="danger" id="clearRoster" type="button">Clear roster</button><button class="danger" id="deleteAll" type="button">Delete all entries</button></div>
+  </div>
+
+  <div class="section-title">Payroll Settings / Rates</div>
+<div class="card"><form id="paySettingsForm">
       <div class="section-title inner">Fixed components</div>
       <div class="form-grid">
         <div><label>Employment start</label><input id="setJoinDate" type="date"></div>
@@ -167,15 +185,7 @@
         <div><label>Day OFF premium DHM</label><input id="setDayOffRate" type="number" step="0.01"></div>
       </div>
       <div class="actions"><button class="primary" type="submit">Save Payroll Settings</button><button class="secondary" type="button" id="resetPaySettings">Restore Excel defaults</button></div>
-    </form>
-  </details>
-</section>
-
-<section id="settingsView" class="hidden">
-  <div class="section-title">Settings</div>
-  <div class="card"><form id="appSettingsForm"><div class="form-grid">
-    <div><label>Home Base</label><input id="setHomeBase" maxlength="4" placeholder="CMN"></div>
-  </div><div class="actions"><button class="primary" type="submit">Save Settings</button></div></form></div>
+    </form></div>
   <div class="section-title">Supabase Cloud Sync</div>
   <div class="card">
     <div class="sync-status" id="cloudStatus">Checking cloud connection…</div>
@@ -190,5 +200,5 @@
 
 </main>
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=4.8" defer></script>
+<script src="app.js?v=4.9" defer></script>
 </body></html>
