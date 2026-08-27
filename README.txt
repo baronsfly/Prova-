@@ -1,20 +1,11 @@
-PilotLog v4.7
+PilotLog v4.8
 
-NEW
-- Automatic Trip / Layover detection from DHD leaving Home Base until return to base
-- Home Base setting (default CMN)
-- Google Sheets cloud sync between iPhone and Mac
-- Spreadsheet is created in the user's Google Drive on first sync
-- Existing local data is preserved and merged during sync
+Supabase cloud sync enabled for the configured PilotLog project.
+1. Upload index.html, app.js, styles.css, manifest.webmanifest and sw.js to GitHub Pages.
+2. Open Settings.
+3. Create a PilotLog account with email/password (or sign in if already created).
+4. Confirm the email if Supabase asks for confirmation.
+5. Press Sync now.
+6. On the second device, sign in with the same PilotLog email/password and press Sync now.
 
-GOOGLE SETUP REQUIRED ONCE
-1. Create a Google Cloud project.
-2. Enable Google Sheets API.
-3. Configure OAuth consent screen.
-4. Create OAuth Client ID: Web application.
-5. Add Authorized JavaScript origin: https://baronsfly.github.io
-6. Paste the Client ID into PilotLog > Settings.
-7. Connect Google, then Sync now.
-
-IMPORTANT
-The OAuth Client ID is not a secret. Do NOT paste a client secret into PilotLog.
+The app continues to keep a local browser copy. Supabase uses RLS so authenticated users can access only their own rows.
