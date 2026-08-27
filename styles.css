@@ -14,3 +14,6 @@ header{margin-left:-84px;padding-left:calc(84px + 18px)}
 button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.62;cursor:not-allowed}
 #entryLockStatus.success{background:#ecfdf5;color:#166534;padding:9px;border-radius:10px;margin-top:10px;font-weight:700}
 @media(max-width:520px){body{padding-left:74px}header{margin-left:-74px;padding-left:calc(74px + 14px)}.nav{width:74px;padding-left:4px;padding-right:4px}.nav button{font-size:9px;min-height:45px}main{padding:12px}.form-grid{grid-template-columns:1fr}.full{grid-column:1}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v4.9.3 configurable prefixes */
+.prefix-input{display:flex;align-items:stretch;width:100%;border:1px solid #d1d5db;border-radius:10px;background:#fff;overflow:hidden}.prefix-input span{display:flex;align-items:center;padding:0 10px;background:#f3f4f6;border-right:1px solid #d1d5db;font-weight:800;color:#374151;white-space:nowrap}.prefix-input input{border:0;border-radius:0;min-width:0}.prefix-input input:focus{outline:2px solid #2563eb;outline-offset:-2px}.prefix-input:has(input:disabled){opacity:.62}

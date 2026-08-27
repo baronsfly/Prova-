@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=4.9">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • trips • payroll</p></div><span class="version-badge">v4.9.2</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • trips • payroll</p></div><span class="version-badge">v4.9.3</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="grid">
@@ -31,8 +31,8 @@
   <div class="card"><form id="flightForm"><input type="hidden" id="editId"><div class="form-grid">
     <div><label>Duty type</label><select id="dutyTypeFlight"><option>Flight</option><option>Simulator</option><option>Ground Course</option><option>STBY</option><option>DHD</option></select></div>
     <div><label>Date</label><input id="date" type="date" required></div>
-    <div><label>Flight number</label><input id="flightNo" placeholder="3O457"></div>
-    <div><label>Aircraft ID</label><input id="reg" placeholder="CN-NMQ"></div>
+    <div><label>Flight number</label><div class="prefix-input"><span id="flightPrefixLabel">MAC</span><input id="flightNo" inputmode="numeric" placeholder="457" autocomplete="off"></div></div>
+    <div><label>Aircraft ID</label><div class="prefix-input"><span id="aircraftPrefixLabel">CN-NM</span><input id="reg" maxlength="6" placeholder="Q" autocomplete="off"></div></div>
     <div><label>Aircraft type</label><input id="type" placeholder="A320"></div>
     <div><label>From</label><input id="dep" maxlength="4" placeholder="CMN"></div>
     <div><label>To</label><input id="arr" maxlength="4" placeholder="BGY"></div>
@@ -133,6 +133,8 @@
   <div class="section-title">Settings</div>
   <div class="card"><form id="appSettingsForm"><div class="form-grid">
     <div><label>Home Base</label><input id="setHomeBase" maxlength="4" placeholder="CMN"></div>
+    <div><label>Flight Number Prefix</label><input id="setFlightPrefix" maxlength="6" placeholder="MAC"></div>
+    <div><label>Aircraft ID Prefix</label><input id="setAircraftPrefix" maxlength="10" placeholder="CN-NM"></div>
   </div><div class="actions"><button class="primary" type="submit">Save Settings</button></div></form></div>
 
   <div class="section-title">Import / Export</div>
@@ -200,5 +202,5 @@
 
 </main>
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=4.9.2" defer></script>
+<script src="app.js?v=4.9.3" defer></script>
 </body></html>
