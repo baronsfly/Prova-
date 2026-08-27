@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="styles.css?v=4.5">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • trips • payroll</p></div><span class="version-badge">v4.5</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • duty • trips • payroll</p></div><span class="version-badge">v4.6</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="grid">
@@ -56,7 +56,7 @@
 
 <section id="flightsView" class="hidden">
   <div class="section-title">Log entries</div>
-  <div class="card"><div class="actions top"><button class="secondary" id="exportCsv">Export CSV</button><button class="primary" id="exportLogTen">Export for LogTen Pro</button><button class="danger" id="deleteAll">Delete all entries</button></div></div>
+  <div class="card"><div class="actions top"><label class="filebtn primary" for="logTenFile">Import from LogTen Pro</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden"><button class="secondary" id="exportCsv">Export CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button><button class="danger" id="deleteAll">Delete all entries</button></div><div class="hint" id="logTenImportStatus">Use LogTen Pro → Export Flights (Tab).</div></div>
   <div class="card spaced" id="allFlights"></div>
 </section>
 
@@ -172,5 +172,5 @@
 
 </main>
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button></nav>
-<script src="app.js?v=4.5" defer></script>
+<script src="app.js?v=4.6" defer></script>
 </body></html>
