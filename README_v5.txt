@@ -15,7 +15,7 @@ Main changes in v5:
 - automatic sector count;
 - EASA FTL rolling and daily FDP checks (basic acclimatised table, without extensions);
 - DHD credit manually editable;
-- simulator schedule OUT/IN left blank; simulator credit comes from Settings;
+- simulator actual time is independent from pay credit; actual SIM = On Duty→Off Duty, while simulator credit always comes from Settings;
 - Ground Course / STBY / DHD / Simulator retained in Entries;
 - Trips show Paid Layover and Total Layover Allowance; Ground Course charged as fixed 5:00 duty;
 - Roster grouped by duty and displayed in local airport time;
@@ -28,3 +28,10 @@ Important:
 The daily EASA FDP check implemented here is the BASIC acclimatised table without planned extensions,
 split duty, augmented crew, commander discretion, unknown acclimatisation or operator-specific FRM.
 It is a warning/monitoring aid, not a replacement for the operator's approved FTL scheme.
+
+- Simulator totals are split into Simulator Total, Simulator as Trainer, and Simulator as Trainee.
+- Trainer is identified by Instruction = SFI/SFE Instruction Sim; all other simulator entries count as Trainee.
+
+- Morocco scheduled-departure premium: Flight credit is first rounded up to the next 30 minutes, then increased by 50% when the scheduled departure airport is in Morocco and scheduled local departure is from 18:00 through 04:59.
+  Example: base credit 3:00 -> paid credit 4:30.
+- The supplied LogTen Pro standard Tab export does not contain a dedicated Locked field, so lock status cannot be imported reliably from that export format.

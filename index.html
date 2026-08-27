@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.0.0">
+<link rel="stylesheet" href="styles.css?v=5.0.3">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.0.0</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.0.3</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="grid">
@@ -112,7 +112,9 @@
     <div class="card metric"><b id="tInstruction">0:00</b><span>Flight Instruction</span></div>
     <div class="card metric"><b id="tSimInstruction">0:00</b><span>SFI/SFE Sim Instruction</span></div>
     <div class="card metric"><b id="tNight">0:00</b><span>Night</span></div>
-    <div class="card metric"><b id="tSim">0:00</b><span>Simulator</span></div>
+    <div class="card metric"><b id="tSim">0:00</b><span>Simulator Total</span></div>
+    <div class="card metric"><b id="tSimTrainer">0:00</b><span>Simulator as Trainer</span></div>
+    <div class="card metric"><b id="tSimTrainee">0:00</b><span>Simulator as Trainee</span></div>
   </div>
   <div class="section-title">EASA Flight Time Limitations</div><div class="card" id="ftlTotals"></div>
   <div class="section-title">Periods / logbook hours</div><div class="card" id="periodTotals"></div>
@@ -146,7 +148,7 @@
       <div><label>Arrears / adjustments (DHM)</label><input id="payArrears" type="number" step="0.01" value="0"></div>
       <div class="payroll-action"><button class="primary" type="button" id="recalcPayroll">Recalculate</button></div>
     </div>
-    <div class="hint">Flight credits use the 30-minute rounding rule. Simulator credit is read from Settings. DHD credit stays individually editable.</div>
+    <div class="hint">Flight credits use the 30-minute rounding rule. Flights scheduled to depart Morocco between 18:00 and 04:59 local receive +50% paid credit. Simulator credit is read from Settings. DHD credit stays individually editable.</div>
   </div>
   <div class="grid stats-grid spaced">
     <div class="card metric"><b id="payCredits">0:00</b><span>Monthly Credit</span></div>
@@ -236,5 +238,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.0.0" defer></script>
+<script src="app.js?v=5.0.3" defer></script>
 </body></html>
