@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.0.3">
+<link rel="stylesheet" href="styles.css?v=5.0.5">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.0.3</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.0.5</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="grid">
@@ -34,30 +34,30 @@
       <div class="form-grid">
         <div><label>Duty type</label><select id="dutyTypeFlight"><option>Flight</option><option>Simulator</option><option>Ground Course</option><option>STBY</option><option>DHD</option></select></div>
         <div><label>Date (Zulu)</label><input id="date" type="date" required></div>
-        <div><label>Flight number</label><div class="prefix-input"><span id="flightPrefixLabel">MAC</span><input id="flightNo" placeholder="457" autocomplete="off"></div></div>
-        <div><label>Aircraft ID</label><div class="prefix-input"><span id="aircraftPrefixLabel">CN-NM</span><input id="reg" maxlength="10" placeholder="Q" autocomplete="off"></div></div>
-        <div><label>Aircraft type</label><input id="type" placeholder="A320" data-upper></div>
-        <div><label>From — IATA/ICAO</label><input id="dep" maxlength="4" placeholder="CMN" data-upper><div class="airport-info" id="depInfo"></div></div>
-        <div><label>To — IATA/ICAO</label><input id="arr" maxlength="4" placeholder="BGY" data-upper><div class="airport-info" id="arrInfo"></div></div>
-        <div><label>Schedule OUT (Z)</label><input id="schedOut" type="time"></div>
-        <div><label>Schedule IN (Z)</label><input id="schedIn" type="time"></div>
-        <div><label>Schedule Block</label><input id="schedBlockDisplay" readonly></div>
-        <div><label>On Duty (Z)</label><input id="onDuty" type="time"></div>
-        <div><label>Off Duty (Z) — last entry only</label><input id="offDuty" type="time"></div>
-        <div><label>OUT (Z)</label><input id="out" type="time"></div>
-        <div><label>OFF / Take-off (Z)</label><input id="off" type="time"></div>
-        <div><label>ON / Landing (Z)</label><input id="on" type="time"></div>
-        <div><label>IN (Z)</label><input id="in" type="time"></div>
-        <div><label>Block</label><input id="blockDisplay" readonly></div>
-        <div><label>Credit Hours</label><input id="creditDisplay"></div>
-        <div><label>Role</label><select id="role"><option>PIC</option><option>SIC</option><option>Instructor</option><option>Examiner</option></select></div>
-        <div><label>Instruction</label><select id="instructionType"><option value="">None</option><option value="Flight Instruction">Flight Instruction</option><option value="SFI/SFE Instruction Sim">SFI/SFE Instruction Sim</option></select></div>
-        <div><label>Night time — auto</label><input id="night" value="00:00" readonly></div>
-        <div><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
+        <div data-entry-field="flightNo"><label>Flight number</label><div class="prefix-input"><span id="flightPrefixLabel">MAC</span><input id="flightNo" placeholder="457" autocomplete="off"></div></div>
+        <div data-entry-field="reg"><label>Aircraft ID</label><div class="prefix-input"><span id="aircraftPrefixLabel">CN-NM</span><input id="reg" maxlength="10" placeholder="Q" autocomplete="off"></div></div>
+        <div data-entry-field="type"><label>Aircraft type</label><input id="type" placeholder="A320" data-upper></div><div data-entry-field="courseType" class="hidden"><label>Course type</label><input id="courseType" placeholder="GRT MOD 3 / CRM / SEP..." data-upper></div>
+        <div data-entry-field="dep"><label>From — IATA/ICAO</label><input id="dep" maxlength="4" placeholder="CMN" data-upper><div class="airport-info" id="depInfo"></div></div>
+        <div data-entry-field="arr"><label>To — IATA/ICAO</label><input id="arr" maxlength="4" placeholder="BGY" data-upper><div class="airport-info" id="arrInfo"></div></div>
+        <div data-entry-field="schedOut"><label id="schedOutLabel">Schedule OUT (Z)</label><input id="schedOut" type="time"></div>
+        <div data-entry-field="schedIn"><label id="schedInLabel">Schedule IN (Z)</label><input id="schedIn" type="time"></div>
+        <div data-entry-field="schedBlock"><label>Schedule Block</label><input id="schedBlockDisplay" readonly></div>
+        <div data-entry-field="onDuty"><label>On Duty (Z)</label><input id="onDuty" type="time"></div>
+        <div data-entry-field="offDuty"><label>Off Duty (Z) — last entry only</label><input id="offDuty" type="time"></div>
+        <div data-entry-field="out"><label>OUT (Z)</label><input id="out" type="time"></div>
+        <div data-entry-field="off"><label>OFF / Take-off (Z)</label><input id="off" type="time"></div>
+        <div data-entry-field="on"><label>ON / Landing (Z)</label><input id="on" type="time"></div>
+        <div data-entry-field="in"><label>IN (Z)</label><input id="in" type="time"></div>
+        <div data-entry-field="block"><label>Block</label><input id="blockDisplay" readonly></div>
+        <div data-entry-field="credit"><label>Credit Hours</label><input id="creditDisplay"></div>
+        <div data-entry-field="role"><label>Role</label><select id="role"><option>PIC</option><option>SIC</option><option>Instructor</option><option>Examiner</option></select></div>
+        <div data-entry-field="instruction"><label>Instruction</label><select id="instructionType"><option value="">None</option><option value="Flight Instruction">Flight Instruction</option><option value="SFI/SFE Instruction Sim">SFI/SFE Instruction Sim</option></select></div>
+        <div data-entry-field="night"><label>Night time — auto</label><input id="night" value="00:00" readonly></div>
+        <div data-entry-field="ifr"><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
       </div>
 
-      <div class="section-title inner">Logbook time breakdown</div>
-      <div class="form-grid breakdown-grid">
+      <div class="section-title inner" id="breakdownTitle">Logbook time breakdown</div>
+      <div class="form-grid breakdown-grid" id="breakdownGrid">
         <div><label>Total time</label><input id="totalTimeDisplay" readonly></div>
         <div><label>PIC</label><input id="picDisplay" readonly></div>
         <div><label>SIC</label><input id="sicDisplay" readonly></div>
@@ -71,7 +71,7 @@
         <div><label>Total duty — last entry</label><input id="totalDutyDisplay" readonly></div>
       </div>
 
-      <div class="full"><label>Remarks</label><textarea id="remarks"></textarea></div>
+      <div class="full" id="remarksWrap"><label>Remarks</label><textarea id="remarks"></textarea></div>
       <div class="totals" id="calcPreview">Schedule Block 0:00 • Actual Block 0:00 • Flight 0:00 • Credit 0:00</div>
       <div class="hint" id="nightStatus">Night time is calculated automatically from airport coordinates and civil twilight when OFF/ON are available.</div>
       <div class="actions"><button class="primary" type="submit" id="saveEntryBtn">Save entry</button><button class="secondary" type="button" id="lockEntryBtn">Save & Lock</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
@@ -238,5 +238,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.0.3" defer></script>
+<script src="app.js?v=5.0.5" defer></script>
 </body></html>

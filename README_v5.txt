@@ -35,3 +35,8 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - Morocco scheduled-departure premium: Flight credit is first rounded up to the next 30 minutes, then increased by 50% when the scheduled departure airport is in Morocco and scheduled local departure is from 18:00 through 04:59.
   Example: base credit 3:00 -> paid credit 4:30.
 - The supplied LogTen Pro standard Tab export does not contain a dedicated Locked field, so lock status cannot be imported reliably from that export format.
+
+- DHD entry UI is simplified to Date, From, To, Start time, End time and editable Credit Hours only. All flight/simulator-specific fields are hidden.
+
+- Ground Course entry UI is simplified to Date, Location (IATA), Course Type and editable Credit Hours.
+- Ground Course credit defaults from Settings but remains manually editable.
