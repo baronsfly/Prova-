@@ -1,4 +1,4 @@
-// PilotLog v4.9.3 - no application caching during active development.
+// PilotLog v5.0.0 - development mode: no application caching.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',e=>e.waitUntil((async()=>{
   const keys=await caches.keys();

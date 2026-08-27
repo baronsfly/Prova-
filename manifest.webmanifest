@@ -1,1 +1,8 @@
-{"name":"PilotLog Airline","short_name":"PilotLog","start_url":"./","display":"standalone","background_color":"#f3f4f6","theme_color":"#0f172a","description":"Airline pilot logbook, roster, duty, totals and trip layover calculator"}
+{
+  "name": "PilotLog Airline",
+  "short_name": "PilotLog",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#0f172a"
+}
