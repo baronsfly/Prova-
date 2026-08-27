@@ -1,3 +1,8 @@
-// PilotLog v4.8 - service worker intentionally minimal during active development.
+// PilotLog v4.9.2 - no application caching during active development.
 self.addEventListener('install',()=>self.skipWaiting());
-self.addEventListener('activate',e=>e.waitUntil(self.clients.claim()));
+self.addEventListener('activate',e=>e.waitUntil((async()=>{
+  const keys=await caches.keys();
+  await Promise.all(keys.map(k=>caches.delete(k)));
+  await self.clients.claim();
+})()));
+self.addEventListener('fetch',()=>{});
