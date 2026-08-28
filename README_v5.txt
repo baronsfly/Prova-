@@ -78,3 +78,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - CHANGELOG.md now records changes chronologically by version.
 
 - v5.0.20: fixed Dashboard 7-day duty view storage-key typo; no data migration required.
+
+- v5.0.21: separated Professional Experience from Payroll, simplified Dashboard/Totals, hid Duty navigation, and added EASA-style logbook print/PDF plus experience/backup exports.

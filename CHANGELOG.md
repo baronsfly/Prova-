@@ -69,3 +69,18 @@
 - Root cause: `DUTIES_KEY` typo; the real storage key constant is `DUTY_KEY`.
 - Entries remain isolated from Dashboard failures and no reimport is required.
 - Added static pre-release validation for undefined `*_KEY` identifiers.
+
+## v5.0.21
+- Dashboard: split Today Duty from Next Duties (next 6 days).
+- Dashboard: removed PIC, Flight Instruction and Total Duty counters.
+- Dashboard: retained EASA FTL status immediately above EASA FTL rolling limits.
+- Navigation: hid the standalone Duty menu while keeping duty data and calculations internal.
+- Totals: removed EASA FTL and Duty Breakdown.
+- Totals: vertical professional statistics now show Total Flight Hours, A320 Total Hours, A320 PIC, A320 SIC, A320 Instruction Flight Time and A320 Instruction Simulator Time.
+- A320 recognition normalizes historical labels such as A320, A320-211-CFM, A32O and Airbus A320.
+- Added EASA-style professional logbook print/PDF export independent from Payroll.
+- Export selection supports Last 1/2/3/5 flight pages, custom date range and all flight pages.
+- Flight pages use 18 entries and include Brought Forward, Page Total and Total To Date.
+- DHD, STBY and Ground Course are excluded from professional flight-logbook pages.
+- Simulator experience is available as an optional separate appendix.
+- Added professional-experience CSV and full PilotLog JSON backup export.

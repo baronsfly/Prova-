@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.20';
+const VERSION='5.0.21';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -92,6 +92,13 @@ function flightInstrMins(f){return isFlight(f)&&f.instructionType==='Flight Inst
 function simInstrMins(f){return isSim(f)&&f.instructionType==='SFI/SFE Instruction Sim'?(Number(f.simulatorTime)||Number(f.block)||0):0}
 function simTrainerMins(f){return isSim(f)&&f.instructionType==='SFI/SFE Instruction Sim'?(Number(f.simulatorTime)||0):0}
 function simTraineeMins(f){return isSim(f)&&f.instructionType!=='SFI/SFE Instruction Sim'?(Number(f.simulatorTime)||0):0}
+
+function isA320Entry(f){
+  const raw=upper([f.type,f.aircraftType,f.category,f.remarks].filter(Boolean).join(' '));
+  const norm=raw.replace(/A32O/g,'A320').replace(/[^A-Z0-9]/g,'');
+  return norm.includes('A320');
+}
+function totalFlightMins(f){return isFlight(f)?Number(f.block)||Number(f.flight)||0:0}
 
 const APP_DEFAULTS={homeBase:'CMN',flightPrefix:'MAC',aircraftPrefix:'CN-NM'};
 function appSettings(){return {...APP_DEFAULTS,...loadObject(APP_SETTINGS_KEY,{})}}
@@ -654,6 +661,70 @@ function logTenImport(text){
 }
 
 /* Export */
+
+const EASA_ROWS_PER_PAGE=18;
+function experienceFlights(){
+  return load(FLIGHTS_KEY).filter(isFlight).sort((a,b)=>`${a.date||''}${a.off||a.out||a.schedOut||''}`.localeCompare(`${b.date||''}${b.off||b.out||b.schedOut||''}`));
+}
+function experienceSims(){
+  return load(FLIGHTS_KEY).filter(isSim).sort((a,b)=>`${a.date||''}${a.onDuty||''}`.localeCompare(`${b.date||''}${b.onDuty||''}`));
+}
+function expTotals(list){return{total:sum(list,totalFlightMins),pic:sum(list,picMins),sic:sum(list,sicMins),instr:sum(list,flightInstrMins),night:sum(list,f=>durMins(f.night)),ifr:sum(list,f=>f.ifr==='yes'?totalFlightMins(f):0),toDay:sum(list,f=>Number(f.dayTakeoffs)||0),toNight:sum(list,f=>Number(f.nightTakeoffs)||0),ldDay:sum(list,f=>Number(f.dayLandings)||0),ldNight:sum(list,f=>Number(f.nightLandings)||0)}}
+function plusTotals(a,b){const o={};Object.keys(a).forEach(k=>o[k]=(Number(a[k])||0)+(Number(b[k])||0));return o}
+function fmtCount(v){return String(Number(v)||0)}
+function logbookTotalRow(label,t,cls=''){return `<tr class="${cls}"><td colspan="7"><b>${esc(label)}</b></td><td><b>${fmt(t.total)}</b></td><td><b>${fmt(t.pic)}</b></td><td><b>${fmt(t.sic)}</b></td><td><b>${fmt(t.instr)}</b></td><td><b>${fmt(t.night)}</b></td><td><b>${fmt(t.ifr)}</b></td><td><b>${fmtCount(t.toDay)}</b></td><td><b>${fmtCount(t.toNight)}</b></td><td><b>${fmtCount(t.ldDay)}</b></td><td><b>${fmtCount(t.ldNight)}</b></td><td></td></tr>`}
+function flightLogRow(f){return `<tr><td>${esc(f.date||'')}</td><td>${esc(f.type||'')}</td><td>${esc(f.reg||'')}</td><td>${esc(f.dep||'')}</td><td>${esc(f.arr||'')}</td><td>${esc(f.off||f.out||'')}</td><td>${esc(f.on||f.in||'')}</td><td>${fmt(totalFlightMins(f))}</td><td>${fmt(picMins(f))}</td><td>${fmt(sicMins(f))}</td><td>${fmt(flightInstrMins(f))}</td><td>${fmt(durMins(f.night))}</td><td>${f.ifr==='yes'?fmt(totalFlightMins(f)):'0:00'}</td><td>${fmtCount(f.dayTakeoffs)}</td><td>${fmtCount(f.nightTakeoffs)}</td><td>${fmtCount(f.dayLandings)}</td><td>${fmtCount(f.nightLandings)}</td><td>${esc(f.remarks||'')}</td></tr>`}
+function emptyLogRows(n){return Array.from({length:n},()=>'<tr class="blank-row">'+Array.from({length:18},()=>'<td>&nbsp;</td>').join('')+'</tr>').join('')}
+function selectedFlightPageRange(){
+  const all=experienceFlights(),mode=$('easaExportMode')?.value||'last2';
+  if(mode==='period'){const from=$('easaFrom')?.value||'',to=$('easaTo')?.value||'';return{all,selected:all.filter(f=>(!from||f.date>=from)&&(!to||f.date<=to)),firstPage:null,lastPages:false}}
+  if(mode==='all')return{all,selected:all,firstPage:0,lastPages:false};
+  const n=Number(mode.replace('last',''))||2,totalPages=Math.max(1,Math.ceil(all.length/EASA_ROWS_PER_PAGE)),firstPage=Math.max(0,totalPages-n);
+  return{all,selected:all.slice(firstPage*EASA_ROWS_PER_PAGE),firstPage,lastPages:true}
+}
+function easaFlightPagesHtml(){
+  const {all,selected,firstPage,lastPages}=selectedFlightPageRange();if(!selected.length)return{html:'',count:0};
+  const chunks=[];for(let i=0;i<selected.length;i+=EASA_ROWS_PER_PAGE)chunks.push(selected.slice(i,i+EASA_ROWS_PER_PAGE));
+  const pages=chunks.map((rows,pageIndex)=>{
+    let prior,pageNo;
+    if(lastPages){const absolutePage=(firstPage||0)+pageIndex;prior=expTotals(all.slice(0,absolutePage*EASA_ROWS_PER_PAGE));pageNo=absolutePage+1}
+    else{const firstSelectedIndex=all.findIndex(x=>x.id===rows[0]?.id);prior=expTotals(firstSelectedIndex>0?all.slice(0,firstSelectedIndex):[]);pageNo=firstSelectedIndex>=0?Math.floor(firstSelectedIndex/EASA_ROWS_PER_PAGE)+1:pageIndex+1}
+    const pageTotal=expTotals(rows),toDate=plusTotals(prior,pageTotal);
+    return `<section class="log-page"><div class="log-header"><div><h1>PILOT LOGBOOK</h1><div class="sub">EASA-style professional flight experience record</div></div><div class="page-number">Flight Page ${pageNo}</div></div>
+    <table class="log-table"><thead><tr><th>Date</th><th>Type</th><th>Registration</th><th>From</th><th>To</th><th>OFF</th><th>ON</th><th>Total</th><th>PIC</th><th>SIC</th><th>Instr.</th><th>Night</th><th>IFR</th><th>TO D</th><th>TO N</th><th>LDG D</th><th>LDG N</th><th>Remarks</th></tr></thead>
+    <tbody>${logbookTotalRow('Brought Forward',prior,'brought')}${rows.map(flightLogRow).join('')}${emptyLogRows(Math.max(0,EASA_ROWS_PER_PAGE-rows.length))}${logbookTotalRow('Page Total',pageTotal,'page-total')}${logbookTotalRow('Total To Date',toDate,'grand-total')}</tbody></table></section>`
+  });
+  return{html:pages.join(''),count:pages.length}
+}
+function simulatorAppendixHtml(){
+  if(($('easaIncludeSim')?.value||'yes')!=='yes')return'';
+  const sims=experienceSims(),mode=$('easaExportMode')?.value||'last2',from=$('easaFrom')?.value||'',to=$('easaTo')?.value||'';
+  const filtered=mode==='period'?sims.filter(f=>(!from||f.date>=from)&&(!to||f.date<=to)):sims;if(!filtered.length)return'';
+  const chunks=[];for(let i=0;i<filtered.length;i+=24)chunks.push(filtered.slice(i,i+24));
+  return chunks.map((rows,i)=>{const total=sum(rows,f=>Number(f.simulatorTime)||0),instr=sum(rows,simInstrMins);return `<section class="log-page sim-page"><div class="log-header"><div><h1>SYNTHETIC TRAINING DEVICE</h1><div class="sub">Simulator experience appendix</div></div><div class="page-number">SIM Page ${i+1}</div></div><table class="log-table sim-table"><thead><tr><th>Date</th><th>Device / Type</th><th>Location</th><th>Start</th><th>End</th><th>Simulator Time</th><th>SFI/SFE Instruction</th><th>Remarks</th></tr></thead><tbody>${rows.map(f=>`<tr><td>${esc(f.date||'')}</td><td>${esc(f.type||'A320 SIM')}</td><td>${esc(f.dep||'')}</td><td>${esc(f.onDuty||'')}</td><td>${esc(f.offDuty||'')}</td><td>${fmt(Number(f.simulatorTime)||0)}</td><td>${fmt(simInstrMins(f))}</td><td>${esc(f.remarks||'')}</td></tr>`).join('')}<tr class="page-total"><td colspan="5"><b>Simulator Page Total</b></td><td><b>${fmt(total)}</b></td><td><b>${fmt(instr)}</b></td><td></td></tr></tbody></table></section>`}).join('')
+}
+function experienceSummaryHtml(){
+  const fs=experienceFlights(),sims=experienceSims(),a320=load(FLIGHTS_KEY).filter(isA320Entry),a320Flights=a320.filter(isFlight);
+  const rows=[['Total Flight Hours',sum(fs,totalFlightMins)],['A320 Total Hours',sum(a320Flights,totalFlightMins)],['A320 PIC',sum(a320Flights,picMins)],['A320 SIC',sum(a320Flights,sicMins)],['A320 Instruction Flight Time',sum(a320Flights,flightInstrMins)],['A320 Instruction Simulator Time',sum(a320,simInstrMins)],['Total Simulator Time',sum(sims,f=>Number(f.simulatorTime)||0)]];
+  return `<section class="summary-page"><h1>Professional Experience Summary</h1><table class="summary-table">${rows.map(([n,v])=>`<tr><td>${esc(n)}</td><td><b>${fmt(v)}</b></td></tr>`).join('')}</table><div class="summary-note">Operational/payroll items such as DHD, Standby, Ground Course, credit hours, layover and allowances are intentionally excluded.</div></section>`
+}
+function exportEasaStylePdf(){
+  const pages=easaFlightPagesHtml();if(!pages.count)return alert('No flight experience matches this selection.');
+  const w=window.open('','_blank');if(!w)return alert('Please allow pop-ups for PilotLog to create the printable logbook.');
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>PilotLog EASA Logbook</title><style>@page{size:A4 landscape;margin:7mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0}.log-page,.summary-page{page-break-after:always;min-height:190mm}.log-page:last-child,.summary-page:last-child{page-break-after:auto}.log-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:5px}h1{font-size:16px;margin:0}.sub{font-size:8px;color:#444}.page-number{font-size:9px;font-weight:bold}table{border-collapse:collapse;width:100%}.log-table{table-layout:fixed;font-size:6.7px}th,td{border:.35mm solid #444;padding:1.25mm .7mm;text-align:center;height:7mm;overflow:hidden}th{background:#eee;font-size:6.2px}.log-table th:nth-child(18),.log-table td:nth-child(18){width:17%}.blank-row td{height:7mm}.brought td{background:#f7f7f7}.page-total td{background:#f1f5f9}.grand-total td{background:#e5e7eb}.sim-table{font-size:8px}.sim-table th,.sim-table td{height:7mm}.summary-page{padding:8mm 15mm}.summary-page h1{font-size:22px;margin-bottom:10mm}.summary-table{max-width:150mm;font-size:12px}.summary-table td{text-align:left;padding:3mm}.summary-table td:last-child{text-align:right;width:35mm}.summary-note{font-size:9px;color:#555;margin-top:8mm}</style></head><body>${pages.html}${simulatorAppendixHtml()}${experienceSummaryHtml()}</body></html>`;
+  w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch(e){console.error(e)}},500)
+}
+function exportExperienceCsv(){
+  const d=load(FLIGHTS_KEY).filter(f=>isFlight(f)||isSim(f));if(!d.length)return alert('No professional experience to export');
+  const cols=['dutyType','date','flightNo','reg','type','dep','arr','off','on','block','role','instructionType','night','ifr','dayTakeoffs','nightTakeoffs','dayLandings','nightLandings','simulatorTime','remarks'];
+  download('pilotlog_professional_experience.csv',[cols.join(','),...d.map(r=>cols.map(c=>csv(r[c])).join(','))].join('\n'),'text/csv')
+}
+function exportFullBackupJson(){
+  snapshotFlights('manual-export');
+  const payload={schema:'PilotLog Backup',version:VERSION,exportedAt:new Date().toISOString(),flights:load(FLIGHTS_KEY),roster:load(ROSTER_KEY),duties:load(DUTY_KEY),trips:load(TRIPS_KEY),appSettings:appSettings(),paySettings:paySettings(),payrollExtras:loadObject(PAY_MONTH_KEY,{}),fx:loadObject(FX_KEY,{})};
+  download(`pilotlog_backup_${today()}.json`,JSON.stringify(payload,null,2),'application/json')
+}
+
 function download(name,text,type='text/plain'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
 function logTenExport(){const fs=load(FLIGHTS_KEY);if(!fs.length)return alert('No entries to export');const h=['flight_flightDate','flight_type','flight_flightNumber','flight_from','flight_to','flight_scheduledDepartureTime','flight_actualDepartureTime','flight_takeoffTime','flight_landingTime','flight_scheduledArrivalTime','flight_actualArrivalTime','flight_totalTime','flight_pic','flight_sic','flight_dualGiven','flight_simulator','flight_ground','flight_night','flight_dayTakeoffs','flight_nightTakeoffs','flight_dayLandings','flight_nightLandings','flight_onDutyTime','flight_offDutyTime','flight_remarks','aircraft_aircraftID','aircraftType_type'];const rows=fs.map(f=>{const total=isFlight(f)?fmt(f.block):'',sim=isSim(f)?fmt(f.simulatorTime||0):'',ground=isGround(f)?fmt(300):'',dual=f.instructionType?fmt(isSim(f)?f.simulatorTime:f.block):'';return[f.date,'',f.flightNo||'',f.dep||'',f.arr||'',f.schedOut||'',f.out||'',f.off||'',f.on||'',f.schedIn||'',f.in||'',total,picMins(f)?total:'',sicMins(f)?total:'',dual,sim,ground,f.night||'00:00',f.dayTakeoffs||0,f.nightTakeoffs||0,f.dayLandings||0,f.nightLandings||0,f.onDuty||'',f.offDuty||'',f.remarks||'',f.reg||'',f.type||'']});download(`PilotLog_LogTen_${today()}.txt`,[h.join('\t'),...rows.map(r=>r.map(v=>String(v??'').replace(/[\t\r\n]+/g,' ')).join('\t'))].join('\n'),'text/tab-separated-values')}
 
@@ -736,57 +807,32 @@ function isoDateLocal(d){
   const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 }
-function dashboardDuty7Days(){
+function dashboardDutyRows(startOffset,count){
   const today=new Date(), roster=load(ROSTER_KEY), duties=load(DUTY_KEY), flights=load(FLIGHTS_KEY);
   const rows=[];
-
-  for(let i=0;i<7;i++){
-    const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+i);
-    const date=isoDateLocal(d);
+  for(let i=startOffset;i<startOffset+count;i++){
+    const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+i),date=isoDateLocal(d);
     const dayLabel=i===0?'Today':new Intl.DateTimeFormat('en-GB',{weekday:'short'}).format(d);
-
-    const actual=dayEntries(date,flights).filter(f=>!isDhd(f));
-    const actualFlights=actual.filter(isFlight);
-    const planned=dedupeRosterItems(roster.filter(r=>r.date===date));
-    const ext=duties.find(x=>x.date===date);
-
+    const actual=dayEntries(date,flights).filter(f=>!isDhd(f)),actualFlights=actual.filter(isFlight);
+    const planned=dedupeRosterItems(roster.filter(r=>r.date===date)),ext=duties.find(x=>x.date===date);
     let type='OFF / No duty',report='',end='',sectors=0,route='',detail='';
-
     if(actual.length){
       if(actualFlights.length){
-        const first=actualFlights[0],last=actualFlights[actualFlights.length-1];
-        type='Flight Duty';
-        report=first.onDuty||ext?.report||shiftTime(first.schedOut||first.out,-60);
-        end=last.offDuty||ext?.end||shiftTime(last.schedIn||last.in,30);
-        sectors=actualFlights.length;
-        const home=upper(appSettings().homeBase||'CMN');
+        const first=actualFlights[0],last=actualFlights[actualFlights.length-1],home=upper(appSettings().homeBase||'CMN');
+        type='Flight Duty';report=first.onDuty||ext?.report||shiftTime(first.schedOut||first.out,-60);end=last.offDuty||ext?.end||shiftTime(last.schedIn||last.in,30);sectors=actualFlights.length;
         const dest=actualFlights.find(x=>upper(x.dep)===home&&upper(x.arr)!==home)?.arr||first.arr||'';
         route=`${first.dep||home}${dest?' → '+dest:''}`;
       }else{
         const first=actual[0],last=actual[actual.length-1];
-        type=first.dutyType||'Duty';
-        report=first.onDuty||ext?.report||'';
-        end=last.offDuty||ext?.end||'';
-        route=first.dep||first.courseType||'';
+        type=first.dutyType||'Duty';report=first.onDuty||ext?.report||'';end=last.offDuty||ext?.end||'';route=first.dep||first.courseType||'';
       }
     }else if(planned.length){
       planned.sort((a,b)=>(a.std||'').localeCompare(b.std||''));
-      const first=planned[0],last=planned[planned.length-1];
-      type='Planned Flight Duty';
-      report=ext?.report||shiftTime(first.std,-60);
-      end=ext?.end||shiftTime(last.sta,30);
-      sectors=planned.filter(x=>x.flightNo).length;
-      const home=upper(appSettings().homeBase||'CMN');
-      const dest=planned.find(x=>upper(x.dep)===home&&upper(x.arr)!==home)?.arr||first.arr||'';
-      route=`${first.dep||home}${dest?' → '+dest:''}`;
-    }else if(ext){
-      type=ext.type||'Duty';
-      report=ext.report||'';
-      end=ext.end||'';
-      detail=ext.remarks||'';
-    }
-
-    rows.push(`<div class="duty-week-row">
+      const first=planned[0],last=planned[planned.length-1],home=upper(appSettings().homeBase||'CMN');
+      type='Planned Flight Duty';report=ext?.report||shiftTime(first.std,-60);end=ext?.end||shiftTime(last.sta,30);sectors=planned.filter(x=>x.flightNo).length;
+      const dest=planned.find(x=>upper(x.dep)===home&&upper(x.arr)!==home)?.arr||first.arr||'';route=`${first.dep||home}${dest?' → '+dest:''}`;
+    }else if(ext){type=ext.type||'Duty';report=ext.report||'';end=ext.end||'';detail=ext.remarks||''}
+    rows.push(`<div class="duty-week-row${i===0?' today-duty-row':''}">
       <div class="duty-week-date"><b>${esc(dayLabel)}</b><span>${esc(date)}</span></div>
       <div class="duty-week-main"><b>${esc(type)}</b>${route?`<div class="small">${esc(route)}</div>`:''}${detail?`<div class="small">${esc(detail)}</div>`:''}</div>
       <div class="duty-week-time">${report||end?`<b>${esc(report||'--:--')} – ${esc(end||'--:--')}</b><div class="small">${sectors?`${sectors} sector${sectors===1?'':'s'}`:'Duty'}</div>`:'<span class="small">—</span>'}</div>
@@ -794,6 +840,8 @@ function dashboardDuty7Days(){
   }
   return rows.join('');
 }
+function dashboardDuty7Days(){return dashboardDutyRows(0,7)}
+
 
 
 const BACKUP_KEY='pilotlog_flights_backup_v1';
@@ -834,15 +882,14 @@ async function render(){
 
   try{reconcileAllDuties()}catch(e){console.error('Duty reconciliation failed',e)}
   try{
-    if($('mPic'))$('mPic').textContent=fmt(sum(fs,picMins));
-    if($('mTri'))$('mTri').textContent=fmt(sum(fs,flightInstrMins));
-    if($('mDuty'))$('mDuty').textContent=fmt(mergedDutyMinutes());
   }catch(e){console.error('Dashboard metrics failed',e)}
   try{
-    if($('dashboardDutyWeek'))$('dashboardDutyWeek').innerHTML=dashboardDuty7Days();
+    if($('dashboardTodayDuty'))$('dashboardTodayDuty').innerHTML=dashboardDutyRows(0,1);
+    if($('dashboardNextDuties'))$('dashboardNextDuties').innerHTML=dashboardDutyRows(1,6);
   }catch(e){
     console.error('Dashboard 7-day view failed',e);
-    if($('dashboardDutyWeek'))$('dashboardDutyWeek').innerHTML='<div class="empty">Duty view temporarily unavailable.</div>';
+    if($('dashboardTodayDuty'))$('dashboardTodayDuty').innerHTML='<div class="empty">Today duty temporarily unavailable.</div>';
+    if($('dashboardNextDuties'))$('dashboardNextDuties').innerHTML='<div class="empty">Next duties temporarily unavailable.</div>';
   }
   try{
     const ok=await renderFtl('dashboardFtl',true);
@@ -856,10 +903,24 @@ async function renderRoster(){
   if($('rosterList'))$('rosterList').innerHTML=await rosterGroupHtml(groups,true);
 }
 function renderDuty(){const ds=load(DUTY_KEY).sort((a,b)=>String(b.date).localeCompare(String(a.date)));$('dutyList').innerHTML=ds.length?ds.map(d=>`<div class="rowitem"><div><b>${esc(d.type)}</b><div class="small">${esc(d.date)} • ${esc(d.notes||'')}</div></div><div class="meta"><b>${fmt(d.minutes)}</b><br>${esc(d.report||'')}–${esc(d.end||'')}<div class="list-actions"><button class="danger" data-delete-duty="${d.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No duties yet.</div>'}
-async function renderTotals(){const fs=load(FLIGHTS_KEY),flying=fs.filter(isFlight);$('tDuty').textContent=fmt(mergedDutyMinutes());$('tPic').textContent=fmt(sum(fs,picMins));$('tInstruction').textContent=fmt(sum(fs,flightInstrMins));$('tSimInstruction').textContent=fmt(sum(fs,simInstrMins));$('tNight').textContent=fmt(sum(fs,f=>durMins(f.night)));$('tSim').textContent=fmt(sum(fs,f=>isSim(f)?Number(f.simulatorTime)||0:0));$('tSimTrainer').textContent=fmt(sum(fs,simTrainerMins));$('tSimTrainee').textContent=fmt(sum(fs,simTraineeMins));await renderFtl('ftlTotals',false);
-  const now=new Date(),y=now.getUTCFullYear(),m=now.getUTCMonth(),month=sum(flying,f=>{const d=dateOnly(f.date);return d.getUTCFullYear()===y&&d.getUTCMonth()===m?f.block:0}),year=calendarYearFlight();$('periodTotals').innerHTML=[['This Month — Flight',month],['This Year — Flight',year],['Last 28 days — Flight',rollingFlight(28)],['Last 90 days — Flight',rollingFlight(90)],['Last 365 days — Flight',rollingFlight(365)]].map(([n,v])=>`<div class="stat-row"><span>${n}</span><b>${fmt(v)}</b></div>`).join('');
-  const ac={};fs.forEach(f=>{const t=upper(f.type||'Unspecified');if(!ac[t])ac[t]={f:0,s:0};if(isSim(f))ac[t].s+=Number(f.simulatorTime)||0;else if(isFlight(f))ac[t].f+=Number(f.block)||0});$('aircraftBreakdown').innerHTML=Object.entries(ac).map(([t,v])=>`<div class="stat-row"><span><b>${esc(t)}</b><div class="small">Flying ${fmt(v.f)} • Simulator ${fmt(v.s)}</div></span><b>${fmt(v.f+v.s)}</b></div>`).join('')||'<div class="empty">No aircraft data.</div>';
-  const by={};[...new Set(fs.map(f=>f.date))].forEach(d=>{const x=dutySummary(d);if(!x)return;const type=x.entries.some(isSim)?'Simulator':x.entries.some(isGround)?'Ground Course':x.entries.some(isStby)?'Standby':'Flight Duty';by[type]=(by[type]||0)+x.minutes});$('dutyBreakdown').innerHTML=Object.entries(by).map(([n,v])=>`<div class="stat-row"><span>${esc(n)}</span><b>${fmt(v)}</b></div>`).join('')||'<div class="empty">No duty data.</div>'
+async function renderTotals(){
+  const fs=load(FLIGHTS_KEY),flying=fs.filter(isFlight),a320=fs.filter(isA320Entry),a320Flights=a320.filter(isFlight);
+  $('tTotalFlight').textContent=fmt(sum(flying,totalFlightMins));
+  $('tA320Total').textContent=fmt(sum(a320Flights,totalFlightMins));
+  $('tA320Pic').textContent=fmt(sum(a320Flights,picMins));
+  $('tA320Sic').textContent=fmt(sum(a320Flights,sicMins));
+  $('tA320FlightInstruction').textContent=fmt(sum(a320Flights,flightInstrMins));
+  $('tA320SimInstruction').textContent=fmt(sum(a320,simInstrMins));
+  const now=new Date(),y=now.getUTCFullYear(),m=now.getUTCMonth(),
+    month=sum(flying,f=>{const d=dateOnly(f.date);return d.getUTCFullYear()===y&&d.getUTCMonth()===m?totalFlightMins(f):0}),
+    year=calendarYearFlight();
+  $('periodTotals').innerHTML=[
+    ['This Month — Flight',month],['This Year — Flight',year],
+    ['Last 28 days — Flight',rollingFlight(28)],['Last 90 days — Flight',rollingFlight(90)],['Last 365 days — Flight',rollingFlight(365)]
+  ].map(([n,v])=>`<div class="stat-row"><span>${n}</span><b>${fmt(v)}</b></div>`).join('');
+  const ac={};
+  fs.forEach(f=>{const t=upper(f.type||'Unspecified');if(!ac[t])ac[t]={f:0,s:0};if(isSim(f))ac[t].s+=Number(f.simulatorTime)||0;else if(isFlight(f))ac[t].f+=totalFlightMins(f)});
+  $('aircraftBreakdown').innerHTML=Object.entries(ac).map(([t,v])=>`<div class="stat-row"><span><b>${esc(t)}</b><div class="small">Flying ${fmt(v.f)} • Simulator ${fmt(v.s)}</div></span><b>${fmt(v.f+v.s)}</b></div>`).join('')||'<div class="empty">No aircraft data.</div>';
 }
 
 function tripIncludedEntries(t){
@@ -931,8 +992,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('dutyForm').addEventListener('submit',e=>{e.preventDefault();const ds=load(DUTY_KEY),rep=$('reportTime').value,end=$('endDuty').value;ds.push(stamp({id:makeId(),date:$('dutyDate').value,type:$('dutyType').value,report:rep,end,minutes:diff(mins(rep),mins(end)),notes:$('dutyNotes').value.trim()}));save(DUTY_KEY,ds);reconcileAllDuties();e.target.reset();$('dutyDate').value=today();render();renderDuty()});
   ['tripStart','tripEnd'].forEach(id=>$(id).addEventListener('input',tripCalc));$('calcTrip').addEventListener('click',tripCalc);$('clearTrip').addEventListener('click',resetTrip);
   $('tripForm').addEventListener('submit',e=>{e.preventDefault();const c=tripCalc();if(!c)return alert('Enter a valid Trip Start and Trip End.');const ts=load(TRIPS_KEY),id=$('tripEditId').value||makeId(),t=stamp({id,base:upper(appSettings().homeBase||'CMN'),stations:upper($('tripStations').value),start:$('tripStart').value,end:$('tripEnd').value,trip:c.trip,duty:c.duty,layover:c.layover,allowance:c.allowance,remarks:$('tripRemarks').value.trim()}),i=ts.findIndex(x=>x.id===id);if(i>=0)ts[i]=t;else ts.push(t);save(TRIPS_KEY,ts);resetTrip();renderTrips();alert('Trip saved.')});
+  $('exportEasaPdf').addEventListener('click',exportEasaStylePdf);
+  $('exportExperienceCsv').addEventListener('click',exportExperienceCsv);
+  $('exportBackupJson').addEventListener('click',exportFullBackupJson);
   $('exportCsv').addEventListener('click',()=>{const d=load(FLIGHTS_KEY);if(!d.length)return alert('No entries to export');const cols=['dutyType','date','flightNo','reg','type','dep','arr','schedOut','schedIn','schedBlock','onDuty','offDuty','totalDuty','sectors','out','off','on','in','block','flight','simulatorTime','credit','role','instructionType','night','dayTakeoffs','nightTakeoffs','dayLandings','nightLandings','ifr','remarks','locked'];download('pilotlog_logbook.csv',[cols.join(','),...d.map(r=>cols.map(c=>csv(r[c])).join(','))].join('\n'),'text/csv')});
   $('exportLogTen').addEventListener('click',logTenExport);
+  const updateEasaRangeUI=()=>{const period=$('easaExportMode').value==='period';$('easaFrom').disabled=!period;$('easaTo').disabled=!period};
+  $('easaExportMode').addEventListener('change',updateEasaRangeUI);updateEasaRangeUI();
   $('logTenFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const r=logTenImport(await file.text());e.target.value='';autoDetectTrips(false);await render();$('logTenImportStatus').textContent=`Imported ${r.imported} new, repaired/updated ${r.updated}, simulators ${r.sims}, other duties ${r.other}.`;alert('LogTen import complete.')}catch(err){alert('LogTen import failed: '+err.message)}});
   $('calendarFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const events=parseIcs(await file.text());if(!events.length)throw new Error('No calendar events found.');const r=importCalendar(events);e.target.value='';autoDetectTrips(false);await render();$('calendarImportStatus').textContent=`Imported ${r.sectors} flight sectors, ${r.duties} duties and ${r.other} other entries. ${r.skipped} skipped.`;alert(`Imported: ${r.sectors} flights • ${r.duties} duties • ${r.other} other entries`)}catch(err){alert('Calendar import failed: '+err.message)}});
   $('rosterFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const rows=parseCsv(await file.text());if(rows.length<2)return alert('CSV contains no data');const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),aliases={date:['date','day'],flightNo:['flightno','flightnumber','flight','flt'],dep:['dep','departure','from','origin'],arr:['arr','arrival','to','destination'],std:['std','departuretime','scheduleddeparture','offblock'],sta:['sta','arrivaltime','scheduledarrival','onblock']},fieldFor=h=>Object.keys(aliases).find(k=>aliases[k].includes(norm(h)))||null,map=rows[0].map(fieldFor),imp=rows.slice(1).map(r=>{const o={id:makeId(),status:'planned'};map.forEach((k,i)=>{if(k)o[k]=r[i]||''});o.date=normalDate(o.date);['dep','arr','flightNo'].forEach(k=>o[k]=upper(o[k]));if(o.flightNo)o.flightNo=rosterFlightLabel(o.flightNo);return o}).filter(x=>x.date&&(x.dep||x.arr||x.flightNo));const merged=dedupeRosterItems([...load(ROSTER_KEY),...imp]);save(ROSTER_KEY,merged);e.target.value='';await render();alert(`${imp.length} roster sectors imported`)});

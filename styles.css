@@ -16,3 +16,12 @@
   .duty-week-row{grid-template-columns:82px 1fr;align-items:start}
   .duty-week-time{grid-column:2;text-align:left}
 }
+
+.dashboard-ftl{max-width:260px;text-align:left}
+.dashboard-ftl b{font-size:28px}
+.today-duty-row{padding-top:4px;padding-bottom:4px}
+.total-statistics-column{max-width:720px}
+.total-statistics-column .stat-row{font-size:14px}
+.total-statistics-column .stat-row b{font-size:16px}
+.logbook-export-grid{margin-top:10px}
+@media(max-width:520px){.dashboard-ftl{max-width:none}}

@@ -8,20 +8,18 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.0.20">
+<link rel="stylesheet" href="styles.css?v=5.0.21">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.0.20</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.0.21</span></div></header>
 <main>
 <section id="dashboardView">
-  <div class="grid">
-    <div class="card metric"><b id="mPic">0:00</b><span>PIC</span></div>
-    <div class="card metric"><b id="mTri">0:00</b><span>Flight Instruction</span></div>
-    <div class="card metric"><b id="mDuty">0:00</b><span>Total Duty</span></div>
-    <div class="card metric"><b id="mFtl">OK</b><span>EASA FTL</span></div>
-  </div>
-  <div class="section-title">Duty — Today + next 6 days</div>
-  <div class="card" id="dashboardDutyWeek"></div>
+  <div class="section-title">Today Duty</div>
+  <div class="card" id="dashboardTodayDuty"></div>
+  <div class="section-title">Next Duties</div>
+  <div class="card" id="dashboardNextDuties"></div>
+  <div class="section-title">EASA FTL</div>
+  <div class="card metric dashboard-ftl"><b id="mFtl">OK</b><span>Current status</span></div>
   <div class="section-title">EASA FTL rolling limits</div>
   <div class="card" id="dashboardFtl"></div>
 </section>
@@ -105,21 +103,17 @@
 </section>
 
 <section id="totalsView" class="hidden">
-  <div class="section-title">Totals / Statistics</div>
-  <div class="grid stats-grid">
-    <div class="card metric"><b id="tDuty">0:00</b><span>Total Duty</span></div>
-    <div class="card metric"><b id="tPic">0:00</b><span>PIC</span></div>
-    <div class="card metric"><b id="tInstruction">0:00</b><span>Flight Instruction</span></div>
-    <div class="card metric"><b id="tSimInstruction">0:00</b><span>SFI/SFE Sim Instruction</span></div>
-    <div class="card metric"><b id="tNight">0:00</b><span>Night</span></div>
-    <div class="card metric"><b id="tSim">0:00</b><span>Simulator Total</span></div>
-    <div class="card metric"><b id="tSimTrainer">0:00</b><span>Simulator as Trainer</span></div>
-    <div class="card metric"><b id="tSimTrainee">0:00</b><span>Simulator as Trainee</span></div>
+  <div class="section-title">Total Statistics</div>
+  <div class="card total-statistics-column">
+    <div class="stat-row"><span>Total Flight Hours</span><b id="tTotalFlight">0:00</b></div>
+    <div class="stat-row"><span>A320 Total Hours</span><b id="tA320Total">0:00</b></div>
+    <div class="stat-row"><span>A320 PIC</span><b id="tA320Pic">0:00</b></div>
+    <div class="stat-row"><span>A320 SIC</span><b id="tA320Sic">0:00</b></div>
+    <div class="stat-row"><span>A320 Instruction Flight Time</span><b id="tA320FlightInstruction">0:00</b></div>
+    <div class="stat-row"><span>A320 Instruction Simulator Time</span><b id="tA320SimInstruction">0:00</b></div>
   </div>
-  <div class="section-title">EASA Flight Time Limitations</div><div class="card" id="ftlTotals"></div>
   <div class="section-title">Periods / logbook hours</div><div class="card" id="periodTotals"></div>
   <div class="section-title">Aircraft breakdown</div><div class="card" id="aircraftBreakdown"></div>
-  <div class="section-title">Duty breakdown</div><div class="card" id="dutyBreakdown"></div>
 </section>
 
 <section id="tripsView" class="hidden">
@@ -180,8 +174,32 @@
 
   <div class="section-title">Import / Export</div>
   <div class="card">
-    <div class="section-title inner">Logbook</div>
-    <div class="actions top"><label class="filebtn primary" for="logTenFile">Import from LogTen Pro</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden"><button class="secondary" id="exportCsv">Export CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button></div>
+    <div class="section-title inner">Professional Experience / Logbook</div>
+    <div class="hint">Experience exports are independent from Payroll. DHD, STBY and Ground Course are excluded from the professional flight logbook.</div>
+    <div class="form-grid logbook-export-grid">
+      <div>
+        <label>EASA-style PDF selection</label>
+        <select id="easaExportMode">
+          <option value="last2">Last 2 flight pages</option>
+          <option value="last1">Last 1 flight page</option>
+          <option value="last3">Last 3 flight pages</option>
+          <option value="last5">Last 5 flight pages</option>
+          <option value="period">Custom date range</option>
+          <option value="all">All flight pages</option>
+        </select>
+      </div>
+      <div><label>From</label><input id="easaFrom" type="date"></div>
+      <div><label>To</label><input id="easaTo" type="date"></div>
+      <div><label>Simulator appendix</label><select id="easaIncludeSim"><option value="yes">Include</option><option value="no">Exclude</option></select></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="exportEasaPdf" type="button">Export EASA-style PDF</button>
+      <button class="secondary" id="exportExperienceCsv" type="button">Export Experience CSV</button>
+      <button class="secondary" id="exportBackupJson" type="button">Export Full Backup JSON</button>
+    </div>
+    <div class="hint">PDF opens a print-ready A4 landscape logbook. On iPhone/Mac choose Print/Share → Save as PDF. “Last pages” exports complete logbook pages with carried-forward totals.</div>
+    <div class="section-title inner">LogTen Pro</div>
+    <div class="actions top"><label class="filebtn primary" for="logTenFile">Import from LogTen Pro</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden"><button class="secondary" id="exportCsv">Export Operational CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button></div>
     <div class="hint" id="logTenImportStatus">Use LogTen Pro → Export Flights (Tab).</div>
     <div class="section-title inner">Duty / Roster</div>
     <div class="actions"><label class="filebtn primary" for="calendarFile">Import Calendar (.ics)</label><input id="calendarFile" type="file" accept=".ics,text/calendar" class="hidden"><label class="filebtn secondary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden"><button class="secondary" id="exportRoster">Export roster CSV</button></div>
@@ -241,6 +259,6 @@
 </section>
 </main>
 
-<nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.0.20" defer></script>
+<nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
+<script src="app.js?v=5.0.21" defer></script>
 </body></html>
