@@ -46,3 +46,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - Automatically generated trips store the IDs of included entries and expose a View duties inspector showing each included flight/duty, times, duration and whether it was deducted from layover.
 
 - Only DHD entries can open an automatic trip. Normal operating flights can be included inside an already-open trip but can never generate a trip by themselves.
+
+- LogTen import mapping updated: flight_type 7 = STBY, flight_type 2 = Ground Course, flight_type 3 = Simulator, blank = normal Flight. flight_type 1 is treated as transfer/DHD when transfer evidence is present or no operating flight number exists.
