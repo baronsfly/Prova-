@@ -64,3 +64,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - Roster duty summary now shows Home Base -> outbound destination (for example CMN -> CDG) instead of CMN -> CMN on a return duty.
 
 - v5.0.14 emergency fix: corrected a JavaScript runtime error introduced in v5.0.13 by an undefined isMoroccoAirport() call. Existing logbook history remains in localStorage and renders again without reimport.
+
+- v5.0.15 Morocco night premium fix: Add/Edit now evaluates the current unsaved sector as well as saved sectors. If any flight sector in the duty/day departs Morocco between 18:00 and 04:59 local, all flight sectors of that duty receive +50% credit, including the return.
+
+- v5.0.16 Morocco night premium pairing logic: each flight sector departing Morocco is evaluated independently by scheduled local departure time. Its result (day or +50% night) also applies only to the immediately following return sector. Example: CMN-BCN 14:00 + BCN-CMN = day; CMN-AGP 18:10 + AGP-CMN = night +50%.
