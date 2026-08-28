@@ -106,3 +106,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.2.0: persistent Add draft/autosave, lock-only workflow, mobile autocomplete, actual IN+30 duty end, taxi-inclusive Night, PF/approach tracking, corrected EASA duty/FDP, Last 6 months, and offline caching.
 
 - v5.2.1: fixed EASA rolling FTL counters counting future roster duties and double-counting legacy Duty records.
+
+- v5.2.2: EASA rolling duty now counts one saved operational duty total per day instead of rebuilding multi-day sessions. Future FDP selection comes from Roster.
+
+- v5.3.0: internal cleanup/refactor. Production remains a single app.js for reliability, while maintainable source is organized under /src and can be rebuilt with build_app.py. No database migration.

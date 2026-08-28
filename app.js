@@ -1,6 +1,18 @@
+/*
+ PilotLog source map
+  01 Core/storage/settings
+  02 Airports/night/flight-entry rules
+  03 Duty + EASA FTL
+  04 Roster + trips
+  05 Imports
+  06 Exports
+  07 Payroll
+  08 Cloud sync
+  09 UI/render/events
+*/
 (() => {
 'use strict';
-const VERSION='5.2.1';
+const VERSION='5.3.0';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1', ENTRY_DRAFT_KEY='pilotlog_entry_draft_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -135,8 +147,6 @@ function picMins(f){return isFlight(f)&&(f.role==='PIC'||f.role==='Instructor'||
 function sicMins(f){return isFlight(f)&&f.role==='SIC'?Number(f.block)||0:0}
 function flightInstrMins(f){return isFlight(f)&&f.instructionType==='Flight Instruction'?(Number(f.block)||0):0}
 function simInstrMins(f){return isSim(f)&&f.instructionType==='SFI/SFE Instruction Sim'?(Number(f.simulatorTime)||Number(f.block)||0):0}
-function simTrainerMins(f){return isSim(f)&&f.instructionType==='SFI/SFE Instruction Sim'?(Number(f.simulatorTime)||0):0}
-function simTraineeMins(f){return isSim(f)&&f.instructionType!=='SFI/SFE Instruction Sim'?(Number(f.simulatorTime)||0):0}
 
 function isA320Entry(f){
   const raw=upper([f.type,f.aircraftType,f.category,f.remarks].filter(Boolean).join(' '));
@@ -510,16 +520,6 @@ function reconcileAllDuties(){
   });
   fs.forEach(f=>f._updatedAt=new Date().toISOString());save(FLIGHTS_KEY,fs);
 }
-function dutySummary(date){
-  const s=buildDutySessions().find(x=>x.reportDate===date);
-  if(s)return{date:s.reportDate,entries:s.entries,report:s.report,end:s.end,minutes:s.minutes,sectors:s.sectors,dep:s.dep,arr:s.arr,startDateTime:s.startDateTime,endDateTime:s.endDateTime};
-  const ext=externalDutyForDate(date);if(ext)return{date,entries:[],report:ext.report||'',end:ext.end||'',minutes:Number(ext.minutes)||diff(mins(ext.report),mins(ext.end)),sectors:0,dep:'',arr:''};return null;
-}
-function mergedDutyMinutes(start=null,end=null){
-  const sessions=buildDutySessions();let total=0;
-  for(const s of sessions){if(start&&end){const a=Math.max(s.startDateTime.getTime(),start.getTime()),b=Math.min(s.endDateTime.getTime(),end.getTime());if(b>a)total+=Math.round((b-a)/60000)}else total+=s.minutes}
-  const sessionDates=new Set(sessions.map(s=>s.reportDate));load(DUTY_KEY).filter(d=>!sessionDates.has(d.date)).forEach(d=>{if(d.minutes)total+=Number(d.minutes)||0});return total;
-}
 
 /* EASA FTL — basic maximum daily FDP, acclimatised, no extension. ORO.FTL.205 Table 2. */
 const FDP_TABLE=[
@@ -540,43 +540,162 @@ const FDP_TABLE=[
 ];
 function fdpLimit(localStartMins,sectors){const row=FDP_TABLE.find(r=>localStartMins>=r.a&&localStartMins<=r.b);if(!row)return 0;const idx=Math.max(0,Math.min(8,(sectors<=2?0:sectors-2)));return row.v[idx]}
 function tzParts(date,tz){try{const p=new Intl.DateTimeFormat('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);const h=Number(p.find(x=>x.type==='hour')?.value||0),m=Number(p.find(x=>x.type==='minute')?.value||0);return h*60+m}catch{return date.getUTCHours()*60+date.getUTCMinutes()}}
-async function dailyFtlSession(s){
-  if(!s||!s.firstFlight)return null;
-  const a=await airport(s.firstFlight.dep),localM=tzParts(s.startDateTime,a?.tz||'UTC'),limit=fdpLimit(localM,s.sectors),margin=limit-s.minutes;
-  return{...s,date:s.reportDate,limit,margin,status:margin<0?'VIOLATION':margin<60?'CAUTION':'OK',localStart:localM,tz:a?.tz||'UTC'};
-}
 function startOfDays(n){const d=new Date();d.setUTCHours(0,0,0,0);d.setUTCDate(d.getUTCDate()-n+1);return d}
 function rollingFlight(n){
   const c=startOfDays(n),end=new Date();
   return sum(load(FLIGHTS_KEY).filter(isFlight),f=>{const d=dateOnly(f.date);return d>=c&&d<=end?(Number(f.block)||0):0});
 }
+function dutyValueMinutes(v){
+  if(typeof v==='number'&&Number.isFinite(v))return Math.max(0,v);
+  return Math.max(0,durMins(v||''));
+}
+function dailyDutyFallback(date,entries){
+  const relevant=(entries||[]).filter(f=>!isDhd(f));
+  if(!relevant.length)return null;
+
+  const flights=relevant.filter(isFlight).sort((a,b)=>entryChrono(a).localeCompare(entryChrono(b)));
+  let report='',end='',sectors=flights.length;
+
+  if(flights.length){
+    const first=flights[0],last=flights[flights.length-1];
+    report=first.onDuty||shiftTime(first.schedOut||first.out||first.off,-60);
+    // Actual IN always wins for duty end; scheduled IN is fallback only.
+    end=last.offDuty||(last.in?shiftTime(last.in,30):shiftTime(last.schedIn||last.on,30));
+  }else{
+    const ordered=[...relevant].sort((a,b)=>entryChrono(a).localeCompare(entryChrono(b)));
+    const first=ordered[0],last=ordered[ordered.length-1];
+    report=first.onDuty||first.schedOut||first.out||'';
+    end=last.offDuty||last.schedIn||last.in||'';
+    if(!end&&isGround(last)&&report)end=shiftTime(report,300);
+  }
+
+  if(!report||!end)return null;
+  const minutes=diff(mins(report),mins(end));
+  if(!minutes||minutes>1440)return null;
+  return{date,minutes,report,end,sectors,entries:relevant,source:'fallback'};
+}
+function accruedDutyLedger(){
+  const fs=load(FLIGHTS_KEY).filter(f=>f.date&&!isDhd(f));
+  const byDate={};
+  fs.forEach(f=>(byDate[f.date]||(byDate[f.date]=[])).push(f));
+
+  const records=[];
+  Object.entries(byDate).forEach(([date,entries])=>{
+    // totalDuty is written only on the last entry of a duty. If duplicates exist,
+    // use the largest valid value once, never sum all entry-level duty fields.
+    const totals=entries.map(f=>dutyValueMinutes(f.totalDuty)).filter(v=>v>0&&v<=1440);
+    if(totals.length){
+      const minutes=Math.max(...totals);
+      const flights=entries.filter(isFlight).sort((a,b)=>entryChrono(a).localeCompare(entryChrono(b)));
+      const first=flights[0]||entries[0],last=flights.at(-1)||entries.at(-1);
+      const report=first?.onDuty||shiftTime(first?.schedOut||first?.out||first?.off,-60);
+      const end=last?.offDuty||(last?.in?shiftTime(last.in,30):shiftTime(last?.schedIn||last?.on,30));
+      records.push({date,minutes,report:report||'',end:end||'',sectors:flights.length,entries,source:'stored-totalDuty'});
+    }else{
+      const fallback=dailyDutyFallback(date,entries);
+      if(fallback)records.push(fallback);
+    }
+  });
+
+  // Manual/external Duty records are used only for dates that do not already
+  // have an Entries-derived duty, preventing double counting.
+  const dates=new Set(records.map(r=>r.date));
+  load(DUTY_KEY).forEach(d=>{
+    if(!d?.date||dates.has(d.date))return;
+    const minutes=dutyValueMinutes(d.minutes)||diff(mins(d.report),mins(d.end));
+    if(minutes>0&&minutes<=1440){
+      records.push({date:d.date,minutes,report:d.report||'',end:d.end||'',sectors:Number(d.sectors)||0,entries:[],source:'duty-record'});
+      dates.add(d.date);
+    }
+  });
+
+  return records.sort((a,b)=>a.date.localeCompare(b.date));
+}
 function rollingDuty(n){
-  const c=startOfDays(n),now=new Date();
-  // Rolling EASA duty limits are historical/current exposure only. Planned future
-  // duties must never be included in 7/14/28-day accrued duty totals.
-  return sum(buildDutySessions(),s=>s.startDateTime>=c&&s.startDateTime<=now?s.minutes:0);
+  const start=startOfDays(n),now=new Date();
+  return accruedDutyLedger().reduce((total,r)=>{
+    const d=dateOnly(r.date);
+    return d>=start&&d<=now?total+r.minutes:total;
+  },0);
 }
 function calendarYearFlight(){const now=new Date(),y=now.getUTCFullYear();return sum(load(FLIGHTS_KEY).filter(isFlight),f=>{const d=dateOnly(f.date);return d.getUTCFullYear()===y&&d<=now?Number(f.block)||0:0})}
 function rollingCalendar12Flight(){const now=new Date(),start=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-11,1));return sum(load(FLIGHTS_KEY).filter(isFlight),f=>{const d=dateOnly(f.date);return d>=start&&d<=now?Number(f.block)||0:0})}
 function limitRow(name,value,limit){const pct=limit?value/limit:0,cls=pct>1?'danger-text':pct>.9?'warning':'';return `<div class="stat-row"><span>${esc(name)}</span><b class="${cls}">${fmt(value)} / ${fmt(limit)}</b></div>`}
+async function dutyFdpFromRecord(r){
+  if(!r||!r.report)return null;
+  const firstFlight=(r.entries||[]).filter(isFlight)[0]||null;
+  const dep=firstFlight?.dep||'';
+  const start=zuluDate(r.date,r.report);
+  if(!start)return null;
+  const a=dep?await airport(dep):null;
+  const localM=tzParts(start,a?.tz||'UTC');
+  const sectors=Math.max(1,Number(r.sectors)||1);
+  const limit=fdpLimit(localM,sectors);
+  const margin=limit-r.minutes;
+  return{date:r.date,minutes:r.minutes,sectors,limit,margin,status:margin<0?'VIOLATION':margin<60?'CAUTION':'OK'};
+}
+async function rosterFdp(g){
+  if(!g?.date||!g.start)return null;
+  const start=zuluDate(g.date,g.start);
+  if(!start)return null;
+  const a=g.dep?await airport(g.dep):null;
+  const localM=tzParts(start,a?.tz||'UTC');
+  const sectors=Math.max(1,Number(g.sectors)||1);
+  const minutes=g.end?diff(mins(g.start),mins(g.end)):0;
+  const limit=fdpLimit(localM,sectors);
+  const margin=limit-minutes;
+  return{date:g.date,minutes,sectors,limit,margin,status:margin<0?'VIOLATION':margin<60?'CAUTION':'OK'};
+}
 async function renderFtl(containerId,compact=false){
-  const d7=rollingDuty(7),d14=rollingDuty(14),d28=rollingDuty(28),f28=rollingFlight(28),fy=calendarYearFlight(),f12=rollingCalendar12Flight();
-  const allSessions=buildDutySessions(),now=new Date();
-  const accruedSessions=allSessions.filter(s=>s.startDateTime<=now).sort((a,b)=>b.startDateTime-a.startDateTime).slice(0,10),daily=[];
-  for(const s of accruedSessions){const x=await dailyFtlSession(s);if(x&&x.limit)daily.push(x)}
-  const violations=daily.filter(x=>x.margin<0);
+  const d7=rollingDuty(7),d14=rollingDuty(14),d28=rollingDuty(28),
+        f28=rollingFlight(28),fy=calendarYearFlight(),f12=rollingCalendar12Flight();
 
-  let current=daily.find(x=>x.date===today())||null;
+  const ledger=accruedDutyLedger();
+  const todayKey=today();
+  const todayRecord=ledger.find(r=>r.date===todayKey)||null;
+
+  let current=todayRecord?await dutyFdpFromRecord(todayRecord):null;
   let dailyLabel='Maximum daily FDP';
+
   if(!current){
-    const next=allSessions.filter(s=>s.startDateTime>now).sort((a,b)=>a.startDateTime-b.startDateTime)[0]||null;
-    if(next){current=await dailyFtlSession(next);dailyLabel='Next planned FDP'}
-    else current=daily[0]||null;
+    // Planned FDP must come from the roster, not future logbook Entries.
+    const nowDate=today();
+    const nextGroup=rosterGroups()
+      .filter(g=>g.date>=nowDate)
+      .sort((a,b)=>`${a.date}${a.start||''}`.localeCompare(`${b.date}${b.start||''}`))[0]||null;
+    if(nextGroup){
+      current=await rosterFdp(nextGroup);
+      dailyLabel=nextGroup.date===todayKey?'Today planned FDP':'Next planned FDP';
+    }else{
+      const last=ledger.filter(r=>r.date<=todayKey).sort((a,b)=>b.date.localeCompare(a.date))[0]||null;
+      current=last?await dutyFdpFromRecord(last):null;
+      dailyLabel='Last recorded FDP';
+    }
   }
+
   const maxDaily=current?`<div class="stat-row"><span>${esc(dailyLabel)} — ${esc(displayDate(current.date))} • ${current.sectors} sector${current.sectors===1?'':'s'}</span><b class="${current.status==='VIOLATION'?'danger-text':current.status==='CAUTION'?'warning':'success'}">${fmt(current.minutes)} / ${fmt(current.limit)}</b></div>`:'';
-  const rows=maxDaily+limitRow('Duty — 7 consecutive days',d7,3600)+limitRow('Duty — 14 consecutive days',d14,6600)+limitRow('Duty — 28 consecutive days',d28,11400)+limitRow('Flight time — 28 consecutive days',f28,6000)+limitRow('Flight time — calendar year',fy,54000)+limitRow('Flight time — 12 calendar months',f12,60000);
-  const dailyHtml=compact?'':daily.map(x=>`<div class="stat-row"><span>${esc(displayDate(x.date))} • ${x.sectors} sector${x.sectors===1?'':'s'} • start ${fmt(x.localStart)} ${esc(x.tz)}</span><b class="${x.status==='VIOLATION'?'danger-text':x.status==='CAUTION'?'warning':'success'}">${fmt(x.minutes)} / ${fmt(x.limit)} • ${x.status}</b></div>`).join('');
-  $(containerId).innerHTML=rows+(dailyHtml||'');return violations.length===0&&d7<=3600&&d14<=6600&&d28<=11400&&f28<=6000&&fy<=54000&&f12<=60000;
+
+  const rows=maxDaily+
+    limitRow('Duty — 7 consecutive days',d7,3600)+
+    limitRow('Duty — 14 consecutive days',d14,6600)+
+    limitRow('Duty — 28 consecutive days',d28,11400)+
+    limitRow('Flight time — 28 consecutive days',f28,6000)+
+    limitRow('Flight time — calendar year',fy,54000)+
+    limitRow('Flight time — 12 calendar months',f12,60000);
+
+  let dailyHtml='';
+  if(!compact){
+    const recent=ledger.filter(r=>r.date<=todayKey).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,10);
+    const detailed=[];
+    for(const r of recent){
+      const x=await dutyFdpFromRecord(r);
+      if(x&&x.limit)detailed.push(x);
+    }
+    dailyHtml=detailed.map(x=>`<div class="stat-row"><span>${esc(displayDate(x.date))} • ${x.sectors} sector${x.sectors===1?'':'s'}</span><b class="${x.status==='VIOLATION'?'danger-text':x.status==='CAUTION'?'warning':'success'}">${fmt(x.minutes)} / ${fmt(x.limit)} • ${x.status}</b></div>`).join('');
+  }
+
+  $(containerId).innerHTML=rows+dailyHtml;
+  return d7<=3600&&d14<=6600&&d28<=11400&&f28<=6000&&fy<=54000&&f12<=60000;
 }
 
 /* Roster local display and grouping */
@@ -622,7 +741,6 @@ async function rosterGroupHtml(groups,interactive=false){
 }
 
 /* Trips */
-function entryInterval(f){const t=f.onDuty||f.out||f.schedOut,u=f.offDuty||f.in||f.schedIn;if(!f.date||!t||!u)return null;return dutyDateEnd(f.date,t,u)}
 function overlapMins(a,b,s,e){const x=Math.max(a.getTime(),s.getTime()),y=Math.min(b.getTime(),e.getTime());return Math.max(0,Math.round((y-x)/60000))}
 function tripChargeableDuty(s,e){
   let total=0;
@@ -675,7 +793,6 @@ function tripSequenceEnd(f){
   const end=f.schedIn||f.in||f.offDuty||f.on||start;
   return endZuluDate(f.date,start,end);
 }
-function entryEnd(f){if(!f.date)return null;const t=f.offDuty||f.schedIn||f.in||f.onDuty||'00:00';return endZuluDate(f.date,f.onDuty||f.schedOut||f.out||'00:00',t)}
 function autoDetectTrips(showAlert=true){
   const base=upper(appSettings().homeBase||'CMN');
   const fs=load(FLIGHTS_KEY)
@@ -1884,7 +2001,6 @@ function dashboardDutyRows(startOffset,count){
   }
   return rows.join('');
 }
-function dashboardDuty7Days(){return dashboardDutyRows(0,7)}
 
 
 
@@ -2155,6 +2271,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     b=e.target.closest('[data-delete-trip]');if(b){if(!confirm('Confirm to delete this trip?'))return;save(TRIPS_KEY,load(TRIPS_KEY).filter(t=>t.id!==b.dataset.deleteTrip));renderTrips();$('tripInspectorWrap')?.classList.add('hidden');return}
     b=e.target.closest('[data-roster-action]');if(b){const rs=load(ROSTER_KEY),r=rs.find(x=>x.id===b.dataset.rosterAction);if(!r)return;const existing=load(FLIGHTS_KEY).find(f=>f.date===r.date&&upper(f.flightNo)===upper(r.flightNo)&&upper(f.dep)===upper(r.dep)&&upper(f.arr)===upper(r.arr));if(existing)loadEntryToForm(existing);else{resetEntry();$('date').value=r.date;$('flightNo').value=flightNoInput(composeFlightNo(r.flightNo));$('dep').value=r.dep;$('arr').value=r.arr;$('schedOut').value=r.std;$('schedIn').value=r.sta;calcEntry();$('remarks').value='Imported from roster';await updateAirportInfo()}r.status='done';save(ROSTER_KEY,rs);show('addView');await render()}
   });
-  resetEntry();refreshEntrySuggestions();['picName','sicName','soName','instructorName'].forEach(id=>setupSmartAutocomplete(id,()=>entrySuggestionDb.crew));setupSmartAutocomplete('type',()=>entrySuggestionDb.types);restoreEntryDraft();resetTrip();$('dutyDate').value=today();$('payrollMonth').value=monthNow();$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';fillPaySettings();renderDuty();renderSettings();render();show('dashboardView');if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js?v=5.2.0').catch(e=>console.warn('Offline cache unavailable',e));console.log('PilotLog v'+VERSION+' loaded');
+  resetEntry();refreshEntrySuggestions();['picName','sicName','soName','instructorName'].forEach(id=>setupSmartAutocomplete(id,()=>entrySuggestionDb.crew));setupSmartAutocomplete('type',()=>entrySuggestionDb.types);restoreEntryDraft();resetTrip();$('dutyDate').value=today();$('payrollMonth').value=monthNow();$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';fillPaySettings();renderDuty();renderSettings();render();show('dashboardView');if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js?v=5.3.0').catch(e=>console.warn('Offline cache unavailable',e));console.log('PilotLog v'+VERSION+' loaded');
 });
 })();

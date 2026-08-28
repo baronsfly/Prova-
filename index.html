@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.2.0">
+<link rel="stylesheet" href="styles.css?v=5.2.2">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.2.1</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.3.0</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -21,7 +21,7 @@
   <div class="section-title">EASA FTL</div>
   <div class="card metric dashboard-ftl"><b id="mFtl">OK</b><span>Current status</span></div>
   <div class="section-title">EASA FTL rolling limits</div>
-  <div class="hint">Rolling limits include only accrued/current duties up to now. Future roster duties are excluded.</div>
+  <div class="hint">Duty rolling limits use one saved duty total per operational day (the same Duty shown in Entries). Future roster duties are excluded.</div>
   <div class="card" id="dashboardFtl"></div>
 </section>
 
@@ -325,5 +325,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.2.0" defer></script>
+<script src="app.js?v=5.2.2" defer></script>
 </body></html>

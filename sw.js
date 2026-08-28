@@ -1,4 +1,4 @@
-const CACHE='pilotlog-v5.2.0';
+const CACHE='pilotlog-v5.3.0';
 const ROOT=new URL('./',self.location).href;
 const INDEX=new URL('./index.html',self.location).href;
 const CORE=[ROOT,INDEX,new URL('./styles.css',self.location).href,new URL('./app.js',self.location).href,new URL('./manifest.webmanifest',self.location).href];

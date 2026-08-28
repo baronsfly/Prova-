@@ -218,3 +218,22 @@
 - Flight-time 28-day, calendar-year and 12-calendar-month counters now explicitly exclude future-dated flight records.
 - Maximum daily FDP no longer selects the farthest future duty. It shows today's duty when available, otherwise the nearest next planned FDP; accrued-limit status remains based on past/current duties only.
 - Added a dashboard note clarifying that future roster duties are excluded from rolling limits.
+
+## v5.2.2
+- Replaced EASA rolling-duty calculation again, removing `buildDutySessions()` from 7/14/28-day duty totals.
+- Rolling duty now uses the saved `totalDuty` value from the final entry of each operational duty — the same value displayed in Entries such as `Duty 9:35`.
+- Multiple duplicated entries on the same duty no longer multiply duty hours; only one valid duty total is counted.
+- If an old day has no saved `totalDuty`, PilotLog reconstructs that single day's duty from first report/start to final Off Duty, with Actual IN + 30 minutes taking priority.
+- External/manual Duty records are added only when Entries do not already provide a duty for that date, preventing double counting.
+- Future dates are excluded from accrued rolling-duty totals.
+- Maximum/Next daily FDP now obtains future planned duties from Roster, never from future logbook Entries.
+- Added safeguards rejecting impossible reconstructed duty values over 24 hours.
+
+## v5.3.0
+- Maintenance/refactor release with no intended changes to PilotLog rules, calculations, data format or cloud schema.
+- Removed eight obsolete functions that had no runtime references after previous revisions.
+- Added a concise source map to `app.js`.
+- Added `/src` maintenance fragments grouped by Core, Flight, Duty/FTL, Roster/Trips, Imports, Exports, Payroll, Cloud and UI.
+- Production still loads one `app.js`, avoiding runtime module/load-order regressions.
+- Added `build_app.py` to rebuild the production `app.js` deterministically from the organized source fragments.
+- Updated Service Worker cache/version registration to v5.3.0.
