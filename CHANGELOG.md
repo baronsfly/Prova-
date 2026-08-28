@@ -145,3 +145,22 @@
 - Cloud Status immediately reports “Not signed in” when no local session exists.
 - Passwords remain non-persistent; only the remembered email and cloud session tokens are stored.
 - Existing cloud data merge format is preserved.
+
+## v5.1.5
+- Fixed Cloud Sync creating duplicate flights when the same real-world flight existed on two devices with different internal PilotLog IDs.
+- Cloud sync now performs semantic deduplication using date, duty type, route, normalized flight number and operational/scheduled times.
+- Matched copies are merged, keeping the more complete record and filling missing fields from the other copy.
+- Locked status is preserved if either copy was locked.
+- Skeletal duplicates with no flight number/times are merged only when there is exactly one complete same-date/same-route candidate.
+- Existing local duplicates are automatically cleaned on the next Cloud Sync.
+- A local history snapshot is created before duplicate cleanup.
+- Stale duplicate flight records are removed from Supabase after a successful merge so they do not return on another device.
+
+## v5.1.6
+- Flight entries now include PIC Name, SIC Name and SO Name (Second Officer).
+- Crew-name fields are shown only for Flight entries.
+- PIC/SIC/SO names are stored with each flight and restored when editing.
+- Professional Experience CSV exports all three crew-name fields.
+- EASA PDF populates the standard Name(s) PIC field from PIC Name.
+- SIC and SO names are preserved in EASA Remarks/Endorsements when present.
+- Added best-effort LogTen crew-name import aliases when those source fields exist.

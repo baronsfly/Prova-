@@ -92,3 +92,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.1.3: fixed the Roster month header `[object Promise]` regression. Month labels are now rendered synchronously.
 
 - v5.1.4: Cloud Sync now uses direct Supabase API calls with explicit timeouts, eliminating the external Supabase JS CDN dependency that could hang on iPhone.
+
+- v5.1.5: Cloud Sync now identifies and merges the same operational flight across devices even when internal IDs differ, backs up before cleanup, and removes stale cloud duplicates.
+
+- v5.1.6: Flight entries store PIC Name, SIC Name and SO Name. PIC Name feeds the EASA Name(s) PIC column; SIC/SO names remain available for professional exports.

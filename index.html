@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.1.4">
+<link rel="stylesheet" href="styles.css?v=5.1.6">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.1.4</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.1.6</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -49,6 +49,9 @@
         <div data-entry-field="block"><label>Block</label><input id="blockDisplay" readonly></div>
         <div data-entry-field="credit"><label>Credit Hours</label><input id="creditDisplay"></div>
         <div data-entry-field="role"><label>Role</label><select id="role"><option>PIC</option><option>SIC</option><option>Instructor</option><option>Examiner</option></select></div>
+        <div data-entry-field="picName"><label>PIC Name</label><input id="picName" placeholder="CAPTAIN NAME" data-upper></div>
+        <div data-entry-field="sicName"><label>SIC Name</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper></div>
+        <div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper></div>
         <div data-entry-field="instruction"><label>Instruction</label><select id="instructionType"><option value="">None</option><option value="Flight Instruction">Flight Instruction</option><option value="SFI/SFE Instruction Sim">SFI/SFE Instruction Sim</option></select></div>
         <div data-entry-field="night"><label>Night time — auto</label><input id="night" value="00:00" readonly></div>
         <div data-entry-field="ifr"><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
@@ -315,5 +318,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.1.4" defer></script>
+<script src="app.js?v=5.1.6" defer></script>
 </body></html>
