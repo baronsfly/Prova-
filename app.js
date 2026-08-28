@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.2.0';
+const VERSION='5.2.1';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1', ENTRY_DRAFT_KEY='pilotlog_entry_draft_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -546,20 +546,34 @@ async function dailyFtlSession(s){
   return{...s,date:s.reportDate,limit,margin,status:margin<0?'VIOLATION':margin<60?'CAUTION':'OK',localStart:localM,tz:a?.tz||'UTC'};
 }
 function startOfDays(n){const d=new Date();d.setUTCHours(0,0,0,0);d.setUTCDate(d.getUTCDate()-n+1);return d}
-function rollingFlight(n){const c=startOfDays(n);return sum(load(FLIGHTS_KEY).filter(isFlight),f=>dateOnly(f.date)>=c?Number(f.block)||0:0)}
-function rollingDuty(n){
-  const c=startOfDays(n),sessions=buildDutySessions();let total=sum(sessions,s=>s.startDateTime>=c?s.minutes:0),sessionDates=new Set(sessions.map(s=>s.reportDate));
-  total+=sum(load(DUTY_KEY).filter(d=>!sessionDates.has(d.date)),d=>dateOnly(d.date)>=c?(Number(d.minutes)||0):0);return total;
+function rollingFlight(n){
+  const c=startOfDays(n),end=new Date();
+  return sum(load(FLIGHTS_KEY).filter(isFlight),f=>{const d=dateOnly(f.date);return d>=c&&d<=end?(Number(f.block)||0):0});
 }
-function calendarYearFlight(){const y=new Date().getUTCFullYear();return sum(load(FLIGHTS_KEY).filter(isFlight),f=>dateOnly(f.date).getUTCFullYear()===y?Number(f.block)||0:0)}
-function rollingCalendar12Flight(){const now=new Date(),start=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-11,1));return sum(load(FLIGHTS_KEY).filter(isFlight),f=>dateOnly(f.date)>=start?Number(f.block)||0:0)}
+function rollingDuty(n){
+  const c=startOfDays(n),now=new Date();
+  // Rolling EASA duty limits are historical/current exposure only. Planned future
+  // duties must never be included in 7/14/28-day accrued duty totals.
+  return sum(buildDutySessions(),s=>s.startDateTime>=c&&s.startDateTime<=now?s.minutes:0);
+}
+function calendarYearFlight(){const now=new Date(),y=now.getUTCFullYear();return sum(load(FLIGHTS_KEY).filter(isFlight),f=>{const d=dateOnly(f.date);return d.getUTCFullYear()===y&&d<=now?Number(f.block)||0:0})}
+function rollingCalendar12Flight(){const now=new Date(),start=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()-11,1));return sum(load(FLIGHTS_KEY).filter(isFlight),f=>{const d=dateOnly(f.date);return d>=start&&d<=now?Number(f.block)||0:0})}
 function limitRow(name,value,limit){const pct=limit?value/limit:0,cls=pct>1?'danger-text':pct>.9?'warning':'';return `<div class="stat-row"><span>${esc(name)}</span><b class="${cls}">${fmt(value)} / ${fmt(limit)}</b></div>`}
 async function renderFtl(containerId,compact=false){
   const d7=rollingDuty(7),d14=rollingDuty(14),d28=rollingDuty(28),f28=rollingFlight(28),fy=calendarYearFlight(),f12=rollingCalendar12Flight();
-  const sessions=buildDutySessions().sort((a,b)=>b.startDateTime-a.startDateTime).slice(0,10),daily=[];
-  for(const s of sessions){const x=await dailyFtlSession(s);if(x&&x.limit)daily.push(x)}
-  const violations=daily.filter(x=>x.margin<0),current=daily.find(x=>x.date===today())||daily[0]||null;
-  const maxDaily=current?`<div class="stat-row"><span>Maximum daily FDP — ${esc(displayDate(current.date))} • ${current.sectors} sector${current.sectors===1?'':'s'}</span><b class="${current.status==='VIOLATION'?'danger-text':current.status==='CAUTION'?'warning':'success'}">${fmt(current.minutes)} / ${fmt(current.limit)}</b></div>`:'';
+  const allSessions=buildDutySessions(),now=new Date();
+  const accruedSessions=allSessions.filter(s=>s.startDateTime<=now).sort((a,b)=>b.startDateTime-a.startDateTime).slice(0,10),daily=[];
+  for(const s of accruedSessions){const x=await dailyFtlSession(s);if(x&&x.limit)daily.push(x)}
+  const violations=daily.filter(x=>x.margin<0);
+
+  let current=daily.find(x=>x.date===today())||null;
+  let dailyLabel='Maximum daily FDP';
+  if(!current){
+    const next=allSessions.filter(s=>s.startDateTime>now).sort((a,b)=>a.startDateTime-b.startDateTime)[0]||null;
+    if(next){current=await dailyFtlSession(next);dailyLabel='Next planned FDP'}
+    else current=daily[0]||null;
+  }
+  const maxDaily=current?`<div class="stat-row"><span>${esc(dailyLabel)} — ${esc(displayDate(current.date))} • ${current.sectors} sector${current.sectors===1?'':'s'}</span><b class="${current.status==='VIOLATION'?'danger-text':current.status==='CAUTION'?'warning':'success'}">${fmt(current.minutes)} / ${fmt(current.limit)}</b></div>`:'';
   const rows=maxDaily+limitRow('Duty — 7 consecutive days',d7,3600)+limitRow('Duty — 14 consecutive days',d14,6600)+limitRow('Duty — 28 consecutive days',d28,11400)+limitRow('Flight time — 28 consecutive days',f28,6000)+limitRow('Flight time — calendar year',fy,54000)+limitRow('Flight time — 12 calendar months',f12,60000);
   const dailyHtml=compact?'':daily.map(x=>`<div class="stat-row"><span>${esc(displayDate(x.date))} • ${x.sectors} sector${x.sectors===1?'':'s'} • start ${fmt(x.localStart)} ${esc(x.tz)}</span><b class="${x.status==='VIOLATION'?'danger-text':x.status==='CAUTION'?'warning':'success'}">${fmt(x.minutes)} / ${fmt(x.limit)} • ${x.status}</b></div>`).join('');
   $(containerId).innerHTML=rows+(dailyHtml||'');return violations.length===0&&d7<=3600&&d14<=6600&&d28<=11400&&f28<=6000&&fy<=54000&&f12<=60000;

@@ -210,3 +210,11 @@
 - Corrected EASA ORO.FTL.205 Table 2 and added Maximum Daily FDP.
 - Rebuilt EASA duty accumulation as operational duty sessions, including midnight crossing, to prevent inflated 7/14/28-day totals.
 - Added offline PWA caching for core PilotLog files after first online load.
+
+## v5.2.1
+- Fixed EASA FTL rolling-duty totals incorrectly including future planned duties.
+- Duty 7/14/28-day totals now include only duty sessions whose report time is at or before the current time.
+- Removed legacy/manual Duty-table additions from rolling FTL totals to prevent double counting against reconstructed operational duty sessions.
+- Flight-time 28-day, calendar-year and 12-calendar-month counters now explicitly exclude future-dated flight records.
+- Maximum daily FDP no longer selects the farthest future duty. It shows today's duty when available, otherwise the nearest next planned FDP; accrued-limit status remains based on past/current duties only.
+- Added a dashboard note clarifying that future roster duties are excluded from rolling limits.

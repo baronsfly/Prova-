@@ -104,3 +104,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.1.9: added crew-name and aircraft-type autocomplete, IFR=Yes default for new flights, and a Return Flight shortcut that reverses the route, increments the flight number and preserves persistent crew/aircraft parameters.
 
 - v5.2.0: persistent Add draft/autosave, lock-only workflow, mobile autocomplete, actual IN+30 duty end, taxi-inclusive Night, PF/approach tracking, corrected EASA duty/FDP, Last 6 months, and offline caching.
+
+- v5.2.1: fixed EASA rolling FTL counters counting future roster duties and double-counting legacy Duty records.
