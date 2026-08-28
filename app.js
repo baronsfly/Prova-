@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.12';
+const VERSION='5.0.13';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -31,9 +31,31 @@ function qualifiesMoroccoNightCredit(f){
   const m=moroccoLocalScheduledMinute(f);
   return m!==null&&(m>=18*60||m<5*60);
 }
+function moroccoNightTrigger(f){
+  if(!isFlight(f)||!isMoroccoAirport(f.dep)||!f.schedOut)return false;
+  const depDate=zuluDate(f.date,f.schedOut);
+  if(!depDate)return false;
+  const ap=airport(f.dep);
+  const tz=ap?.tz||ap?.timezone||'Africa/Casablanca';
+  const p=tzParts(depDate,tz);
+  const hh=Number(p.hour),mm=Number(p.minute);
+  const minsLocal=hh*60+mm;
+  return minsLocal>=18*60 || minsLocal<5*60;
+}
+function dutyGetsMoroccoNightPremium(f){
+  if(!isFlight(f)||!f.date)return false;
+  const flights=dayEntries(f.date).filter(isFlight);
+  if(!flights.length)return moroccoNightTrigger(f);
+
+  // A qualifying outbound from Morocco applies the +50% to all operating
+  // sectors belonging to that same day's flight duty, including the return sector.
+  const first=flights[0];
+  return moroccoNightTrigger(first);
+}
 function paidFlightCreditMins(f){
-  const base=credit(scheduleBlockMins(f));
-  return qualifiesMoroccoNightCredit(f)?Math.round(base*1.5):base;
+  const base=scheduleBlockMins(f);
+  const rounded=Math.ceil(base/30)*30;
+  return dutyGetsMoroccoNightPremium(f)?Math.round(rounded*1.5):rounded;
 }
 const shiftTime=(t,delta)=>{const m=mins(t);if(m==null)return'';let x=(m+delta)%1440;if(x<0)x+=1440;return `${String(Math.floor(x/60)).padStart(2,'0')}:${String(x%60).padStart(2,'0')}`};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -383,7 +405,9 @@ function rosterGroups(){
   const rs=load(ROSTER_KEY).sort((a,b)=>`${a.date}${a.std||''}`.localeCompare(`${b.date}${b.std||''}`)), by={};
   rs.forEach(r=>(by[r.date]||(by[r.date]=[])).push(r));
   const ds=load(DUTY_KEY);
-  return Object.entries(by).map(([date,rawItems])=>{const items=dedupeRosterItems(rawItems);items.sort((a,b)=>(a.std||'').localeCompare(b.std||''));const duty=ds.find(d=>d.date===date&&/flight duty/i.test(d.type||''));const first=items[0],last=items[items.length-1];return{date,items,start:duty?.report||shiftTime(first.std,-60),end:duty?.end||shiftTime(last.sta,30),dep:first.dep||'',arr:last.arr||'',sectors:items.filter(x=>x.flightNo).length,status:items.every(x=>x.status==='done')?'done':'planned'}}).sort((a,b)=>a.date.localeCompare(b.date))
+  return Object.entries(by).map(([date,rawItems])=>{const items=dedupeRosterItems(rawItems);items.sort((a,b)=>(a.std||'').localeCompare(b.std||''));const duty=ds.find(d=>d.date===date&&/flight duty/i.test(d.type||''));const first=items[0],last=items[items.length-1];const home=upper(appSettings().homeBase||'CMN');
+    const outboundDest=(items.find(x=>upper(x.dep)===home&&upper(x.arr)!==home)?.arr)||first.arr||last.arr||'';
+    return{date,items,start:duty?.report||shiftTime(first.std,-60),end:duty?.end||shiftTime(last.sta,30),dep:first.dep||home,arr:outboundDest,sectors:items.filter(x=>x.flightNo).length,status:items.every(x=>x.status==='done')?'done':'planned'}}).sort((a,b)=>a.date.localeCompare(b.date))
 }
 async function rosterGroupHtml(groups,interactive=false){
   if(!groups.length)return'<div class="empty">No upcoming roster.</div>';let html='';

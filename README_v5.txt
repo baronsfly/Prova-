@@ -59,3 +59,6 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - Future-month payroll uses the latest live EUR/MAD rate provisionally until the existing month-rate locking rule is satisfied.
 
 - v5.0.12 emergency fix: restores the render() function accidentally removed in v5.0.11. Existing localStorage logbook entries were not deleted; the previous version failed to render them.
+
+- v5.0.13 Morocco night credit: when the first operating sector of a duty departs a Moroccan airport between 18:00 and 04:59 local, the +50% credit applies to every operating flight sector in that same duty, including the return from abroad.
+- Roster duty summary now shows Home Base -> outbound destination (for example CMN -> CDG) instead of CMN -> CMN on a return duty.
