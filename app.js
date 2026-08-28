@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.1.8';
+const VERSION='5.1.9';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -77,6 +77,22 @@ const shiftTime=(t,delta)=>{const m=mins(t);if(m==null)return'';let x=(m+delta)%
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const csv=s=>`"${String(s??'').replace(/"/g,'""')}"`;
 const dateOnly=d=>new Date(`${d}T00:00:00Z`);
+
+
+function refreshEntrySuggestions(){
+  const fs=load(FLIGHTS_KEY);
+  const names=new Set(),types=new Set();
+  fs.forEach(f=>{
+    [f.picName,f.sicName,f.soName,f.instructorName].forEach(n=>{
+      const v=upper(n||'').trim();
+      if(v)names.add(v);
+    });
+    const t=upper(f.type||'').trim();
+    if(t&&t!=='UNSPECIFIED')types.add(t);
+  });
+  if($('crewNameSuggestions'))$('crewNameSuggestions').innerHTML=[...names].sort().map(v=>`<option value="${esc(v)}"></option>`).join('');
+  if($('aircraftTypeSuggestions'))$('aircraftTypeSuggestions').innerHTML=[...types].sort().map(v=>`<option value="${esc(v)}"></option>`).join('');
+}
 
 function displayDate(v){
   const s=String(v||'').slice(0,10);
@@ -200,6 +216,98 @@ function formCredit(dutyType,schedBlock){
   if(dutyType==='Ground Course')return Math.round(Number(paySettings().groundCredit||0)*60);
   if(dutyType==='DHD')return durMins($('creditDisplay').value);
   return 0;
+}
+
+
+function incrementFlightNumber(v){
+  const raw=upper(v||'').trim();
+  if(!raw)return'';
+  const m=raw.match(/^(.*?)(\d+)$/);
+  if(!m)return raw;
+  return `${m[1]}${String(Number(m[2])+1).padStart(m[2].length,'0')}`;
+}
+function plusOneIsoDate(date){
+  const d=dateOnly(date);
+  d.setUTCDate(d.getUTCDate()+1);
+  return d.toISOString().slice(0,10);
+}
+function returnFlightDateFromLeg(f){
+  const date=f.date||today();
+  const dep=f.schedOut||f.out||f.off||'';
+  const arr=f.schedIn||f.in||f.on||'';
+  if(dep&&arr&&mins(arr)<mins(dep))return plusOneIsoDate(date);
+  return date;
+}
+function formLegSnapshot(){
+  return {
+    dutyType:$('dutyTypeFlight')?.value||'Flight',
+    date:$('date')?.value||today(),
+    flightNo:composeFlightNo($('flightNo')?.value||''),
+    type:upper($('type')?.value||''),
+    reg:composeAircraftId($('reg')?.value||''),
+    dep:upper($('dep')?.value||''),
+    arr:upper($('arr')?.value||''),
+    schedOut:$('schedOut')?.value||'',
+    schedIn:$('schedIn')?.value||'',
+    out:$('out')?.value||'',
+    off:$('off')?.value||'',
+    on:$('on')?.value||'',
+    in:$('in')?.value||'',
+    role:$('role')?.value||'PIC',
+    picName:upper($('picName')?.value||''),
+    sicName:upper($('sicName')?.value||''),
+    soName:upper($('soName')?.value||''),
+    instructorName:upper($('instructorName')?.value||''),
+    instructionType:$('instructionType')?.value||'',
+    ifr:$('ifr')?.value||'yes'
+  };
+}
+function latestFlightForReturn(){
+  return load(FLIGHTS_KEY).filter(isFlight).sort((a,b)=>
+    `${b.date||''}${b.schedOut||b.out||b.off||''}`.localeCompare(`${a.date||''}${a.schedOut||a.out||a.off||''}`)
+  )[0]||null;
+}
+function createReturnFlight(){
+  let src=formLegSnapshot();
+  if(!src.dep||!src.arr){
+    const latest=latestFlightForReturn();
+    if(!latest)return alert('Enter or save the outbound flight first.');
+    src=latest;
+  }
+  if(String(src.dutyType||'Flight')!=='Flight')return alert('Return Flight is available for Flight entries only.');
+
+  resetEntry();
+  $('dutyTypeFlight').value='Flight';
+  $('date').value=returnFlightDateFromLeg(src);
+
+  const prefix=(appSettings().flightPrefix||'MAC').toUpperCase();
+  let no=String(src.flightNo||'');
+  if(no.toUpperCase().startsWith(prefix))no=no.slice(prefix.length);
+  $('flightNo').value=incrementFlightNumber(no);
+
+  $('type').value=upper(src.type||'A320');
+
+  const regPrefix=(appSettings().aircraftPrefix||'CN-NM').toUpperCase();
+  let reg=String(src.reg||'');
+  if(reg.toUpperCase().startsWith(regPrefix))reg=reg.slice(regPrefix.length);
+  $('reg').value=upper(reg);
+
+  $('dep').value=upper(src.arr||'');
+  $('arr').value=upper(src.dep||'');
+
+  $('role').value=src.role||'PIC';
+  $('picName').value=upper(src.picName||'');
+  $('sicName').value=upper(src.sicName||'');
+  $('soName').value=upper(src.soName||'');
+  $('instructorName').value=upper(src.instructorName||'');
+  $('instructionType').value=src.instructionType||'';
+  $('ifr').value=src.ifr||'yes';
+
+  setEntryTypeUI();
+  updateExaminerRemarkReminder();
+  calcEntry();
+  updateAirportInfo();
+  $('schedOut')?.focus();
 }
 
 function updateExaminerRemarkReminder(){
@@ -1779,6 +1887,7 @@ function cleanupExistingDuplicatesOnce(){
 
 async function render(){
   cleanupExistingDuplicatesOnce();
+  refreshEntrySuggestions();
   snapshotFlights('before-render');
   const fs=renderEntriesSafe();
 
@@ -1912,6 +2021,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('onDuty').addEventListener('input',()=>calcEntry());
   $('creditDisplay').addEventListener('change',()=>{if(isDhd({dutyType:$('dutyTypeFlight').value}))$('creditDisplay').value=fmt(durMins($('creditDisplay').value))});
   $('flightForm').addEventListener('submit',async e=>{e.preventDefault();if($('dutyTypeFlight').value==='Flight')await calcNightForForm();const editing=!!$('editId').value;if(!persistEntry(false))return;resetEntry();await render();show('dashboardView');alert(editing?'Entry updated.':'Entry saved.')});
+  $('returnFlight').addEventListener('click',createReturnFlight);
   $('clearForm').addEventListener('click',resetEntry);
   $('lockEntryBtn').addEventListener('click',()=>{const id=$('editId').value,fs=load(FLIGHTS_KEY),existing=id?fs.find(x=>x.id===id):null;if(existing?.locked){if(!confirm('Unlock this entry and allow editing?'))return;existing.locked=false;existing._updatedAt=new Date().toISOString();save(FLIGHTS_KEY,fs);setEntryLockedUI(false);return}if(!confirm('Lock this entry? Its data will be protected from accidental editing.'))return;if(!persistEntry(true))return;setEntryLockedUI(true);render()});
   $('dutyForm').addEventListener('submit',e=>{e.preventDefault();const ds=load(DUTY_KEY),rep=$('reportTime').value,end=$('endDuty').value;ds.push(stamp({id:makeId(),date:$('dutyDate').value,type:$('dutyType').value,report:rep,end,minutes:diff(mins(rep),mins(end)),notes:$('dutyNotes').value.trim()}));save(DUTY_KEY,ds);reconcileAllDuties();e.target.reset();$('dutyDate').value=today();render();renderDuty()});

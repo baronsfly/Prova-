@@ -100,3 +100,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.1.7: added Instructor/Examiner Name, mapped LogTen Student→SO and Instructor→Instructor/Examiner correctly, and added an Examiner-role reminder for Remarks.
 
 - v5.1.8: duplicate prevention now applies to LogTen import and one-time startup cleanup, including identical date/route placeholder rows with no flight number or times.
+
+- v5.1.9: added crew-name and aircraft-type autocomplete, IFR=Yes default for new flights, and a Return Flight shortcut that reverses the route, increments the flight number and preserves persistent crew/aircraft parameters.

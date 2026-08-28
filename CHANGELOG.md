@@ -183,3 +183,15 @@
 - Semantic duplicate cleanup now runs before every LogTen save.
 - Existing duplicates are also cleaned once automatically when v5.1.8 first renders, with a local snapshot taken before cleanup.
 - Repeated real sectors are preserved when flight numbers or times distinguish them.
+
+## v5.1.9
+- Added database-driven autocomplete for PIC Name, SIC Name, SO Name and Instructor / Examiner Name.
+- Crew suggestions are built automatically from names already stored in PilotLog.
+- Added Aircraft Type autocomplete using aircraft types already present in the PilotLog database.
+- New Flight entries default to IFR = Yes.
+- Added Return Flight button in Add Flight.
+- Return Flight reverses From/To and increments the numeric flight number by one (for example MAC457 → MAC458).
+- Return Flight preserves aircraft type, aircraft registration, role, PIC/SIC/SO/Instructor names, Instruction and IFR.
+- If the outbound sector crosses midnight, the return flight date is advanced automatically by one day.
+- Sector-specific times and calculated values remain blank for the new return sector.
+- Return Flight uses the currently populated outbound form, or the most recent stored Flight if the form has no route.

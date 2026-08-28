@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.1.8">
+<link rel="stylesheet" href="styles.css?v=5.1.9">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.1.8</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.1.9</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -34,7 +34,7 @@
         <div><label>Date (Zulu)</label><input id="date" type="date" required></div>
         <div data-entry-field="flightNo"><label>Flight number</label><div class="prefix-input"><span id="flightPrefixLabel">MAC</span><input id="flightNo" placeholder="457" autocomplete="off"></div></div>
         <div data-entry-field="reg"><label>Aircraft ID</label><div class="prefix-input"><span id="aircraftPrefixLabel">CN-NM</span><input id="reg" maxlength="10" placeholder="Q" autocomplete="off"></div></div>
-        <div data-entry-field="type"><label>Aircraft type</label><input id="type" placeholder="A320" data-upper></div><div data-entry-field="courseType" class="hidden"><label>Course type</label><input id="courseType" placeholder="GRT MOD 3 / CRM / SEP..." data-upper></div>
+        <div data-entry-field="type"><label>Aircraft type</label><input id="type" placeholder="A320" data-upper list="aircraftTypeSuggestions" autocomplete="off"><datalist id="aircraftTypeSuggestions"></datalist></div><div data-entry-field="courseType" class="hidden"><label>Course type</label><input id="courseType" placeholder="GRT MOD 3 / CRM / SEP..." data-upper></div>
         <div data-entry-field="dep"><label>From — IATA/ICAO</label><input id="dep" maxlength="4" placeholder="CMN" data-upper><div class="airport-info" id="depInfo"></div></div>
         <div data-entry-field="arr"><label>To — IATA/ICAO</label><input id="arr" maxlength="4" placeholder="BGY" data-upper><div class="airport-info" id="arrInfo"></div></div>
         <div data-entry-field="schedOut"><label id="schedOutLabel">Schedule OUT (Z)</label><input id="schedOut" type="time"></div>
@@ -49,10 +49,11 @@
         <div data-entry-field="block"><label>Block</label><input id="blockDisplay" readonly></div>
         <div data-entry-field="credit"><label>Credit Hours</label><input id="creditDisplay"></div>
         <div data-entry-field="role"><label>Role</label><select id="role"><option>PIC</option><option>SIC</option><option>Instructor</option><option>Examiner</option></select></div>
-        <div data-entry-field="picName"><label>PIC Name</label><input id="picName" placeholder="CAPTAIN NAME" data-upper></div>
-        <div data-entry-field="sicName"><label>SIC Name</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper></div>
-        <div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper></div>
-        <div data-entry-field="instructorName"><label>Instructor / Examiner Name</label><input id="instructorName" placeholder="INSTRUCTOR / EXAMINER NAME" data-upper></div>
+        <div data-entry-field="picName"><label>PIC Name</label><input id="picName" placeholder="CAPTAIN NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
+        <div data-entry-field="sicName"><label>SIC Name</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
+        <div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
+        <div data-entry-field="instructorName"><label>Instructor / Examiner Name</label><input id="instructorName" placeholder="INSTRUCTOR / EXAMINER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
+        <datalist id="crewNameSuggestions"></datalist>
         <div id="examinerRemarkReminder" class="full hint warning hidden">Line Check / Examiner duty: remember to state your examiner role in Remarks so the logbook clearly shows you were acting as examiner/checker, not claiming PIC time.</div>
         <div data-entry-field="instruction"><label>Instruction</label><select id="instructionType"><option value="">None</option><option value="Flight Instruction">Flight Instruction</option><option value="SFI/SFE Instruction Sim">SFI/SFE Instruction Sim</option></select></div>
         <div data-entry-field="night"><label>Night time — auto</label><input id="night" value="00:00" readonly></div>
@@ -77,7 +78,7 @@
       <div class="full" id="remarksWrap"><label>Remarks</label><textarea id="remarks"></textarea></div>
       <div class="totals" id="calcPreview">Schedule Block 0:00 • Actual Block 0:00 • Flight 0:00 • Credit 0:00</div>
       <div class="hint" id="nightStatus">Night time is calculated automatically from airport coordinates and civil twilight when OFF/ON are available.</div>
-      <div class="actions"><button class="primary" type="submit" id="saveEntryBtn">Save entry</button><button class="secondary" type="button" id="lockEntryBtn">Save & Lock</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
+      <div class="actions"><button class="primary" type="submit" id="saveEntryBtn">Save entry</button><button class="secondary" type="button" id="lockEntryBtn">Save & Lock</button><button class="secondary" type="button" id="returnFlight">Return Flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
       <div class="hint" id="entryLockStatus">Unlocked. Lock the entry when all data are final.</div>
     </form>
   </div>
@@ -320,5 +321,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.1.8" defer></script>
+<script src="app.js?v=5.1.9" defer></script>
 </body></html>
