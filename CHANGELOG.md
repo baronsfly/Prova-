@@ -84,3 +84,32 @@
 - DHD, STBY and Ground Course are excluded from professional flight-logbook pages.
 - Simulator experience is available as an optional separate appendix.
 - Added professional-experience CSV and full PilotLog JSON backup export.
+
+## v5.0.22
+- Redesigned EASA-style PDF using the supplied traditional EASA logbook layout as the structural reference.
+- PDF is now A4 portrait.
+- Each printed page is self-contained: logbook rows plus all three summary lines remain on the same physical page.
+- Summary lines are Total From This Page, Total From Previous Pages and Total To Date.
+- Zero values are rendered as blank cells instead of 0 or 0:00.
+- Remarks and Endorsements are left aligned.
+- FSTD/Simulator sessions are integrated into the same EASA-style page structure instead of a separate simulator appendix.
+- DHD, STBY and Ground Course remain excluded because the professional logbook is independent from Payroll.
+- Logbook dates are displayed as dd/mm/yyyy.
+- Reduced entries per page to 11 to preserve portrait-page integrity and prevent totals from being pushed onto a new page.
+
+## v5.1.0
+- Major version increment after the Dashboard, Totals, professional logbook and import/export redesigns.
+- Added Import from Screenshot in Settings.
+- Screenshot OCR runs in the browser using Tesseract.js loaded on demand.
+- Supported screenshot profiles: Auto, Roster, LogTen / logbook and Generic flight / duty.
+- Added editable OCR text so recognition errors can be corrected without leaving PilotLog.
+- Added Review Import table before any data are saved.
+- Review fields include target, date, duty type, flight number, From, To, start/end time and remarks/course.
+- Each detected row can be edited or excluded before import.
+- Screenshot imports can create Entries, planned Roster sectors or internal Duty rows.
+- Roster-style duty screenshots can generate a duty window separately from the detected flight sectors, preventing duty start/end times from being incorrectly used as sector times.
+- Duplicate detection is applied during reviewed screenshot import.
+- An automatic local flight-history snapshot is made before screenshot import.
+- Date presentation in the main UI is now European dd/mm/yyyy while ISO YYYY-MM-DD remains the internal storage/ordering format.
+- Updated visible dates in Dashboard duties, Entries, Roster, FTL daily rows, Duty records, Trips, Trip inspector and FX display.
+- Existing protected Entries rendering, storage-key validation and DOM-ID pre-release checks remain in place.

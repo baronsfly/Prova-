@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.21';
+const VERSION='5.1.0';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -77,6 +77,19 @@ const shiftTime=(t,delta)=>{const m=mins(t);if(m==null)return'';let x=(m+delta)%
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const csv=s=>`"${String(s??'').replace(/"/g,'""')}"`;
 const dateOnly=d=>new Date(`${d}T00:00:00Z`);
+
+function displayDate(v){
+  const s=String(v||'').slice(0,10);
+  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?`${m[3]}/${m[2]}/${m[1]}`:s;
+}
+function displayDateTime(v){
+  const s=String(v||'');
+  if(!s)return'';
+  const parts=s.replace('T',' ').split(' ');
+  return `${displayDate(parts[0])}${parts[1]?' '+parts[1].slice(0,5):''}`;
+}
+
 const sum=(a,f)=>a.reduce((x,y)=>x+(Number(f(y))||0),0);
 const upper=s=>String(s||'').trim().toUpperCase();
 const durMins=v=>{v=String(v||'').trim();const m=v.match(/^(\d+):(\d{1,2})$/);return m?Number(m[1])*60+Number(m[2]):0};
@@ -393,7 +406,7 @@ async function renderFtl(containerId,compact=false){
   for(const d of dates){const x=await dailyFtl(d);if(x&&x.limit)daily.push(x)}
   const violations=daily.filter(x=>x.margin<0);
   const rows=limitRow('Duty — 7 consecutive days',d7,3600)+limitRow('Duty — 14 consecutive days',d14,6600)+limitRow('Duty — 28 consecutive days',d28,11400)+limitRow('Flight time — 28 consecutive days',f28,6000)+limitRow('Flight time — calendar year',fy,54000)+limitRow('Flight time — 12 calendar months',f12,60000);
-  const dailyHtml=compact?'':daily.map(x=>`<div class="stat-row"><span>${esc(x.date)} • ${x.sectors} sector${x.sectors===1?'':'s'} • start ${fmt(x.localStart)} ${esc(x.tz)}</span><b class="${x.status==='VIOLATION'?'danger-text':x.status==='CAUTION'?'warning':'success'}">${fmt(x.minutes)} / ${fmt(x.limit)} • ${x.status}</b></div>`).join('');
+  const dailyHtml=compact?'':daily.map(x=>`<div class="stat-row"><span>${esc(displayDate(x.date))} • ${x.sectors} sector${x.sectors===1?'':'s'} • start ${fmt(x.localStart)} ${esc(x.tz)}</span><b class="${x.status==='VIOLATION'?'danger-text':x.status==='CAUTION'?'warning':'success'}">${fmt(x.minutes)} / ${fmt(x.limit)} • ${x.status}</b></div>`).join('');
   $(containerId).innerHTML=rows+(dailyHtml||'');
   return violations.length===0&&d7<=3600&&d14<=6600&&d28<=11400&&f28<=6000&&fy<=54000&&f12<=60000
 }
@@ -436,7 +449,7 @@ function rosterGroups(){
 }
 async function rosterGroupHtml(groups,interactive=false){
   if(!groups.length)return'<div class="empty">No upcoming roster.</div>';let html='';
-  for(const g of groups){const start=await localTime(g.date,g.start,g.dep),end=await localTime(g.date,g.end,g.arr);html+=`<div class="rowitem"><div><b>${esc(g.date)} • ${g.sectors} flight${g.sectors===1?'':'s'}</b><div class="small">${esc(g.dep)} → ${esc(g.arr)}</div></div><div class="meta"><b>${esc(start)} – ${esc(end)}</b><br><span class="small">local time</span>${interactive?`<div class="list-actions">${g.items.map(r=>`<button class="secondary" data-roster-action="${r.id}">${esc(r.flightNo?rosterFlightLabel(r.flightNo):'Open')}</button>`).join('')}</div>`:''}</div></div>`}
+  for(const g of groups){const start=await localTime(g.date,g.start,g.dep),end=await localTime(g.date,g.end,g.arr);html+=`<div class="rowitem"><div><b>${esc(displayDate(g.date))} • ${g.sectors} flight${g.sectors===1?'':'s'}</b><div class="small">${esc(g.dep)} → ${esc(g.arr)}</div></div><div class="meta"><b>${esc(start)} – ${esc(end)}</b><br><span class="small">local time</span>${interactive?`<div class="list-actions">${g.items.map(r=>`<button class="secondary" data-roster-action="${r.id}">${esc(r.flightNo?rosterFlightLabel(r.flightNo):'Open')}</button>`).join('')}</div>`:''}</div></div>`}
   return html
 }
 
@@ -662,58 +675,267 @@ function logTenImport(text){
 
 /* Export */
 
-const EASA_ROWS_PER_PAGE=18;
+
+const EASA_ROWS_PER_PAGE=11;
+
+function euDate(v){
+  const s=String(v||'').slice(0,10);
+  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m?`${m[3]}/${m[2]}/${m[1]}`:s;
+}
+function blankIfZero(v){
+  const n=Number(v)||0;
+  return n>0?fmt(n):'';
+}
+function blankCount(v){
+  const n=Number(v)||0;
+  return n>0?String(n):'';
+}
+function safeTime(v){return String(v||'').trim()}
 function experienceFlights(){
-  return load(FLIGHTS_KEY).filter(isFlight).sort((a,b)=>`${a.date||''}${a.off||a.out||a.schedOut||''}`.localeCompare(`${b.date||''}${b.off||b.out||b.schedOut||''}`));
+  return load(FLIGHTS_KEY).filter(isFlight).sort((a,b)=>{
+    const ka=`${a.date||''}${a.off||a.out||a.schedOut||''}`,
+          kb=`${b.date||''}${b.off||b.out||b.schedOut||''}`;
+    return ka.localeCompare(kb);
+  });
 }
 function experienceSims(){
-  return load(FLIGHTS_KEY).filter(isSim).sort((a,b)=>`${a.date||''}${a.onDuty||''}`.localeCompare(`${b.date||''}${b.onDuty||''}`));
+  return load(FLIGHTS_KEY).filter(isSim).sort((a,b)=>{
+    const ka=`${a.date||''}${a.onDuty||''}`,
+          kb=`${b.date||''}${b.onDuty||''}`;
+    return ka.localeCompare(kb);
+  });
 }
-function expTotals(list){return{total:sum(list,totalFlightMins),pic:sum(list,picMins),sic:sum(list,sicMins),instr:sum(list,flightInstrMins),night:sum(list,f=>durMins(f.night)),ifr:sum(list,f=>f.ifr==='yes'?totalFlightMins(f):0),toDay:sum(list,f=>Number(f.dayTakeoffs)||0),toNight:sum(list,f=>Number(f.nightTakeoffs)||0),ldDay:sum(list,f=>Number(f.dayLandings)||0),ldNight:sum(list,f=>Number(f.nightLandings)||0)}}
-function plusTotals(a,b){const o={};Object.keys(a).forEach(k=>o[k]=(Number(a[k])||0)+(Number(b[k])||0));return o}
-function fmtCount(v){return String(Number(v)||0)}
-function logbookTotalRow(label,t,cls=''){return `<tr class="${cls}"><td colspan="7"><b>${esc(label)}</b></td><td><b>${fmt(t.total)}</b></td><td><b>${fmt(t.pic)}</b></td><td><b>${fmt(t.sic)}</b></td><td><b>${fmt(t.instr)}</b></td><td><b>${fmt(t.night)}</b></td><td><b>${fmt(t.ifr)}</b></td><td><b>${fmtCount(t.toDay)}</b></td><td><b>${fmtCount(t.toNight)}</b></td><td><b>${fmtCount(t.ldDay)}</b></td><td><b>${fmtCount(t.ldNight)}</b></td><td></td></tr>`}
-function flightLogRow(f){return `<tr><td>${esc(f.date||'')}</td><td>${esc(f.type||'')}</td><td>${esc(f.reg||'')}</td><td>${esc(f.dep||'')}</td><td>${esc(f.arr||'')}</td><td>${esc(f.off||f.out||'')}</td><td>${esc(f.on||f.in||'')}</td><td>${fmt(totalFlightMins(f))}</td><td>${fmt(picMins(f))}</td><td>${fmt(sicMins(f))}</td><td>${fmt(flightInstrMins(f))}</td><td>${fmt(durMins(f.night))}</td><td>${f.ifr==='yes'?fmt(totalFlightMins(f)):'0:00'}</td><td>${fmtCount(f.dayTakeoffs)}</td><td>${fmtCount(f.nightTakeoffs)}</td><td>${fmtCount(f.dayLandings)}</td><td>${fmtCount(f.nightLandings)}</td><td>${esc(f.remarks||'')}</td></tr>`}
-function emptyLogRows(n){return Array.from({length:n},()=>'<tr class="blank-row">'+Array.from({length:18},()=>'<td>&nbsp;</td>').join('')+'</tr>').join('')}
-function selectedFlightPageRange(){
-  const all=experienceFlights(),mode=$('easaExportMode')?.value||'last2';
-  if(mode==='period'){const from=$('easaFrom')?.value||'',to=$('easaTo')?.value||'';return{all,selected:all.filter(f=>(!from||f.date>=from)&&(!to||f.date<=to)),firstPage:null,lastPages:false}}
+function experienceRows(){
+  const includeSim=($('easaIncludeSim')?.value||'yes')==='yes';
+  const rows=[
+    ...experienceFlights().map(f=>({...f,_experienceKind:'flight'})),
+    ...(includeSim?experienceSims().map(f=>({...f,_experienceKind:'sim'})):[])
+  ];
+  return rows.sort((a,b)=>{
+    const ta=a._experienceKind==='flight'?(a.off||a.out||a.schedOut||'00:00'):(a.onDuty||'00:00');
+    const tb=b._experienceKind==='flight'?(b.off||b.out||b.schedOut||'00:00'):(b.onDuty||'00:00');
+    return `${a.date||''}${ta}`.localeCompare(`${b.date||''}${tb}`);
+  });
+}
+function expTotals(list){
+  const flights=list.filter(x=>x._experienceKind!=='sim' && isFlight(x));
+  const sims=list.filter(x=>x._experienceKind==='sim' || isSim(x));
+  return{
+    total:sum(flights,totalFlightMins),
+    pic:sum(flights,picMins),
+    sic:sum(flights,sicMins),
+    instr:sum(flights,flightInstrMins),
+    night:sum(flights,f=>durMins(f.night)),
+    ifr:sum(flights,f=>String(f.ifr||'').toLowerCase()==='yes'?totalFlightMins(f):0),
+    ldDay:sum(flights,f=>Number(f.dayLandings)||0),
+    ldNight:sum(flights,f=>Number(f.nightLandings)||0),
+    sim:sum(sims,f=>Number(f.simulatorTime)||0),
+    simInstr:sum(sims,simInstrMins)
+  };
+}
+function plusTotals(a,b){
+  const out={};
+  Object.keys(a).forEach(k=>out[k]=(Number(a[k])||0)+(Number(b[k])||0));
+  return out;
+}
+function selectedExperiencePageRange(){
+  const all=experienceRows(),mode=$('easaExportMode')?.value||'last2';
+  if(mode==='period'){
+    const from=$('easaFrom')?.value||'',to=$('easaTo')?.value||'';
+    return{all,selected:all.filter(f=>(!from||f.date>=from)&&(!to||f.date<=to)),firstPage:null,lastPages:false};
+  }
   if(mode==='all')return{all,selected:all,firstPage:0,lastPages:false};
-  const n=Number(mode.replace('last',''))||2,totalPages=Math.max(1,Math.ceil(all.length/EASA_ROWS_PER_PAGE)),firstPage=Math.max(0,totalPages-n);
-  return{all,selected:all.slice(firstPage*EASA_ROWS_PER_PAGE),firstPage,lastPages:true}
+  const n=Number(mode.replace('last',''))||2;
+  const totalPages=Math.max(1,Math.ceil(all.length/EASA_ROWS_PER_PAGE));
+  const firstPage=Math.max(0,totalPages-n);
+  return{all,selected:all.slice(firstPage*EASA_ROWS_PER_PAGE),firstPage,lastPages:true};
+}
+function easaRowHtml(f){
+  const sim=f._experienceKind==='sim'||isSim(f);
+  if(sim){
+    return `<tr>
+      <td>${euDate(f.date)}</td>
+      <td></td><td></td><td></td><td></td>
+      <td>${esc(f.type||'A320')}</td><td></td><td></td>
+      <td></td><td></td>
+      <td></td><td></td><td></td>
+      <td></td><td></td><td></td>
+      <td>${euDate(f.date)}</td><td>${esc(f.type||'A320 SIM')}</td><td>${blankIfZero(Number(f.simulatorTime)||0)}</td>
+      <td class="remarks">${esc(f.remarks||'')}</td>
+    </tr>`;
+  }
+
+  const total=totalFlightMins(f);
+  const pic=picMins(f),sic=sicMins(f),instr=flightInstrMins(f);
+  const ifr=String(f.ifr||'').toLowerCase()==='yes'?total:0;
+  return `<tr>
+    <td>${euDate(f.date)}</td>
+    <td>${esc(f.dep||'')}</td><td>${safeTime(f.off||f.out||'')}</td>
+    <td>${esc(f.arr||'')}</td><td>${safeTime(f.on||f.in||'')}</td>
+    <td>${esc(f.type||'')}</td><td>${esc(f.reg||'')}</td><td>${esc(f.picName||'')}</td>
+    <td>${blankIfZero(total)}</td><td>${blankCount(f.dayLandings)}</td><td>${blankCount(f.nightLandings)}</td>
+    <td>${blankIfZero(durMins(f.night))}</td><td>${blankIfZero(ifr)}</td>
+    <td>${blankIfZero(pic)}</td><td>${blankIfZero(sic)}</td><td>${blankIfZero(instr)}</td>
+    <td></td><td></td><td></td>
+    <td class="remarks">${esc(f.remarks||'')}</td>
+  </tr>`;
+}
+function emptyEasaRows(n){
+  return Array.from({length:n},()=>'<tr class="blank-row">'+Array.from({length:20},()=>'<td>&nbsp;</td>').join('')+'</tr>').join('');
+}
+function totalsLine(label,t,cls=''){
+  return `<tr class="${cls}">
+    <td colspan="8" class="total-label">${esc(label)}</td>
+    <td>${blankIfZero(t.total)}</td>
+    <td>${blankCount(t.ldDay)}</td>
+    <td>${blankCount(t.ldNight)}</td>
+    <td>${blankIfZero(t.night)}</td>
+    <td>${blankIfZero(t.ifr)}</td>
+    <td>${blankIfZero(t.pic)}</td>
+    <td>${blankIfZero(t.sic)}</td>
+    <td>${blankIfZero(t.instr)}</td>
+    <td></td><td></td><td>${blankIfZero(t.sim)}</td><td></td>
+  </tr>`;
 }
 function easaFlightPagesHtml(){
-  const {all,selected,firstPage,lastPages}=selectedFlightPageRange();if(!selected.length)return{html:'',count:0};
-  const chunks=[];for(let i=0;i<selected.length;i+=EASA_ROWS_PER_PAGE)chunks.push(selected.slice(i,i+EASA_ROWS_PER_PAGE));
+  const {all,selected,firstPage,lastPages}=selectedExperiencePageRange();
+  if(!selected.length)return{html:'',count:0};
+
+  const chunks=[];
+  for(let i=0;i<selected.length;i+=EASA_ROWS_PER_PAGE){
+    chunks.push(selected.slice(i,i+EASA_ROWS_PER_PAGE));
+  }
+
   const pages=chunks.map((rows,pageIndex)=>{
     let prior,pageNo;
-    if(lastPages){const absolutePage=(firstPage||0)+pageIndex;prior=expTotals(all.slice(0,absolutePage*EASA_ROWS_PER_PAGE));pageNo=absolutePage+1}
-    else{const firstSelectedIndex=all.findIndex(x=>x.id===rows[0]?.id);prior=expTotals(firstSelectedIndex>0?all.slice(0,firstSelectedIndex):[]);pageNo=firstSelectedIndex>=0?Math.floor(firstSelectedIndex/EASA_ROWS_PER_PAGE)+1:pageIndex+1}
+    if(lastPages){
+      const absolutePage=(firstPage||0)+pageIndex;
+      prior=expTotals(all.slice(0,absolutePage*EASA_ROWS_PER_PAGE));
+      pageNo=absolutePage+1;
+    }else{
+      const firstSelectedIndex=all.findIndex(x=>x.id===rows[0]?.id && x._experienceKind===rows[0]?._experienceKind);
+      prior=expTotals(firstSelectedIndex>0?all.slice(0,firstSelectedIndex):[]);
+      pageNo=firstSelectedIndex>=0?Math.floor(firstSelectedIndex/EASA_ROWS_PER_PAGE)+1:pageIndex+1;
+    }
     const pageTotal=expTotals(rows),toDate=plusTotals(prior,pageTotal);
-    return `<section class="log-page"><div class="log-header"><div><h1>PILOT LOGBOOK</h1><div class="sub">EASA-style professional flight experience record</div></div><div class="page-number">Flight Page ${pageNo}</div></div>
-    <table class="log-table"><thead><tr><th>Date</th><th>Type</th><th>Registration</th><th>From</th><th>To</th><th>OFF</th><th>ON</th><th>Total</th><th>PIC</th><th>SIC</th><th>Instr.</th><th>Night</th><th>IFR</th><th>TO D</th><th>TO N</th><th>LDG D</th><th>LDG N</th><th>Remarks</th></tr></thead>
-    <tbody>${logbookTotalRow('Brought Forward',prior,'brought')}${rows.map(flightLogRow).join('')}${emptyLogRows(Math.max(0,EASA_ROWS_PER_PAGE-rows.length))}${logbookTotalRow('Page Total',pageTotal,'page-total')}${logbookTotalRow('Total To Date',toDate,'grand-total')}</tbody></table></section>`
+
+    return `<section class="easa-page">
+      <div class="easa-title">
+        <div><b>PILOT LOGBOOK</b><span>EASA-style professional experience record</span></div>
+        <div>Page ${pageNo}</div>
+      </div>
+      <table class="easa-table">
+        <thead>
+          <tr>
+            <th rowspan="2">DATE<br><small>dd/mm/yyyy</small></th>
+            <th colspan="2">DEPARTURE</th>
+            <th colspan="2">ARRIVAL</th>
+            <th colspan="2">AIRCRAFT</th>
+            <th rowspan="2">NAME(S) PIC</th>
+            <th rowspan="2">TOTAL TIME<br>OF FLIGHT</th>
+            <th colspan="2">NO. LDG</th>
+            <th colspan="2">CONDITIONS OF FLIGHT</th>
+            <th colspan="3">PILOT FUNCTION TIME</th>
+            <th colspan="3">FSTD SESSION</th>
+            <th rowspan="2">REMARKS AND ENDORSEMENTS</th>
+          </tr>
+          <tr>
+            <th>PLACE</th><th>TIME</th>
+            <th>PLACE</th><th>TIME</th>
+            <th>MAKE / MODEL</th><th>REG.</th>
+            <th>DAY</th><th>NIGHT</th>
+            <th>NIGHT</th><th>IFR</th>
+            <th>PIC</th><th>CO-PILOT</th><th>FI</th>
+            <th>DATE</th><th>TYPE</th><th>TIME</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(easaRowHtml).join('')}
+          ${emptyEasaRows(Math.max(0,EASA_ROWS_PER_PAGE-rows.length))}
+          ${totalsLine('TOTAL FROM THIS PAGE',pageTotal,'page-total')}
+          ${totalsLine('TOTAL FROM PREVIOUS PAGES',prior,'previous-total')}
+          ${totalsLine('TOTAL TO DATE',toDate,'grand-total')}
+        </tbody>
+      </table>
+      <div class="easa-signature">
+        <span>I certify that the entries on this page are true and correct.</span>
+        <span>PILOT'S SIGNATURE __________________________</span>
+      </div>
+    </section>`;
   });
-  return{html:pages.join(''),count:pages.length}
-}
-function simulatorAppendixHtml(){
-  if(($('easaIncludeSim')?.value||'yes')!=='yes')return'';
-  const sims=experienceSims(),mode=$('easaExportMode')?.value||'last2',from=$('easaFrom')?.value||'',to=$('easaTo')?.value||'';
-  const filtered=mode==='period'?sims.filter(f=>(!from||f.date>=from)&&(!to||f.date<=to)):sims;if(!filtered.length)return'';
-  const chunks=[];for(let i=0;i<filtered.length;i+=24)chunks.push(filtered.slice(i,i+24));
-  return chunks.map((rows,i)=>{const total=sum(rows,f=>Number(f.simulatorTime)||0),instr=sum(rows,simInstrMins);return `<section class="log-page sim-page"><div class="log-header"><div><h1>SYNTHETIC TRAINING DEVICE</h1><div class="sub">Simulator experience appendix</div></div><div class="page-number">SIM Page ${i+1}</div></div><table class="log-table sim-table"><thead><tr><th>Date</th><th>Device / Type</th><th>Location</th><th>Start</th><th>End</th><th>Simulator Time</th><th>SFI/SFE Instruction</th><th>Remarks</th></tr></thead><tbody>${rows.map(f=>`<tr><td>${esc(f.date||'')}</td><td>${esc(f.type||'A320 SIM')}</td><td>${esc(f.dep||'')}</td><td>${esc(f.onDuty||'')}</td><td>${esc(f.offDuty||'')}</td><td>${fmt(Number(f.simulatorTime)||0)}</td><td>${fmt(simInstrMins(f))}</td><td>${esc(f.remarks||'')}</td></tr>`).join('')}<tr class="page-total"><td colspan="5"><b>Simulator Page Total</b></td><td><b>${fmt(total)}</b></td><td><b>${fmt(instr)}</b></td><td></td></tr></tbody></table></section>`}).join('')
-}
-function experienceSummaryHtml(){
-  const fs=experienceFlights(),sims=experienceSims(),a320=load(FLIGHTS_KEY).filter(isA320Entry),a320Flights=a320.filter(isFlight);
-  const rows=[['Total Flight Hours',sum(fs,totalFlightMins)],['A320 Total Hours',sum(a320Flights,totalFlightMins)],['A320 PIC',sum(a320Flights,picMins)],['A320 SIC',sum(a320Flights,sicMins)],['A320 Instruction Flight Time',sum(a320Flights,flightInstrMins)],['A320 Instruction Simulator Time',sum(a320,simInstrMins)],['Total Simulator Time',sum(sims,f=>Number(f.simulatorTime)||0)]];
-  return `<section class="summary-page"><h1>Professional Experience Summary</h1><table class="summary-table">${rows.map(([n,v])=>`<tr><td>${esc(n)}</td><td><b>${fmt(v)}</b></td></tr>`).join('')}</table><div class="summary-note">Operational/payroll items such as DHD, Standby, Ground Course, credit hours, layover and allowances are intentionally excluded.</div></section>`
+  return{html:pages.join(''),count:pages.length};
 }
 function exportEasaStylePdf(){
-  const pages=easaFlightPagesHtml();if(!pages.count)return alert('No flight experience matches this selection.');
-  const w=window.open('','_blank');if(!w)return alert('Please allow pop-ups for PilotLog to create the printable logbook.');
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>PilotLog EASA Logbook</title><style>@page{size:A4 landscape;margin:7mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0}.log-page,.summary-page{page-break-after:always;min-height:190mm}.log-page:last-child,.summary-page:last-child{page-break-after:auto}.log-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:5px}h1{font-size:16px;margin:0}.sub{font-size:8px;color:#444}.page-number{font-size:9px;font-weight:bold}table{border-collapse:collapse;width:100%}.log-table{table-layout:fixed;font-size:6.7px}th,td{border:.35mm solid #444;padding:1.25mm .7mm;text-align:center;height:7mm;overflow:hidden}th{background:#eee;font-size:6.2px}.log-table th:nth-child(18),.log-table td:nth-child(18){width:17%}.blank-row td{height:7mm}.brought td{background:#f7f7f7}.page-total td{background:#f1f5f9}.grand-total td{background:#e5e7eb}.sim-table{font-size:8px}.sim-table th,.sim-table td{height:7mm}.summary-page{padding:8mm 15mm}.summary-page h1{font-size:22px;margin-bottom:10mm}.summary-table{max-width:150mm;font-size:12px}.summary-table td{text-align:left;padding:3mm}.summary-table td:last-child{text-align:right;width:35mm}.summary-note{font-size:9px;color:#555;margin-top:8mm}</style></head><body>${pages.html}${simulatorAppendixHtml()}${experienceSummaryHtml()}</body></html>`;
-  w.document.open();w.document.write(html);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch(e){console.error(e)}},500)
+  const pages=easaFlightPagesHtml();
+  if(!pages.count)return alert('No professional experience matches this selection.');
+  const w=window.open('','_blank');
+  if(!w)return alert('Please allow pop-ups for PilotLog to create the printable logbook.');
+
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>PilotLog EASA Logbook</title>
+  <style>
+    @page{size:A4 portrait;margin:5.5mm}
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff}
+    .easa-page{
+      page-break-after:always;
+      break-after:page;
+      width:100%;
+      height:285mm;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+    .easa-page:last-child{page-break-after:auto;break-after:auto}
+    .easa-title{display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 2mm;font-size:7.5px}
+    .easa-title b{display:block;font-size:12px;letter-spacing:.2px}
+    .easa-title span{display:block;font-size:6.5px;color:#444;margin-top:.6mm}
+    table{border-collapse:collapse;width:100%}
+    .easa-table{table-layout:fixed;font-size:5.4px;line-height:1.05}
+    .easa-table th,.easa-table td{
+      border:.28mm solid #444;
+      padding:.55mm .35mm;
+      text-align:center;
+      vertical-align:middle;
+      height:13.3mm;
+      overflow:hidden;
+      word-break:break-word;
+    }
+    .easa-table thead th{
+      background:#f1f1f1;
+      font-size:4.9px;
+      height:7.5mm;
+      font-weight:700;
+    }
+    .easa-table small{font-size:4.3px}
+    .easa-table td:nth-child(1){width:7%}
+    .easa-table th:nth-child(20),.easa-table td:nth-child(20){width:14%}
+    .remarks{text-align:left!important;padding-left:.7mm!important}
+    .blank-row td{height:13.3mm}
+    .page-total td,.previous-total td,.grand-total td{height:6.2mm;font-weight:700}
+    .page-total td{background:#f7f7f7}
+    .previous-total td{background:#fafafa}
+    .grand-total td{background:#ececec}
+    .total-label{text-align:right!important;padding-right:1.5mm!important}
+    .easa-signature{
+      margin-top:2mm;
+      display:flex;
+      justify-content:space-between;
+      gap:5mm;
+      font-size:5.2px;
+      line-height:1.2;
+    }
+    @media print{
+      .easa-page{page-break-inside:avoid;break-inside:avoid-page}
+    }
+  </style></head><body>${pages.html}</body></html>`;
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>{try{w.focus();w.print()}catch(e){console.error(e)}},500);
 }
+
 function exportExperienceCsv(){
   const d=load(FLIGHTS_KEY).filter(f=>isFlight(f)||isSim(f));if(!d.length)return alert('No professional experience to export');
   const cols=['dutyType','date','flightNo','reg','type','dep','arr','off','on','block','role','instructionType','night','ifr','dayTakeoffs','nightTakeoffs','dayLandings','nightLandings','simulatorTime','remarks'];
@@ -723,6 +945,344 @@ function exportFullBackupJson(){
   snapshotFlights('manual-export');
   const payload={schema:'PilotLog Backup',version:VERSION,exportedAt:new Date().toISOString(),flights:load(FLIGHTS_KEY),roster:load(ROSTER_KEY),duties:load(DUTY_KEY),trips:load(TRIPS_KEY),appSettings:appSettings(),paySettings:paySettings(),payrollExtras:loadObject(PAY_MONTH_KEY,{}),fx:loadObject(FX_KEY,{})};
   download(`pilotlog_backup_${today()}.json`,JSON.stringify(payload,null,2),'application/json')
+}
+
+
+let screenshotReviewRows=[];
+let screenshotObjectUrl='';
+
+function normalizeScreenshotDate(v){
+  const s=String(v||'').trim();
+  let m=s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})$/);
+  if(m){
+    let y=m[3]; if(y.length===2)y=`20${y}`;
+    return `${y}-${String(m[2]).padStart(2,'0')}-${String(m[1]).padStart(2,'0')}`;
+  }
+  m=s.match(/^(\d{4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})$/);
+  if(m)return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+  return normalDate(s);
+}
+function normalizeOcrTime(v){
+  const s=String(v||'').trim().replace('.',':');
+  const m=s.match(/\b([01]?\d|2[0-3])[:h]([0-5]\d)\b/i);
+  return m?`${String(m[1]).padStart(2,'0')}:${m[2]}`:'';
+}
+function classifyScreenshotDuty(text){
+  const s=upper(text||'');
+  if(/\bSTBY\b|STANDBY|\bHSBY\b/.test(s))return'STBY';
+  if(/\bDHD\b|DEADHEAD|POSITIONING|TRANSFER|\bTGV\b|PICK\s*UP/.test(s))return'DHD';
+  if(/\bSIM\b|SIMULATOR|FSTD|FFS/.test(s))return'Simulator';
+  if(/GROUND\s*COURSE|\bGRT\b|\bCRM\b|\bSEP\b|COURSE|TRAINING\s*GROUND/.test(s))return'Ground Course';
+  if(/\bDUTY\b/.test(s)&&!/\bFLIGHT\b/.test(s))return'Duty';
+  return'Flight';
+}
+function screenshotFlightNumbers(text){
+  const out=[];
+  const seen=new Set();
+  const re=/\b(?:3O|MAC)\s*[- ]?(\d{2,4})\b/gi;
+  let m;
+  while((m=re.exec(text))){
+    const x=`3O${m[1]}`;
+    if(!seen.has(x)){seen.add(x);out.push(x)}
+  }
+  return out;
+}
+function screenshotRoutes(text){
+  const routes=[];
+  const re=/\b([A-Z]{3})\s*(?:→|->|–>|-|TO)\s*([A-Z]{3})\b/g;
+  let m;
+  while((m=re.exec(upper(text||''))))routes.push([m[1],m[2]]);
+  return routes;
+}
+function screenshotTimes(text){
+  const out=[];
+  const re=/\b(?:[01]?\d|2[0-3])[:.]([0-5]\d)\b/g;
+  let m;
+  while((m=re.exec(text))){
+    const t=normalizeOcrTime(m[0]);
+    if(t&&!out.includes(t))out.push(t)
+  }
+  return out;
+}
+function screenshotAirports(text){
+  const stop=new Set(['THE','AND','PIC','SIC','SIM','FSTD','OFF','OUT','DAY','NIGHT','DUTY','TOTAL','FROM','DATE','TIME','FLIGHT','COURSE','CRM','GRT','SEP','MAC']);
+  return [...new Set((upper(text||'').match(/\b[A-Z]{3}\b/g)||[]).filter(x=>!stop.has(x)))];
+}
+function ocrDateMatches(line){
+  return [...String(line||'').matchAll(/\b(?:\d{1,2}[\/.\-]\d{1,2}[\/.\-]\d{2,4}|\d{4}[\/.\-]\d{1,2}[\/.\-]\d{1,2})\b/g)].map(m=>m[0]);
+}
+function makeScreenshotRow(o={}){
+  return{
+    include:o.include!==false,
+    target:o.target||'entries',
+    date:o.date||'',
+    dutyType:o.dutyType||'Flight',
+    flightNo:o.flightNo||'',
+    dep:upper(o.dep||''),
+    arr:upper(o.arr||''),
+    start:o.start||'',
+    end:o.end||'',
+    remarks:o.remarks||''
+  };
+}
+function parseScreenshotText(text){
+  const source=$('screenshotSource')?.value||'auto';
+  const defaultTarget=$('screenshotTarget')?.value||'auto';
+  const cleaned=String(text||'')
+    .replace(/[—–]/g,'-')
+    .replace(/[|]/g,' ')
+    .replace(/\r/g,'')
+    .split('\n')
+    .map(x=>x.replace(/\s+/g,' ').trim())
+    .filter(Boolean);
+
+  if(!cleaned.length)return[];
+
+  // Split OCR into date-based blocks. This works well for roster cards and LogTen list screenshots.
+  const blocks=[];
+  let cur=null;
+  for(const line of cleaned){
+    const dates=ocrDateMatches(line);
+    if(dates.length){
+      if(cur)blocks.push(cur);
+      cur={date:normalizeScreenshotDate(dates[0]),lines:[line]};
+    }else if(cur){
+      cur.lines.push(line);
+    }else{
+      cur={date:'',lines:[line]};
+    }
+  }
+  if(cur)blocks.push(cur);
+
+  const home=upper(appSettings().homeBase||'CMN');
+  const rows=[];
+
+  for(const block of blocks){
+    const blob=block.lines.join(' ');
+    const dutyType=classifyScreenshotDuty(blob);
+    const flights=screenshotFlightNumbers(blob);
+    const routes=screenshotRoutes(blob);
+    const times=screenshotTimes(blob);
+    const airports=screenshotAirports(blob);
+    const autoRoster=source==='roster'||(/\bROSTER\b/i.test(text))||(/\b\d+\s*FLIGHTS?\b/i.test(blob));
+    const target=defaultTarget==='auto'?(autoRoster?'roster':'entries'):defaultTarget;
+
+    // For roster duty cards, the visible start/end is often the duty window, not sector times.
+    // Preserve it as an internal Duty row and keep sector times blank unless they are clearly sector-level.
+    const dutyCount=(blob.match(/\b(\d+)\s*FLIGHTS?\b/i)||[])[1];
+    const isRosterDutyBlock=target==='roster' && (Number(dutyCount)>1 || flights.length>1);
+
+    if(isRosterDutyBlock && block.date){
+      rows.push(makeScreenshotRow({
+        target:'duty',date:block.date,dutyType:'Duty',
+        start:times[0]||'',end:times[1]||'',
+        remarks:'Imported from screenshot roster'
+      }));
+    }
+
+    if(dutyType!=='Flight' && dutyType!=='Duty' && !flights.length){
+      const route=routes[0]||[];
+      rows.push(makeScreenshotRow({
+        target:target==='roster'?'entries':target,
+        date:block.date,dutyType,
+        dep:route[0]||airports[0]||'',
+        arr:route[1]||'',
+        start:times[0]||'',end:times[1]||'',
+        remarks:blob.slice(0,140)
+      }));
+      continue;
+    }
+
+    if(flights.length){
+      for(let i=0;i<flights.length;i++){
+        let dep='',arr='';
+        if(routes[i]){dep=routes[i][0];arr=routes[i][1]}
+        else if(routes.length===1 && flights.length===2){
+          if(i===0){dep=routes[0][0];arr=routes[0][1]}
+          else{dep=routes[0][1];arr=routes[0][0]}
+        }else if(routes.length===1){
+          dep=routes[0][0];arr=routes[0][1]
+        }else if(airports.length>=2){
+          dep=airports[Math.min(i,airports.length-2)]||airports[0];
+          arr=airports[Math.min(i+1,airports.length-1)]||airports[1];
+        }
+
+        rows.push(makeScreenshotRow({
+          target,
+          date:block.date,
+          dutyType:'Flight',
+          flightNo:flights[i],
+          dep,arr,
+          start:isRosterDutyBlock?'':(times[i*2]||times[0]||''),
+          end:isRosterDutyBlock?'':(times[i*2+1]||times[1]||''),
+          remarks:'Imported from screenshot'
+        }));
+      }
+      continue;
+    }
+
+    if(routes.length){
+      for(let i=0;i<routes.length;i++){
+        rows.push(makeScreenshotRow({
+          target,date:block.date,dutyType:'Flight',
+          dep:routes[i][0],arr:routes[i][1],
+          start:times[i*2]||'',end:times[i*2+1]||'',
+          remarks:'Imported from screenshot'
+        }));
+      }
+      continue;
+    }
+
+    // Last-resort editable row. Nothing is imported until the user reviews it.
+    if(block.date || dutyType!=='Flight'){
+      rows.push(makeScreenshotRow({
+        target:target==='roster'?'entries':target,
+        date:block.date,dutyType,
+        dep:airports[0]||'',arr:airports[1]||'',
+        start:times[0]||'',end:times[1]||'',
+        remarks:blob.slice(0,140)
+      }));
+    }
+  }
+
+  // Remove exact duplicate review rows.
+  const seen=new Set();
+  return rows.filter(r=>{
+    const k=[r.target,r.date,r.dutyType,r.flightNo,r.dep,r.arr,r.start,r.end].join('|');
+    if(seen.has(k))return false;
+    seen.add(k);return true;
+  });
+}
+function renderScreenshotReview(){
+  const wrap=$('screenshotReviewWrap'),body=$('screenshotReviewBody');
+  if(!screenshotReviewRows.length){
+    wrap.classList.add('hidden');body.innerHTML='';return;
+  }
+  body.innerHTML=screenshotReviewRows.map((r,i)=>`<tr>
+    <td><input type="checkbox" data-shot-row="${i}" data-shot-field="include" ${r.include?'checked':''}></td>
+    <td><select data-shot-row="${i}" data-shot-field="target">
+      <option value="entries" ${r.target==='entries'?'selected':''}>Entries</option>
+      <option value="roster" ${r.target==='roster'?'selected':''}>Roster</option>
+      <option value="duty" ${r.target==='duty'?'selected':''}>Duty</option>
+    </select></td>
+    <td><input type="date" data-shot-row="${i}" data-shot-field="date" value="${esc(r.date)}"></td>
+    <td><select data-shot-row="${i}" data-shot-field="dutyType">
+      ${['Flight','DHD','STBY','Ground Course','Simulator','Duty'].map(x=>`<option ${r.dutyType===x?'selected':''}>${x}</option>`).join('')}
+    </select></td>
+    <td><input data-upper data-shot-row="${i}" data-shot-field="flightNo" value="${esc(r.flightNo)}"></td>
+    <td><input data-upper maxlength="4" data-shot-row="${i}" data-shot-field="dep" value="${esc(r.dep)}"></td>
+    <td><input data-upper maxlength="4" data-shot-row="${i}" data-shot-field="arr" value="${esc(r.arr)}"></td>
+    <td><input type="time" data-shot-row="${i}" data-shot-field="start" value="${esc(r.start)}"></td>
+    <td><input type="time" data-shot-row="${i}" data-shot-field="end" value="${esc(r.end)}"></td>
+    <td><input data-shot-row="${i}" data-shot-field="remarks" value="${esc(r.remarks)}"></td>
+  </tr>`).join('');
+  wrap.classList.remove('hidden');
+}
+function updateScreenshotReviewFromControl(el){
+  const i=Number(el.dataset.shotRow),field=el.dataset.shotField;
+  if(!Number.isInteger(i)||!screenshotReviewRows[i]||!field)return;
+  screenshotReviewRows[i][field]=field==='include'?!!el.checked:(field==='dep'||field==='arr'||field==='flightNo'?upper(el.value):el.value);
+}
+function clearScreenshotReview(){
+  screenshotReviewRows=[];
+  $('screenshotReviewBody').innerHTML='';
+  $('screenshotReviewWrap').classList.add('hidden');
+}
+async function loadTesseractBrowser(){
+  if(window.Tesseract)return window.Tesseract;
+  await new Promise((resolve,reject)=>{
+    const existing=document.querySelector('script[data-pilotlog-tesseract]');
+    if(existing){
+      existing.addEventListener('load',resolve,{once:true});
+      existing.addEventListener('error',()=>reject(new Error('OCR library could not be loaded.')),{once:true});
+      return;
+    }
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    s.async=true;s.dataset.pilotlogTesseract='1';
+    s.onload=resolve;s.onerror=()=>reject(new Error('OCR library could not be loaded. Check the internet connection.'));
+    document.head.appendChild(s);
+  });
+  if(!window.Tesseract)throw new Error('OCR library unavailable.');
+  return window.Tesseract;
+}
+async function runScreenshotOcr(file){
+  const status=$('screenshotImportStatus');
+  status.textContent='Loading OCR engine…';
+  const T=await loadTesseractBrowser();
+  status.textContent='Reading screenshot… 0%';
+  const result=await T.recognize(file,'eng',{
+    logger:m=>{
+      if(m.status==='recognizing text'){
+        const p=Math.round((m.progress||0)*100);
+        status.textContent=`Reading screenshot… ${p}%`;
+      }else if(m.status){
+        status.textContent=`OCR: ${m.status}`;
+      }
+    }
+  });
+  return result?.data?.text||'';
+}
+async function importReviewedScreenshot(){
+  const selected=screenshotReviewRows.filter(r=>r.include);
+  if(!selected.length)return alert('No reviewed rows selected.');
+
+  snapshotFlights('before-screenshot-import');
+
+  const fs=load(FLIGHTS_KEY),roster=load(ROSTER_KEY),duties=load(DUTY_KEY);
+  let entryCount=0,rosterCount=0,dutyCount=0,duplicates=0;
+
+  for(const r of selected){
+    const date=normalizeScreenshotDate(r.date);
+    if(!date){continue}
+
+    if(r.target==='duty' || r.dutyType==='Duty'){
+      const exists=duties.find(x=>x.date===date&&String(x.report||'')===String(r.start||'')&&String(x.end||'')===String(r.end||''));
+      if(exists){duplicates++;continue}
+      duties.push(stamp({id:makeId(),date,type:'Flight Duty',report:r.start||'',end:r.end||'',minutes:r.start&&r.end?diff(mins(r.start),mins(r.end)):0,notes:r.remarks||'Imported from screenshot'}));
+      dutyCount++;continue;
+    }
+
+    if(r.target==='roster'){
+      const flightNo=r.flightNo?rosterFlightLabel(r.flightNo):'';
+      const exists=roster.find(x=>x.date===date&&upper(x.flightNo)===upper(flightNo)&&upper(x.dep)===upper(r.dep)&&upper(x.arr)===upper(r.arr));
+      if(exists){duplicates++;continue}
+      roster.push(stamp({id:makeId(),date,flightNo,dep:upper(r.dep),arr:upper(r.arr),std:r.start||'',sta:r.end||'',status:'planned',source:'screenshot'}));
+      rosterCount++;continue;
+    }
+
+    const dutyType=r.dutyType||'Flight';
+    const flightNo=(dutyType==='Flight'||dutyType==='DHD')?(r.flightNo?composeFlightNo(r.flightNo):''):'';
+    const exists=fs.find(x=>x.source==='screenshot'&&x.date===date&&x.dutyType===dutyType&&upper(x.flightNo)===upper(flightNo)&&upper(x.dep)===upper(r.dep)&&upper(x.arr)===upper(r.arr)&&String(x.schedOut||x.onDuty||'')===String(r.start||''));
+    if(exists){duplicates++;continue}
+
+    const obj=stamp({
+      id:makeId(),source:'screenshot',dutyType,date,flightNo,reg:'',type:dutyType==='Simulator'?'A320':'',
+      dep:upper(r.dep),arr:upper(r.arr),
+      schedOut:dutyType==='Flight'||dutyType==='DHD'?r.start||'':'',
+      schedIn:dutyType==='Flight'||dutyType==='DHD'?r.end||'':'',
+      schedBlock:dutyType==='Flight'||dutyType==='DHD'&&r.start&&r.end?diff(mins(r.start),mins(r.end)):0,
+      onDuty:['Ground Course','Simulator','STBY'].includes(dutyType)?r.start||'':'',
+      offDuty:['Simulator','STBY'].includes(dutyType)?r.end||'':'',
+      out:'',off:'',on:'',in:'',block:0,flight:0,simulatorTime:0,
+      credit:dutyType==='Ground Course'?Math.round(Number(paySettings().groundCredit||5)*60):dutyType==='Simulator'?Math.round(Number(paySettings().simCredit||5)*60):0,
+      role:'PIC',instructionType:'',night:'00:00',sim:dutyType==='Simulator'?'yes':'no',ifr:'yes',
+      dayTakeoffs:0,nightTakeoffs:0,dayLandings:0,nightLandings:0,
+      courseType:dutyType==='Ground Course'?upper(r.remarks||''):'',
+      remarks:r.remarks||'Imported from screenshot',locked:false
+    });
+    fs.push(obj);entryCount++;
+  }
+
+  save(FLIGHTS_KEY,fs);
+  save(ROSTER_KEY,dedupeRosterItems(roster));
+  save(DUTY_KEY,duties);
+  reconcileAllDuties();
+  autoDetectTrips(false);
+  await render();
+  renderTrips();
+  $('screenshotImportStatus').textContent=`Imported ${entryCount} entries, ${rosterCount} roster sectors, ${dutyCount} duties. ${duplicates} duplicates skipped.`;
+  alert(`Screenshot import complete: ${entryCount} entries • ${rosterCount} roster • ${dutyCount} duties • ${duplicates} duplicates skipped`);
 }
 
 function download(name,text,type='text/plain'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
@@ -762,7 +1322,7 @@ const PAY_MAP={setJoinDate:'joinDate',setBase:'base',setAllowance:'allowance',se
 function fillPaySettings(){const st=paySettings();Object.entries(PAY_MAP).forEach(([id,k])=>{if($(id))$(id).value=st[k]})}
 function readPaySettings(){const st={};Object.entries(PAY_MAP).forEach(([id,k])=>st[k]=k==='joinDate'?$(id).value:Number($(id).value||0));return st}
 let payrollRenderToken=0;
-async function renderPayroll(){const token=++payrollRenderToken,month=$('payrollMonth').value||monthNow();$('payrollMonth').value=month;const ex=monthExtras(month);$('payDayOffCount').value=ex.dayOffCount||0;$('payArrears').value=ex.arrears||0;const p=payrollData(month);$('payCredits').textContent=fmt(p.creditMins);$('payLayover').textContent=fmt(p.layMins);$('payTrainingSectors').textContent=p.training;$('paySimCount').textContent=p.sims;$('payTotalDhm').textContent=`${money(p.total)} DHM`;$('payTotalEur').textContent='…';$('payBreakdown').innerHTML=[['Fixed salary',p.fixed],['Seniority ('+money(p.seniorPct)+'%)',p.seniority],['Credit hours pay',p.flightPay],['Training sectors ('+p.training+')',p.trainingPay],['Layover ('+p.layHours.toFixed(2)+' h)',p.layoverPay],['Simulator allowance ('+p.sims+')',p.simPay],['Day OFF premium ('+(p.extras.dayOffCount||0)+')',p.dayOffPay],['Arrears / adjustments',p.arrears]].map(([n,v])=>`<div class="stat-row"><span>${esc(n)}</span><b class="money">${money(v)} DHM</b></div>`).join('');$('payFxStatus').textContent='Loading EUR/MAD…';try{const fx=await getMonthFx(month);if(token!==payrollRenderToken)return;if(!fx.rate){$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX not available for a future month.';return}$('payTotalEur').textContent=`≈ €${money(p.total/fx.rate)}`;$('payFxStatus').innerHTML=`EUR/MAD ${money(fx.rate)} • ${esc(fx.date)} ${fx.locked?'<span class="fx-lock">LOCKED</span>':'<span class="fx-live">LIVE</span>'}${fx.provisional?' • provisional until lock rule':''}`}catch{$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX unavailable. Payroll in DHM is unaffected.'}}
+async function renderPayroll(){const token=++payrollRenderToken,month=$('payrollMonth').value||monthNow();$('payrollMonth').value=month;const ex=monthExtras(month);$('payDayOffCount').value=ex.dayOffCount||0;$('payArrears').value=ex.arrears||0;const p=payrollData(month);$('payCredits').textContent=fmt(p.creditMins);$('payLayover').textContent=fmt(p.layMins);$('payTrainingSectors').textContent=p.training;$('paySimCount').textContent=p.sims;$('payTotalDhm').textContent=`${money(p.total)} DHM`;$('payTotalEur').textContent='…';$('payBreakdown').innerHTML=[['Fixed salary',p.fixed],['Seniority ('+money(p.seniorPct)+'%)',p.seniority],['Credit hours pay',p.flightPay],['Training sectors ('+p.training+')',p.trainingPay],['Layover ('+p.layHours.toFixed(2)+' h)',p.layoverPay],['Simulator allowance ('+p.sims+')',p.simPay],['Day OFF premium ('+(p.extras.dayOffCount||0)+')',p.dayOffPay],['Arrears / adjustments',p.arrears]].map(([n,v])=>`<div class="stat-row"><span>${esc(n)}</span><b class="money">${money(v)} DHM</b></div>`).join('');$('payFxStatus').textContent='Loading EUR/MAD…';try{const fx=await getMonthFx(month);if(token!==payrollRenderToken)return;if(!fx.rate){$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX not available for a future month.';return}$('payTotalEur').textContent=`≈ €${money(p.total/fx.rate)}`;$('payFxStatus').innerHTML=`EUR/MAD ${money(fx.rate)} • ${esc(displayDate(fx.date))} ${fx.locked?'<span class="fx-lock">LOCKED</span>':'<span class="fx-live">LIVE</span>'}${fx.provisional?' • provisional until lock rule':''}`}catch{$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX unavailable. Payroll in DHM is unaffected.'}}
 
 /* Cloud */
 const SUPABASE_URL='https://ytlfygmojojipdjeppic.supabase.co',SUPABASE_PUBLISHABLE_KEY='sb_publishable_a3P-hh1BBqsQ0zRiY1uquA_YgiFcIg0',SUPABASE_TABLE='pilotlog_entries';
@@ -798,7 +1358,7 @@ function flightHtml(fs,full=false){
     }
     const d=f.totalDuty?`<div class="small">Duty ${fmt(f.totalDuty)} • ${f.sectors||0} sectors</div>`:'';
     const startInfo=isGround(f)&&f.onDuty?`<div class="small">Start ${esc(f.onDuty)} Z</div>`:'';
-    html+=`<div class="flight"><div><div class="route">${esc(f.dep||f.dutyType||'Entry')}${f.arr?` → ${esc(f.arr)}`:''}</div><div class="small">${esc(f.date)} ${esc(f.flightNo||'')}</div>${startInfo}<span class="pill">${esc(f.dutyType||'Flight')}</span>${f.type?`<span class="pill">${esc(f.type)}</span>`:''}${f.instructionType?`<span class="pill green">${esc(f.instructionType)}</span>`:''}${f.locked?'<span class="pill green">🔒 Locked</span>':''}${d}</div><div class="meta"><b>${fmt(isFlight(f)?f.block:isSim(f)?(Number(f.simulatorTime)||0):isGround(f)?300:isDhd(f)?scheduleBlockMins(f):0)}</b><br><span class="small">Credit ${fmt(entryCreditMins(f))}</span>${full?`<div class="list-actions"><button class="secondary" data-edit-flight="${f.id}">${f.locked?'View':'Edit'}</button>${f.locked?'':`<button class="danger" data-delete-flight="${f.id}">Delete</button>`}</div>`:''}</div></div>`;
+    html+=`<div class="flight"><div><div class="route">${esc(f.dep||f.dutyType||'Entry')}${f.arr?` → ${esc(f.arr)}`:''}</div><div class="small">${esc(displayDate(f.date))} ${esc(f.flightNo||'')}</div>${startInfo}<span class="pill">${esc(f.dutyType||'Flight')}</span>${f.type?`<span class="pill">${esc(f.type)}</span>`:''}${f.instructionType?`<span class="pill green">${esc(f.instructionType)}</span>`:''}${f.locked?'<span class="pill green">🔒 Locked</span>':''}${d}</div><div class="meta"><b>${fmt(isFlight(f)?f.block:isSim(f)?(Number(f.simulatorTime)||0):isGround(f)?300:isDhd(f)?scheduleBlockMins(f):0)}</b><br><span class="small">Credit ${fmt(entryCreditMins(f))}</span>${full?`<div class="list-actions"><button class="secondary" data-edit-flight="${f.id}">${f.locked?'View':'Edit'}</button>${f.locked?'':`<button class="danger" data-delete-flight="${f.id}">Delete</button>`}</div>`:''}</div></div>`;
   });
   return html;
 }
@@ -833,7 +1393,7 @@ function dashboardDutyRows(startOffset,count){
       const dest=planned.find(x=>upper(x.dep)===home&&upper(x.arr)!==home)?.arr||first.arr||'';route=`${first.dep||home}${dest?' → '+dest:''}`;
     }else if(ext){type=ext.type||'Duty';report=ext.report||'';end=ext.end||'';detail=ext.remarks||''}
     rows.push(`<div class="duty-week-row${i===0?' today-duty-row':''}">
-      <div class="duty-week-date"><b>${esc(dayLabel)}</b><span>${esc(date)}</span></div>
+      <div class="duty-week-date"><b>${esc(dayLabel)}</b><span>${esc(displayDate(date))}</span></div>
       <div class="duty-week-main"><b>${esc(type)}</b>${route?`<div class="small">${esc(route)}</div>`:''}${detail?`<div class="small">${esc(detail)}</div>`:''}</div>
       <div class="duty-week-time">${report||end?`<b>${esc(report||'--:--')} – ${esc(end||'--:--')}</b><div class="small">${sectors?`${sectors} sector${sectors===1?'':'s'}`:'Duty'}</div>`:'<span class="small">—</span>'}</div>
     </div>`);
@@ -902,7 +1462,7 @@ async function renderRoster(){
   const groups=rosterGroups();
   if($('rosterList'))$('rosterList').innerHTML=await rosterGroupHtml(groups,true);
 }
-function renderDuty(){const ds=load(DUTY_KEY).sort((a,b)=>String(b.date).localeCompare(String(a.date)));$('dutyList').innerHTML=ds.length?ds.map(d=>`<div class="rowitem"><div><b>${esc(d.type)}</b><div class="small">${esc(d.date)} • ${esc(d.notes||'')}</div></div><div class="meta"><b>${fmt(d.minutes)}</b><br>${esc(d.report||'')}–${esc(d.end||'')}<div class="list-actions"><button class="danger" data-delete-duty="${d.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No duties yet.</div>'}
+function renderDuty(){const ds=load(DUTY_KEY).sort((a,b)=>String(b.date).localeCompare(String(a.date)));$('dutyList').innerHTML=ds.length?ds.map(d=>`<div class="rowitem"><div><b>${esc(d.type)}</b><div class="small">${esc(displayDate(d.date))} • ${esc(d.notes||'')}</div></div><div class="meta"><b>${fmt(d.minutes)}</b><br>${esc(d.report||'')}–${esc(d.end||'')}<div class="list-actions"><button class="danger" data-delete-duty="${d.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No duties yet.</div>'}
 async function renderTotals(){
   const fs=load(FLIGHTS_KEY),flying=fs.filter(isFlight),a320=fs.filter(isA320Entry),a320Flights=a320.filter(isFlight);
   $('tTotalFlight').textContent=fmt(sum(flying,totalFlightMins));
@@ -946,7 +1506,7 @@ function renderTripInspector(tripId){
     const charge=isDhd(f)?'Excluded from duty':isGround(f)?'5:00 fixed duty':isStby(f)?'Not deducted':'Included in duty';
     return `<div class="rowitem">
       <div>
-        <b>${esc(f.date)} • ${esc(f.dutyType||'Flight')} ${esc(f.flightNo||'')}</b>
+        <b>${esc(displayDate(f.date))} • ${esc(f.dutyType||'Flight')} ${esc(f.flightNo||'')}</b>
         <div class="small">${esc(f.dep||'')} ${f.arr?'→ '+esc(f.arr):''}</div>
         <div class="small">${charge}</div>
       </div>
@@ -957,8 +1517,8 @@ function renderTripInspector(tripId){
     </div>`;
   }).join('');
   box.innerHTML=
-    `<div class="stat-row"><span>Trip start</span><b>${esc(s.toISOString().replace('T',' ').slice(0,16))} Z</b></div>
-     <div class="stat-row"><span>Trip end</span><b>${esc(e.toISOString().replace('T',' ').slice(0,16))} Z</b></div>
+    `<div class="stat-row"><span>Trip start</span><b>${esc(displayDateTime(s.toISOString().slice(0,16)))} Z</b></div>
+     <div class="stat-row"><span>Trip end</span><b>${esc(displayDateTime(e.toISOString().slice(0,16)))} Z</b></div>
      <div class="stat-row"><span>Total trip time</span><b>${fmt(t.trip)}</b></div>
      <div class="stat-row"><span>Duty subtracted</span><b>${fmt(t.duty)}</b></div>
      <div class="stat-row"><span>Paid layover</span><b>${fmt(t.layover)}</b></div>
@@ -967,7 +1527,7 @@ function renderTripInspector(tripId){
   wrap.classList.remove('hidden');
   wrap.scrollIntoView({behavior:'smooth',block:'start'});
 }
-function renderTrips(){const ts=load(TRIPS_KEY).sort((a,b)=>String(b.start).localeCompare(String(a.start)));$('tripList').innerHTML=ts.length?ts.map(t=>`<div class="rowitem"><div><b>${esc(t.base||'Trip')} ${t.stations?'• '+esc(t.stations):''}</b><div class="small">${esc(String(t.start).replace('T',' '))} → ${esc(String(t.end).replace('T',' '))}</div></div><div class="meta"><b>${fmt(t.layover)}</b><br><span class="small">${money(t.allowance??(t.layover/60*paySettings().layoverRate))} DHM allowance</span><div class="list-actions"><button class="secondary" data-view-trip="${t.id}">View duties</button><button class="danger" data-delete-trip="${t.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No trips yet.</div>'}
+function renderTrips(){const ts=load(TRIPS_KEY).sort((a,b)=>String(b.start).localeCompare(String(a.start)));$('tripList').innerHTML=ts.length?ts.map(t=>`<div class="rowitem"><div><b>${esc(t.base||'Trip')} ${t.stations?'• '+esc(t.stations):''}</b><div class="small">${esc(displayDateTime(t.start))} → ${esc(displayDateTime(t.end))}</div></div><div class="meta"><b>${fmt(t.layover)}</b><br><span class="small">${money(t.allowance??(t.layover/60*paySettings().layoverRate))} DHM allowance</span><div class="list-actions"><button class="secondary" data-view-trip="${t.id}">View duties</button><button class="danger" data-delete-trip="${t.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No trips yet.</div>'}
 function renderSettings(){const st=appSettings();$('setHomeBase').value=st.homeBase||'CMN';$('setFlightPrefix').value=st.flightPrefix||'MAC';$('setAircraftPrefix').value=st.aircraftPrefix||'CN-NM';$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||$('cloudEmail').value||'';updatePrefixUI();fillPaySettings();updateCloudStatus();ensureAirportDb(false)}
 function setEntryLockedUI(locked){$('flightForm').querySelectorAll('input:not(#editId),select,textarea').forEach(el=>{if(['blockDisplay','schedBlockDisplay','totalTimeDisplay','picDisplay','sicDisplay','flightInstructionDisplay','simInstructionDisplay','sectorDisplay','totalDutyDisplay','night'].includes(el.id))return;el.disabled=!!locked});$('creditDisplay').disabled=!!locked;$('saveEntryBtn').disabled=!!locked;$('lockEntryBtn').textContent=locked?'Unlock entry':'Save & Lock';$('entryLockStatus').textContent=locked?'LOCKED • All entry data are protected from editing.':'Unlocked. Lock the entry when all data are final.';$('entryLockStatus').classList.toggle('success',!!locked)}
 function resetEntry(){const f=$('flightForm');f.reset();$('editId').value='';updatePrefixUI();$('date').value=today();$('dutyTypeFlight').value='Flight';$('role').value='PIC';$('night').value='00:00';$('ifr').value='yes';['dayTakeoffs','nightTakeoffs','dayLandings','nightLandings'].forEach(id=>$(id).value=0);$('entryTitle').textContent='Add log entry';$('saveEntryBtn').textContent='Save entry';setEntryLockedUI(false);setEntryTypeUI();calcEntry();$('sectorDisplay').value='';$('totalDutyDisplay').value='';updateAirportInfo()}
@@ -992,6 +1552,36 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('dutyForm').addEventListener('submit',e=>{e.preventDefault();const ds=load(DUTY_KEY),rep=$('reportTime').value,end=$('endDuty').value;ds.push(stamp({id:makeId(),date:$('dutyDate').value,type:$('dutyType').value,report:rep,end,minutes:diff(mins(rep),mins(end)),notes:$('dutyNotes').value.trim()}));save(DUTY_KEY,ds);reconcileAllDuties();e.target.reset();$('dutyDate').value=today();render();renderDuty()});
   ['tripStart','tripEnd'].forEach(id=>$(id).addEventListener('input',tripCalc));$('calcTrip').addEventListener('click',tripCalc);$('clearTrip').addEventListener('click',resetTrip);
   $('tripForm').addEventListener('submit',e=>{e.preventDefault();const c=tripCalc();if(!c)return alert('Enter a valid Trip Start and Trip End.');const ts=load(TRIPS_KEY),id=$('tripEditId').value||makeId(),t=stamp({id,base:upper(appSettings().homeBase||'CMN'),stations:upper($('tripStations').value),start:$('tripStart').value,end:$('tripEnd').value,trip:c.trip,duty:c.duty,layover:c.layover,allowance:c.allowance,remarks:$('tripRemarks').value.trim()}),i=ts.findIndex(x=>x.id===id);if(i>=0)ts[i]=t;else ts.push(t);save(TRIPS_KEY,ts);resetTrip();renderTrips();alert('Trip saved.')});
+  $('screenshotFile').addEventListener('change',async e=>{
+    const file=e.target.files[0];if(!file)return;
+    clearScreenshotReview();
+    $('screenshotOcrWrap').classList.add('hidden');
+    if(screenshotObjectUrl)URL.revokeObjectURL(screenshotObjectUrl);
+    screenshotObjectUrl=URL.createObjectURL(file);
+    $('screenshotPreview').src=screenshotObjectUrl;
+    $('screenshotPreviewWrap').classList.remove('hidden');
+    try{
+      const text=await runScreenshotOcr(file);
+      $('screenshotOcrText').value=text;
+      $('screenshotOcrWrap').classList.remove('hidden');
+      screenshotReviewRows=parseScreenshotText(text);
+      renderScreenshotReview();
+      $('screenshotImportStatus').textContent=screenshotReviewRows.length?`OCR complete. ${screenshotReviewRows.length} review row(s) detected.`:'OCR complete, but no structured rows were detected. Correct the text and press Parse / Re-parse.';
+    }catch(err){
+      console.error('Screenshot OCR failed',err);
+      $('screenshotOcrWrap').classList.remove('hidden');
+      $('screenshotImportStatus').textContent=`OCR unavailable: ${err.message} You can paste or type recognized text manually and press Parse / Re-parse.`;
+    }
+  });
+  $('parseScreenshotText').addEventListener('click',()=>{
+    screenshotReviewRows=parseScreenshotText($('screenshotOcrText').value);
+    renderScreenshotReview();
+    $('screenshotImportStatus').textContent=screenshotReviewRows.length?`${screenshotReviewRows.length} review row(s) detected.`:'No structured rows detected. Adjust the OCR text or choose the correct screenshot type.';
+  });
+  $('screenshotReviewBody').addEventListener('input',e=>updateScreenshotReviewFromControl(e.target));
+  $('screenshotReviewBody').addEventListener('change',e=>updateScreenshotReviewFromControl(e.target));
+  $('importScreenshotReviewed').addEventListener('click',()=>importReviewedScreenshot().catch(err=>{console.error(err);alert('Screenshot import failed: '+err.message)}));
+  $('clearScreenshotReview').addEventListener('click',()=>{clearScreenshotReview();$('screenshotImportStatus').textContent='Review cleared. The OCR text is still available.'});
   $('exportEasaPdf').addEventListener('click',exportEasaStylePdf);
   $('exportExperienceCsv').addEventListener('click',exportExperienceCsv);
   $('exportBackupJson').addEventListener('click',exportFullBackupJson);
