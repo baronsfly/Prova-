@@ -123,3 +123,11 @@
 - Eight experience rows per page; page totals, previous-page totals and total-to-date remain on the same PDF page.
 - Zero values stay blank and Remarks remain left aligned.
 - PDF generation has no external JavaScript dependency and does not rely on browser print CSS.
+
+## v5.1.2
+- Totals: Aircraft Breakdown now shows only one consolidated A320 group.
+- Historical A320 variants such as A320, A320-211-CFM, A32O and equivalent A320 labels are merged into the same A320 group.
+- Roster: upcoming duties are visually separated by month.
+- The current month and following month now have distinct month headings rather than one continuous list.
+- Existing roster cards, sector counts, local times and destination logic are preserved.
+- Retains the true fixed-size A4 PDF generator from v5.1.1.

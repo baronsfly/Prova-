@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.1.1';
+const VERSION='5.1.2';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -1409,9 +1409,30 @@ async function render(){
   try{await renderRoster()}catch(e){console.error('Roster render failed',e)}
 }
 
+async function rosterMonthLabel(date){
+  if(!date)return'';
+  const d=new Date(`${String(date).slice(0,7)}-01T00:00:00Z`);
+  try{return new Intl.DateTimeFormat('en-GB',{month:'long',year:'numeric',timeZone:'UTC'}).format(d)}
+  catch{return String(date).slice(0,7)}
+}
 async function renderRoster(){
   const groups=rosterGroups();
-  if($('rosterList'))$('rosterList').innerHTML=await rosterGroupHtml(groups,true);
+  const box=$('rosterList');if(!box)return;
+  if(!groups.length){box.innerHTML='<div class="empty">No upcoming roster.</div>';return}
+
+  const byMonth={};
+  groups.forEach(g=>{
+    const month=String(g.date||'').slice(0,7)||'Other';
+    (byMonth[month]||(byMonth[month]=[])).push(g);
+  });
+
+  const parts=[];
+  for(const month of Object.keys(byMonth).sort()){
+    const monthGroups=byMonth[month];
+    parts.push(`<div class="roster-month-separator"><span>${esc(rosterMonthLabel(monthGroups[0]?.date||month))}</span></div>`);
+    parts.push(await rosterGroupHtml(monthGroups,true));
+  }
+  box.innerHTML=parts.join('');
 }
 function renderDuty(){const ds=load(DUTY_KEY).sort((a,b)=>String(b.date).localeCompare(String(a.date)));$('dutyList').innerHTML=ds.length?ds.map(d=>`<div class="rowitem"><div><b>${esc(d.type)}</b><div class="small">${esc(displayDate(d.date))} • ${esc(d.notes||'')}</div></div><div class="meta"><b>${fmt(d.minutes)}</b><br>${esc(d.report||'')}–${esc(d.end||'')}<div class="list-actions"><button class="danger" data-delete-duty="${d.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No duties yet.</div>'}
 async function renderTotals(){
@@ -1429,9 +1450,10 @@ async function renderTotals(){
     ['This Month — Flight',month],['This Year — Flight',year],
     ['Last 28 days — Flight',rollingFlight(28)],['Last 90 days — Flight',rollingFlight(90)],['Last 365 days — Flight',rollingFlight(365)]
   ].map(([n,v])=>`<div class="stat-row"><span>${n}</span><b>${fmt(v)}</b></div>`).join('');
-  const ac={};
-  fs.forEach(f=>{const t=upper(f.type||'Unspecified');if(!ac[t])ac[t]={f:0,s:0};if(isSim(f))ac[t].s+=Number(f.simulatorTime)||0;else if(isFlight(f))ac[t].f+=totalFlightMins(f)});
-  $('aircraftBreakdown').innerHTML=Object.entries(ac).map(([t,v])=>`<div class="stat-row"><span><b>${esc(t)}</b><div class="small">Flying ${fmt(v.f)} • Simulator ${fmt(v.s)}</div></span><b>${fmt(v.f+v.s)}</b></div>`).join('')||'<div class="empty">No aircraft data.</div>';
+  const a320Group=fs.filter(isA320Entry);
+  const a320Flying=sum(a320Group.filter(isFlight),totalFlightMins);
+  const a320Sim=sum(a320Group.filter(isSim),f=>Number(f.simulatorTime)||0);
+  $('aircraftBreakdown').innerHTML=`<div class="stat-row"><span><b>A320</b><div class="small">Flying ${fmt(a320Flying)} • Simulator ${fmt(a320Sim)}</div></span><b>${fmt(a320Flying+a320Sim)}</b></div>`;
 }
 
 function tripIncludedEntries(t){

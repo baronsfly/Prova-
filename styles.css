@@ -37,3 +37,8 @@
 .screenshot-review-table th{background:#f3f4f6;text-align:left;white-space:nowrap}
 .screenshot-review-table input,.screenshot-review-table select{font-size:12px;padding:7px;border-radius:7px;min-width:88px}
 .screenshot-review-table input[type="checkbox"]{min-width:auto;width:18px;height:18px}
+
+.roster-month-separator{display:flex;align-items:center;gap:12px;margin:26px 0 10px;font-weight:800;font-size:1.05rem;color:var(--text,#172033)}
+.roster-month-separator:first-child{margin-top:4px}
+.roster-month-separator::after{content:"";height:1px;background:rgba(100,116,139,.25);flex:1}
+.roster-month-separator span{white-space:nowrap}
