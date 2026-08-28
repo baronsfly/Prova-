@@ -88,3 +88,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.1.1: EASA export now generates a true fixed-size A4 PDF rather than an HTML print page, avoiding Safari/iPhone automatic scaling during printing.
 
 - v5.1.2: consolidated Aircraft Breakdown to A320 only and added clear month separators to Upcoming Roster while preserving the existing roster duty cards.
+
+- v5.1.3: fixed the Roster month header `[object Promise]` regression. Month labels are now rendered synchronously.

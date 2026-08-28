@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.1.2';
+const VERSION='5.1.3';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -1409,7 +1409,7 @@ async function render(){
   try{await renderRoster()}catch(e){console.error('Roster render failed',e)}
 }
 
-async function rosterMonthLabel(date){
+function rosterMonthLabel(date){
   if(!date)return'';
   const d=new Date(`${String(date).slice(0,7)}-01T00:00:00Z`);
   try{return new Intl.DateTimeFormat('en-GB',{month:'long',year:'numeric',timeZone:'UTC'}).format(d)}

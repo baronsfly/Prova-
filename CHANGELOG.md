@@ -131,3 +131,9 @@
 - The current month and following month now have distinct month headings rather than one continuous list.
 - Existing roster cards, sector counts, local times and destination logic are preserved.
 - Retains the true fixed-size A4 PDF generator from v5.1.1.
+
+## v5.1.3
+- Fixed Roster month separator displaying `[object Promise]`.
+- Root cause: `rosterMonthLabel()` had accidentally been declared `async`, while its result was interpolated synchronously.
+- `rosterMonthLabel()` is now a synchronous formatter and returns the month/year string directly.
+- Added pre-release guard to reject async month-label formatting in the Roster.
