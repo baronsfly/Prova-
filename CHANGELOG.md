@@ -237,3 +237,21 @@
 - Production still loads one `app.js`, avoiding runtime module/load-order regressions.
 - Added `build_app.py` to rebuild the production `app.js` deterministically from the organized source fragments.
 - Updated Service Worker cache/version registration to v5.3.0.
+
+## v5.3.1
+- Rebuilt the EASA duty engine from the operational sequence rather than stored/reconciled daily totals.
+- Flight duty starts at scheduled OUT minus 60 minutes and ends at actual IN plus 30 minutes; scheduled IN plus 30 is used only until actual IN exists.
+- Cross-midnight duties are handled with absolute UTC datetimes.
+- Sectors are joined into one duty only when the operational gap is at most 5 hours and the resulting duty remains within a sanity ceiling of 18 hours; corrupt windows are ignored rather than inflating rolling totals.
+- Rolling 7/14/28-day duty totals count only the portion actually accrued up to the current time; future duty minutes are excluded.
+- Current/next daily FDP selects the earliest real duty from Entries and Roster instead of an arbitrary later future date.
+- Reconciliation no longer changes every entry timestamp on each render; only entries whose derived duty metadata actually changes are stamped.
+- Fixed stale-code updates on Safari/iPad: runtime CSS/JS/Service Worker now use version-specific filenames.
+- New Service Worker uses network-first exact cache matching and deletes older PilotLog caches, eliminating the old `ignoreSearch` behavior that could keep serving an obsolete app.js after an update.
+
+## v5.3.2
+- Entries now opens at the current-day position instead of at the newest future entry.
+- Chronology remains descending: future entries are above the anchor and past entries are below it.
+- If today has entries, the anchor is placed immediately before today's first entry.
+- If today has no entries, the anchor sits at the boundary between future and past.
+- No data migration or database changes.

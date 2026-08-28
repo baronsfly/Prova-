@@ -110,3 +110,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.2.2: EASA rolling duty now counts one saved operational duty total per day instead of rebuilding multi-day sessions. Future FDP selection comes from Roster.
 
 - v5.3.0: internal cleanup/refactor. Production remains a single app.js for reliability, while maintainable source is organized under /src and can be rebuilt with build_app.py. No database migration.
+
+- v5.3.1: FTL/duty engine rebuilt and stale Service Worker cache issue fixed. The runtime now uses versioned filenames so a newly deployed build cannot silently execute an older cached app.js.
+
+- v5.3.2: Entries automatically opens at today/the today boundary; scroll up for future entries and down for past entries.
