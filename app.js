@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.16';
+const VERSION='5.0.17';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -38,17 +38,22 @@ function moroccoNightTrigger(f){
 function dutyGetsMoroccoNightPremium(f){
   if(!isFlight(f)||!f.date)return false;
 
-  // Build the operating flight sequence for the day and include the current
-  // unsaved/editing sector if it is not already present.
+  // Outbound sector: evaluate its own scheduled departure from Morocco directly.
+  // This must work even while the entry is still being added/edited and is not yet saved.
+  if(isMoroccoCode(f.dep))return moroccoNightTrigger(f);
+
+  // Return sector from abroad: inherit only from the immediately preceding
+  // operating flight, and only when that preceding sector departed Morocco.
   let flights=dayEntries(f.date).filter(isFlight).map(x=>({...x}));
 
   const same=(a,b)=>
-    String(a.id||'')&&String(b.id||'')&&a.id===b.id ||
+    (a.id&&b.id&&a.id===b.id) ||
     (upper(a.flightNo||'')===upper(b.flightNo||'') &&
      upper(a.dep||'')===upper(b.dep||'') &&
      upper(a.arr||'')===upper(b.arr||'') &&
      String(a.schedOut||'')===String(b.schedOut||''));
 
+  // Include current unsaved/editing return sector if needed.
   if(!flights.some(x=>same(x,f)))flights.push({...f});
 
   flights.sort((a,b)=>{
@@ -58,28 +63,10 @@ function dutyGetsMoroccoNightPremium(f){
   });
 
   const idx=flights.findIndex(x=>same(x,f));
-  if(idx<0)return moroccoNightTrigger(f);
+  if(idx<=0)return false;
 
-  // Pair logic:
-  // A sector departing Morocco determines the premium for itself and,
-  // when present, the immediately following return sector.
-  // Each new Morocco departure starts a new independent pair.
-  for(let i=0;i<flights.length;i++){
-    const outbound=flights[i];
-    if(!isMoroccoCode(outbound.dep))continue;
-
-    const qualifies=moroccoNightTrigger(outbound);
-
-    if(i===idx)return qualifies;
-
-    const next=flights[i+1];
-    if(next && i+1===idx){
-      // Apply the outbound's classification only to its paired return.
-      return qualifies;
-    }
-  }
-
-  return false;
+  const previous=flights[idx-1];
+  return isMoroccoCode(previous.dep) && moroccoNightTrigger(previous);
 }
 function paidFlightCreditMins(f){
   const base=scheduleBlockMins(f);
@@ -275,7 +262,8 @@ function calcEntry(){
   $('flightInstructionDisplay').value=fmt(dutyType==='Flight'&&inst==='Flight Instruction'?block:0);
   $('simInstructionDisplay').value=fmt(dutyType==='Simulator'&&inst==='SFI/SFE Instruction Sim'?simActual:0);
   const premiumEntry={dutyType:'Flight',date:$('date').value,dep:$('dep').value,arr:$('arr').value,schedOut:$('schedOut').value,schedIn:$('schedIn').value,schedBlock};
-  const premium=(dutyType==='Flight'&&dutyGetsMoroccoNightPremium(premiumEntry))?' • Morocco Night +50%':'';
+  const premiumApplied=dutyType==='Flight'&&dutyGetsMoroccoNightPremium(premiumEntry);
+  const premium=premiumApplied?' • Morocco Night +50%':'';
   $('calcPreview').textContent=dutyType==='Simulator'?`Simulator actual ${fmt(simActual)} • Credit ${fmt(cr)} (Settings)`:`Schedule Block ${fmt(schedBlock)} • Actual Block ${fmt(block)} • Flight ${fmt(flight)} • Credit ${fmt(cr)}${premium}`;
   return{schedBlock,block,flight,credit:cr}
 }
