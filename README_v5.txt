@@ -62,3 +62,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 
 - v5.0.13 Morocco night credit: when the first operating sector of a duty departs a Moroccan airport between 18:00 and 04:59 local, the +50% credit applies to every operating flight sector in that same duty, including the return from abroad.
 - Roster duty summary now shows Home Base -> outbound destination (for example CMN -> CDG) instead of CMN -> CMN on a return duty.
+
+- v5.0.14 emergency fix: corrected a JavaScript runtime error introduced in v5.0.13 by an undefined isMoroccoAirport() call. Existing logbook history remains in localStorage and renders again without reimport.

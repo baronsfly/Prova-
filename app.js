@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.13';
+const VERSION='5.0.14';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -32,15 +32,8 @@ function qualifiesMoroccoNightCredit(f){
   return m!==null&&(m>=18*60||m<5*60);
 }
 function moroccoNightTrigger(f){
-  if(!isFlight(f)||!isMoroccoAirport(f.dep)||!f.schedOut)return false;
-  const depDate=zuluDate(f.date,f.schedOut);
-  if(!depDate)return false;
-  const ap=airport(f.dep);
-  const tz=ap?.tz||ap?.timezone||'Africa/Casablanca';
-  const p=tzParts(depDate,tz);
-  const hh=Number(p.hour),mm=Number(p.minute);
-  const minsLocal=hh*60+mm;
-  return minsLocal>=18*60 || minsLocal<5*60;
+  // Reuse the existing, tested Morocco scheduled-departure helper.
+  return qualifiesMoroccoNightCredit(f);
 }
 function dutyGetsMoroccoNightPremium(f){
   if(!isFlight(f)||!f.date)return false;
