@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.18';
+const VERSION='5.0.19';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -795,25 +795,66 @@ function dashboardDuty7Days(){
   return rows.join('');
 }
 
-async function render(){
-  reconcileAllDuties();
-  const fs=load(FLIGHTS_KEY).sort((a,b)=>{
-    const kb=`${b.date}${b.onDuty||b.schedOut||b.out||''}`;
-    const ka=`${a.date}${a.onDuty||a.schedOut||a.out||''}`;
-    return kb.localeCompare(ka);
-  });
-  $('mPic').textContent=fmt(sum(fs,picMins));
-  $('mTri').textContent=fmt(sum(fs,flightInstrMins));
-  $('mDuty').textContent=fmt(mergedDutyMinutes());
-  if($('dashboardDutyWeek'))$('dashboardDutyWeek').innerHTML=dashboardDuty7Days();
-  $('allFlights').innerHTML=flightHtml(fs,true);
-  const ok=await renderFtl('dashboardFtl',true);
-  $('mFtl').textContent=ok?'OK':'CHECK';
-  $('mFtl').className=ok?'success':'danger-text';
-  await renderRoster();
+
+const BACKUP_KEY='pilotlog_flights_backup_v1';
+function snapshotFlights(reason='startup'){
+  try{
+    const current=localStorage.getItem(FLIGHTS_KEY);
+    if(!current)return;
+    const parsed=JSON.parse(current);
+    if(!Array.isArray(parsed)||!parsed.length)return;
+    const store=JSON.parse(localStorage.getItem(BACKUP_KEY)||'[]');
+    const signature=JSON.stringify(parsed);
+    if(store[0]?.signature===signature)return;
+    store.unshift({at:new Date().toISOString(),reason,count:parsed.length,signature,data:parsed});
+    localStorage.setItem(BACKUP_KEY,JSON.stringify(store.slice(0,5)));
+  }catch(e){console.warn('PilotLog backup skipped',e)}
+}
+function renderEntriesSafe(){
+  try{
+    const fs=load(FLIGHTS_KEY).sort((a,b)=>{
+      const kb=`${b.date}${b.onDuty||b.schedOut||b.out||''}`;
+      const ka=`${a.date}${a.onDuty||a.schedOut||a.out||''}`;
+      return kb.localeCompare(ka);
+    });
+    const target=$('allFlights');
+    if(target)target.innerHTML=flightHtml(fs,true);
+    return fs;
+  }catch(e){
+    console.error('Entries render failed',e);
+    const target=$('allFlights');
+    if(target)target.innerHTML='<div class="empty">Entries could not be displayed. Stored data has not been deleted.</div>';
+    try{return load(FLIGHTS_KEY)||[]}catch{return[]}
+  }
 }
 
-async function renderRoster(){const groups=rosterGroups(),now=today(),up=groups.filter(g=>g.date>=now).slice(0,6);$('upcomingRoster').innerHTML=await rosterGroupHtml(up,false);$('rosterList').innerHTML=await rosterGroupHtml(groups,true)}
+async function render(){
+  snapshotFlights('before-render');
+  const fs=renderEntriesSafe();
+
+  try{reconcileAllDuties()}catch(e){console.error('Duty reconciliation failed',e)}
+  try{
+    if($('mPic'))$('mPic').textContent=fmt(sum(fs,picMins));
+    if($('mTri'))$('mTri').textContent=fmt(sum(fs,flightInstrMins));
+    if($('mDuty'))$('mDuty').textContent=fmt(mergedDutyMinutes());
+  }catch(e){console.error('Dashboard metrics failed',e)}
+  try{
+    if($('dashboardDutyWeek'))$('dashboardDutyWeek').innerHTML=dashboardDuty7Days();
+  }catch(e){
+    console.error('Dashboard 7-day view failed',e);
+    if($('dashboardDutyWeek'))$('dashboardDutyWeek').innerHTML='<div class="empty">Duty view temporarily unavailable.</div>';
+  }
+  try{
+    const ok=await renderFtl('dashboardFtl',true);
+    if($('mFtl')){$('mFtl').textContent=ok?'OK':'CHECK';$('mFtl').className=ok?'success':'danger-text'}
+  }catch(e){console.error('FTL dashboard failed',e)}
+  try{await renderRoster()}catch(e){console.error('Roster render failed',e)}
+}
+
+async function renderRoster(){
+  const groups=rosterGroups();
+  if($('rosterList'))$('rosterList').innerHTML=await rosterGroupHtml(groups,true);
+}
 function renderDuty(){const ds=load(DUTY_KEY).sort((a,b)=>String(b.date).localeCompare(String(a.date)));$('dutyList').innerHTML=ds.length?ds.map(d=>`<div class="rowitem"><div><b>${esc(d.type)}</b><div class="small">${esc(d.date)} • ${esc(d.notes||'')}</div></div><div class="meta"><b>${fmt(d.minutes)}</b><br>${esc(d.report||'')}–${esc(d.end||'')}<div class="list-actions"><button class="danger" data-delete-duty="${d.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No duties yet.</div>'}
 async function renderTotals(){const fs=load(FLIGHTS_KEY),flying=fs.filter(isFlight);$('tDuty').textContent=fmt(mergedDutyMinutes());$('tPic').textContent=fmt(sum(fs,picMins));$('tInstruction').textContent=fmt(sum(fs,flightInstrMins));$('tSimInstruction').textContent=fmt(sum(fs,simInstrMins));$('tNight').textContent=fmt(sum(fs,f=>durMins(f.night)));$('tSim').textContent=fmt(sum(fs,f=>isSim(f)?Number(f.simulatorTime)||0:0));$('tSimTrainer').textContent=fmt(sum(fs,simTrainerMins));$('tSimTrainee').textContent=fmt(sum(fs,simTraineeMins));await renderFtl('ftlTotals',false);
   const now=new Date(),y=now.getUTCFullYear(),m=now.getUTCMonth(),month=sum(flying,f=>{const d=dateOnly(f.date);return d.getUTCFullYear()===y&&d.getUTCMonth()===m?f.block:0}),year=calendarYearFlight();$('periodTotals').innerHTML=[['This Month — Flight',month],['This Year — Flight',year],['Last 28 days — Flight',rollingFlight(28)],['Last 90 days — Flight',rollingFlight(90)],['Last 365 days — Flight',rollingFlight(365)]].map(([n,v])=>`<div class="stat-row"><span>${n}</span><b>${fmt(v)}</b></div>`).join('');
