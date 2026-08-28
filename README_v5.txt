@@ -52,3 +52,8 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.0.9 re-import repair: LogTen non-flight rows are matched independently of their previously stored dutyType. Re-importing can therefore convert old misclassified entries (for example flight_type 7 previously saved as Flight) into STBY instead of duplicating them.
 
 - v5.0.10 duty fix: DHD never receives operational duty metadata and never defines duty boundaries. On days containing operating flights, On Duty is assigned to the first flight and Off Duty/Total Duty to the last flight. A DHD-only day has zero operational duty.
+
+- v5.0.11: Entries are visually separated by month.
+- Ground Course now includes a Start time (Zulu) used for chronological ordering with DHD/other entries.
+- Roster deduplicates the same sector imported as both 3Oxxx and MACxxx, counts the physical sector once, and displays the roster flight designator as 3Oxxx.
+- Future-month payroll uses the latest live EUR/MAD rate provisionally until the existing month-rate locking rule is satisfied.

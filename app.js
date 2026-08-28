@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.10';
+const VERSION='5.0.11';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -149,6 +149,7 @@ function setEntryTypeUI(){
   // Restore all normal entry fields first.
   document.querySelectorAll('[data-entry-field]').forEach(el=>el.classList.remove('hidden'));
   $('courseType')?.closest('[data-entry-field]')?.classList.add('hidden');
+  if($('onDutyLabel'))$('onDutyLabel').textContent='On Duty (Z)';
   ['breakdownTitle','breakdownGrid','remarksWrap','calcPreview','nightStatus'].forEach(id=>$(id)?.classList.remove('hidden'));
 
   if(dhd){
@@ -170,19 +171,20 @@ function setEntryTypeUI(){
 
   if(ground){
     // Ground Course is intentionally minimal: Date, Location IATA, Course type and Credit Hours.
-    const keep=new Set(['dep','courseType','credit']);
+    const keep=new Set(['dep','courseType','onDuty','credit']);
     document.querySelectorAll('[data-entry-field]').forEach(el=>{
       if(!keep.has(el.dataset.entryField))el.classList.add('hidden');
     });
     $('courseType')?.closest('[data-entry-field]')?.classList.remove('hidden');
     ['breakdownTitle','breakdownGrid','remarksWrap','nightStatus'].forEach(id=>$(id)?.classList.add('hidden'));
     $('depInfo').textContent=$('depInfo').textContent||'Enter the course location IATA code.';
+    if($('onDutyLabel'))$('onDutyLabel').textContent='Start time (Z)';
     $('arr').value='';
-    ['schedOut','schedIn','out','off','on','in','onDuty','offDuty'].forEach(id=>$(id).value='');
+    ['schedOut','schedIn','out','off','on','in','offDuty'].forEach(id=>$(id).value='');
     $('creditDisplay').readOnly=false;
     if(!durMins($('creditDisplay').value))$('creditDisplay').value=fmt(Math.round(Number(paySettings().groundCredit||0)*60));
     $('calcPreview').classList.remove('hidden');
-    $('calcPreview').textContent=`Ground Course • ${$('dep').value||'—'} • ${$('courseType').value||'Course'} • Credit ${$('creditDisplay').value||'0:00'}`;
+    $('calcPreview').textContent=`Ground Course • ${$('dep').value||'—'} • ${$('courseType').value||'Course'}${$('onDuty').value?' • Start '+$('onDuty').value+' Z':''} • Credit ${$('creditDisplay').value||'0:00'}`;
     return;
   }
 
@@ -352,15 +354,40 @@ async function renderFtl(containerId,compact=false){
 /* Roster local display and grouping */
 function parseUtcForRoster(date,time){return zuluDate(date,time)}
 async function localTime(date,time,code){if(!time)return'';const a=await airport(code),d=parseUtcForRoster(date,time);if(!d)return time;try{return new Intl.DateTimeFormat('en-GB',{timeZone:a?.tz||'UTC',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(d)}catch{return time}}
+function rosterFlightDigits(v){
+  const s=cleanPrefix(v);
+  let m=s.match(/^3O(\d+)$/i);if(m)return m[1];
+  const prefix=cleanPrefix(appSettings().flightPrefix||'MAC');
+  if(prefix&&s.startsWith(prefix)&&/^\d+$/.test(s.slice(prefix.length)))return s.slice(prefix.length);
+  m=s.match(/(\d+)$/);return m?m[1]:s;
+}
+function rosterFlightLabel(v){
+  const d=rosterFlightDigits(v);
+  return /^\d+$/.test(d)?`3O${d}`:upper(v);
+}
+function rosterSectorKey(r){
+  // Same physical sector can arrive twice (e.g. 3O485 and MAC485).
+  return [r.date,rosterFlightDigits(r.flightNo),upper(r.dep),upper(r.arr),r.std||'',r.sta||''].join('|');
+}
+function dedupeRosterItems(items){
+  const map=new Map();
+  items.forEach(r=>{
+    const k=rosterSectorKey(r),cur=map.get(k);
+    if(!cur){map.set(k,r);return}
+    // Prefer the 3O-labelled source for the roster display when both exist.
+    if(/^3O/i.test(cleanPrefix(r.flightNo))&&!/^3O/i.test(cleanPrefix(cur.flightNo)))map.set(k,r);
+  });
+  return [...map.values()];
+}
 function rosterGroups(){
   const rs=load(ROSTER_KEY).sort((a,b)=>`${a.date}${a.std||''}`.localeCompare(`${b.date}${b.std||''}`)), by={};
   rs.forEach(r=>(by[r.date]||(by[r.date]=[])).push(r));
   const ds=load(DUTY_KEY);
-  return Object.entries(by).map(([date,items])=>{items.sort((a,b)=>(a.std||'').localeCompare(b.std||''));const duty=ds.find(d=>d.date===date&&/flight duty/i.test(d.type||''));const first=items[0],last=items[items.length-1];return{date,items,start:duty?.report||shiftTime(first.std,-60),end:duty?.end||shiftTime(last.sta,30),dep:first.dep||'',arr:last.arr||'',sectors:items.filter(x=>x.flightNo).length,status:items.every(x=>x.status==='done')?'done':'planned'}}).sort((a,b)=>a.date.localeCompare(b.date))
+  return Object.entries(by).map(([date,rawItems])=>{const items=dedupeRosterItems(rawItems);items.sort((a,b)=>(a.std||'').localeCompare(b.std||''));const duty=ds.find(d=>d.date===date&&/flight duty/i.test(d.type||''));const first=items[0],last=items[items.length-1];return{date,items,start:duty?.report||shiftTime(first.std,-60),end:duty?.end||shiftTime(last.sta,30),dep:first.dep||'',arr:last.arr||'',sectors:items.filter(x=>x.flightNo).length,status:items.every(x=>x.status==='done')?'done':'planned'}}).sort((a,b)=>a.date.localeCompare(b.date))
 }
 async function rosterGroupHtml(groups,interactive=false){
   if(!groups.length)return'<div class="empty">No upcoming roster.</div>';let html='';
-  for(const g of groups){const start=await localTime(g.date,g.start,g.dep),end=await localTime(g.date,g.end,g.arr);html+=`<div class="rowitem"><div><b>${esc(g.date)} • ${g.sectors} flight${g.sectors===1?'':'s'}</b><div class="small">${esc(g.dep)} → ${esc(g.arr)}</div></div><div class="meta"><b>${esc(start)} – ${esc(end)}</b><br><span class="small">local time</span>${interactive?`<div class="list-actions">${g.items.map(r=>`<button class="secondary" data-roster-action="${r.id}">${esc(r.flightNo||'Open')}</button>`).join('')}</div>`:''}</div></div>`}
+  for(const g of groups){const start=await localTime(g.date,g.start,g.dep),end=await localTime(g.date,g.end,g.arr);html+=`<div class="rowitem"><div><b>${esc(g.date)} • ${g.sectors} flight${g.sectors===1?'':'s'}</b><div class="small">${esc(g.dep)} → ${esc(g.arr)}</div></div><div class="meta"><b>${esc(start)} – ${esc(end)}</b><br><span class="small">local time</span>${interactive?`<div class="list-actions">${g.items.map(r=>`<button class="secondary" data-roster-action="${r.id}">${esc(r.flightNo?rosterFlightLabel(r.flightNo):'Open')}</button>`).join('')}</div>`:''}</div></div>`}
   return html
 }
 
@@ -515,7 +542,7 @@ function dutySig(d){return [d.date,d.type,d.report,d.end,d.notes].map(x=>upper(x
 function importCalendar(events){
   let fs=load(FLIGHTS_KEY),rs=load(ROSTER_KEY),ds=load(DUTY_KEY),seenF=new Set(fs.map(entrySig)),seenR=new Set(rs.map(r=>[r.date,r.flightNo,r.dep,r.arr,r.std,r.sta].map(x=>upper(x)).join('|'))),seenD=new Set(ds.map(dutySig));let sectors=0,duties=0,other=0,skipped=0;
   events.forEach(ev=>{const c=classify(ev.SUMMARY),z=zuluTimes(ev.DESCRIPTION),date=ev._start.date;if(['ignore','unknown'].includes(c.kind)){skipped++;return}
-    if(c.kind==='flight'){const std=z.out||ev._start.time||'',sta=z.inn||(ev._end?.time||''),r={id:makeId(),date,flightNo:composeFlightNo(c.flightNo),dep:c.dep,arr:c.arr,std,sta,status:'planned',source:'calendar'};const sr=[r.date,r.flightNo,r.dep,r.arr,r.std,r.sta].map(x=>upper(x)).join('|');if(!seenR.has(sr)){rs.push(r);seenR.add(sr)}
+    if(c.kind==='flight'){const std=z.out||ev._start.time||'',sta=z.inn||(ev._end?.time||''),r={id:makeId(),date,flightNo:rosterFlightLabel(c.flightNo),dep:c.dep,arr:c.arr,std,sta,status:'planned',source:'calendar'};const sr=[r.date,r.flightNo,r.dep,r.arr,r.std,r.sta].map(x=>upper(x)).join('|');if(!seenR.has(sr)){rs.push(r);seenR.add(sr)}
       const f=stamp({id:makeId(),dutyType:'Flight',date,flightNo:composeFlightNo(c.flightNo),dep:c.dep,arr:c.arr,type:'',reg:'',schedOut:std,schedIn:sta,schedBlock:diff(mins(std),mins(sta)),onDuty:'',offDuty:'',out:'',off:'',on:'',in:'',block:0,flight:0,credit:paidFlightCreditMins({dutyType:'Flight',date,dep:c.dep,schedOut:std,schedIn:sta,schedBlock:diff(mins(std),mins(sta))}),role:'PIC',instructionType:'',night:'00:00',sim:'no',ifr:'yes',dayTakeoffs:1,nightTakeoffs:0,dayLandings:1,nightLandings:0,remarks:'Imported from calendar',source:'calendar'});const sf=entrySig(f);if(!seenF.has(sf)){fs.push(f);seenF.add(sf);sectors++}else skipped++;return}
     if(c.kind==='duty'){const rep=z.report||ev._start.time||'',end=z.end||(ev._end?.time||''),d=stamp({id:makeId(),date,type:c.dutyType,report:rep,end,minutes:diff(mins(rep),mins(end)),notes:ev.SUMMARY||'',source:'calendar'}),sd=dutySig(d);if(!seenD.has(sd)){ds.push(d);seenD.add(sd);duties++}else skipped++;return}
     if(c.kind==='entry'){const start=ev._start.time||'',end=ev._end?.time||'',sim=c.dutyType==='Simulator',ground=c.dutyType==='Ground Course',f=stamp({id:makeId(),dutyType:c.dutyType,date,flightNo:'',dep:c.dep||'',arr:c.arr||'',type:c.aircraftType||'',reg:'',schedOut:'',schedIn:'',schedBlock:0,onDuty:start,offDuty:end,out:'',off:'',on:'',in:'',block:0,flight:0,simulatorTime:sim?diff(mins(start),mins(end)):0,credit:sim?Math.round(paySettings().simCredit*60):ground?Math.round(paySettings().groundCredit*60):0,role:'PIC',instructionType:sim?'SFI/SFE Instruction Sim':'',night:'00:00',sim:sim?'yes':'no',ifr:'no',dayTakeoffs:0,nightTakeoffs:0,dayLandings:0,nightLandings:0,courseType:ground?upper(ev.SUMMARY||''):'',remarks:`Imported from calendar: ${ev.SUMMARY||''}`,source:'calendar'});const sf=entrySig(f);if(!seenF.has(sf)){fs.push(f);seenF.add(sf);other++}else skipped++}
@@ -603,12 +630,26 @@ function fxStore(){return loadObject(FX_KEY,{})}
 function dateKey(d){return d.toISOString().slice(0,10)}
 async function fetchFxForDate(dateStr){for(let back=0;back<8;back++){const d=new Date(`${dateStr}T12:00:00Z`);d.setUTCDate(d.getUTCDate()-back);const key=dateKey(d);try{const r=await fetch(`https://${key}.currency-api.pages.dev/v1/currencies/eur.json`,{cache:'no-store'});if(!r.ok)continue;const j=await r.json(),rate=Number(j?.eur?.mad);if(rate>0)return{rate,date:j.date||key}}catch{}}throw new Error('FX unavailable')}
 async function fetchLatestFx(){const r=await fetch('https://latest.currency-api.pages.dev/v1/currencies/eur.json',{cache:'no-store'});if(!r.ok)throw new Error('FX unavailable');const j=await r.json(),rate=Number(j?.eur?.mad);if(!(rate>0))throw new Error('MAD rate unavailable');return{rate,date:j.date||today()}}
-async function getMonthFx(month){const store=fxStore();if(store[month]?.locked)return store[month];const [y,m]=month.split('-').map(Number),target=`${y}-${String(m).padStart(2,'0')}-30`,now=new Date(),targetDate=new Date(`${target}T23:59:59Z`),monthStart=new Date(Date.UTC(y,m-1,1)),nextMonth=new Date(Date.UTC(y,m,1));if(monthStart>now)return{rate:null,locked:false};if(now>=targetDate||now>=nextMonth){const got=await fetchFxForDate(target),locked={...got,locked:true};store[month]=locked;localStorage.setItem(FX_KEY,JSON.stringify(store));return locked}return{...(await fetchLatestFx()),locked:false}}
+async function getMonthFx(month){
+  const store=fxStore();if(store[month]?.locked)return store[month];
+  const [y,m]=month.split('-').map(Number),
+    target=`${y}-${String(m).padStart(2,'0')}-30`,
+    now=new Date(),
+    targetDate=new Date(`${target}T23:59:59Z`),
+    nextMonth=new Date(Date.UTC(y,m,1));
+
+  // Until the month satisfies the locking rule, including future payroll months,
+  // always show the most recent available EUR/MAD rate as a provisional LIVE rate.
+  if(now<targetDate&&now<nextMonth)return{...(await fetchLatestFx()),locked:false,provisional:true};
+
+  const got=await fetchFxForDate(target),locked={...got,locked:true};
+  store[month]=locked;localStorage.setItem(FX_KEY,JSON.stringify(store));return locked;
+}
 const PAY_MAP={setJoinDate:'joinDate',setBase:'base',setAllowance:'allowance',setTransport:'transport',setPos:'pos',setTelephone:'telephone',setUniform:'uniform',setMeal:'meal',setDeduction:'deduction',setSeniority2:'seniority2',setSeniority12:'seniority12',setT1Max:'t1Max',setT1Rate:'t1Rate',setT2Max:'t2Max',setT2Rate:'t2Rate',setT3Max:'t3Max',setT3Rate:'t3Rate',setT4Rate:'t4Rate',setTrainingRate:'trainingRate',setLayoverRate:'layoverRate',setSimAllowance:'simAllowance',setSimCredit:'simCredit',setGroundCredit:'groundCredit',setDayOffRate:'dayOffRate'};
 function fillPaySettings(){const st=paySettings();Object.entries(PAY_MAP).forEach(([id,k])=>{if($(id))$(id).value=st[k]})}
 function readPaySettings(){const st={};Object.entries(PAY_MAP).forEach(([id,k])=>st[k]=k==='joinDate'?$(id).value:Number($(id).value||0));return st}
 let payrollRenderToken=0;
-async function renderPayroll(){const token=++payrollRenderToken,month=$('payrollMonth').value||monthNow();$('payrollMonth').value=month;const ex=monthExtras(month);$('payDayOffCount').value=ex.dayOffCount||0;$('payArrears').value=ex.arrears||0;const p=payrollData(month);$('payCredits').textContent=fmt(p.creditMins);$('payLayover').textContent=fmt(p.layMins);$('payTrainingSectors').textContent=p.training;$('paySimCount').textContent=p.sims;$('payTotalDhm').textContent=`${money(p.total)} DHM`;$('payTotalEur').textContent='…';$('payBreakdown').innerHTML=[['Fixed salary',p.fixed],['Seniority ('+money(p.seniorPct)+'%)',p.seniority],['Credit hours pay',p.flightPay],['Training sectors ('+p.training+')',p.trainingPay],['Layover ('+p.layHours.toFixed(2)+' h)',p.layoverPay],['Simulator allowance ('+p.sims+')',p.simPay],['Day OFF premium ('+(p.extras.dayOffCount||0)+')',p.dayOffPay],['Arrears / adjustments',p.arrears]].map(([n,v])=>`<div class="stat-row"><span>${esc(n)}</span><b class="money">${money(v)} DHM</b></div>`).join('');$('payFxStatus').textContent='Loading EUR/MAD…';try{const fx=await getMonthFx(month);if(token!==payrollRenderToken)return;if(!fx.rate){$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX not available for a future month.';return}$('payTotalEur').textContent=`≈ €${money(p.total/fx.rate)}`;$('payFxStatus').innerHTML=`EUR/MAD ${money(fx.rate)} • ${esc(fx.date)} ${fx.locked?'<span class="fx-lock">LOCKED</span>':'<span class="fx-live">LIVE</span>'}`}catch{$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX unavailable. Payroll in DHM is unaffected.'}}
+async function renderPayroll(){const token=++payrollRenderToken,month=$('payrollMonth').value||monthNow();$('payrollMonth').value=month;const ex=monthExtras(month);$('payDayOffCount').value=ex.dayOffCount||0;$('payArrears').value=ex.arrears||0;const p=payrollData(month);$('payCredits').textContent=fmt(p.creditMins);$('payLayover').textContent=fmt(p.layMins);$('payTrainingSectors').textContent=p.training;$('paySimCount').textContent=p.sims;$('payTotalDhm').textContent=`${money(p.total)} DHM`;$('payTotalEur').textContent='…';$('payBreakdown').innerHTML=[['Fixed salary',p.fixed],['Seniority ('+money(p.seniorPct)+'%)',p.seniority],['Credit hours pay',p.flightPay],['Training sectors ('+p.training+')',p.trainingPay],['Layover ('+p.layHours.toFixed(2)+' h)',p.layoverPay],['Simulator allowance ('+p.sims+')',p.simPay],['Day OFF premium ('+(p.extras.dayOffCount||0)+')',p.dayOffPay],['Arrears / adjustments',p.arrears]].map(([n,v])=>`<div class="stat-row"><span>${esc(n)}</span><b class="money">${money(v)} DHM</b></div>`).join('');$('payFxStatus').textContent='Loading EUR/MAD…';try{const fx=await getMonthFx(month);if(token!==payrollRenderToken)return;if(!fx.rate){$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX not available for a future month.';return}$('payTotalEur').textContent=`≈ €${money(p.total/fx.rate)}`;$('payFxStatus').innerHTML=`EUR/MAD ${money(fx.rate)} • ${esc(fx.date)} ${fx.locked?'<span class="fx-lock">LOCKED</span>':'<span class="fx-live">LIVE</span>'}${fx.provisional?' • provisional until lock rule':''}`}catch{$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX unavailable. Payroll in DHM is unaffected.'}}
 
 /* Cloud */
 const SUPABASE_URL='https://ytlfygmojojipdjeppic.supabase.co',SUPABASE_PUBLISHABLE_KEY='sb_publishable_a3P-hh1BBqsQ0zRiY1uquA_YgiFcIg0',SUPABASE_TABLE='pilotlog_entries';
@@ -627,12 +668,26 @@ async function syncSupabase(){const btn=$('syncCloudBtn');btn.disabled=true;$('c
 
 /* UI render */
 function show(id){document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));if(id==='totalsView')renderTotals();if(id==='tripsView')renderTrips();if(id==='payrollView')renderPayroll();if(id==='settingsView')renderSettings();if(id==='rosterView')renderRoster();scrollTo(0,0)}
-function flightHtml(fs,full=false){if(!fs.length)return'<div class="empty">No entries yet.</div>';return fs.map(f=>{const d=f.totalDuty?`<div class="small">Duty ${fmt(f.totalDuty)} • ${f.sectors||0} sectors</div>`:'';return`<div class="flight"><div><div class="route">${esc(f.dep||f.dutyType||'Entry')}${f.arr?` → ${esc(f.arr)}`:''}</div><div class="small">${esc(f.date)} ${esc(f.flightNo||'')}</div><span class="pill">${esc(f.dutyType||'Flight')}</span>${f.type?`<span class="pill">${esc(f.type)}</span>`:''}${f.instructionType?`<span class="pill green">${esc(f.instructionType)}</span>`:''}${f.locked?'<span class="pill green">🔒 Locked</span>':''}${d}</div><div class="meta"><b>${fmt(isFlight(f)?f.block:isSim(f)?(Number(f.simulatorTime)||0):isGround(f)?300:isDhd(f)?scheduleBlockMins(f):0)}</b><br><span class="small">Credit ${fmt(entryCreditMins(f))}</span>${full?`<div class="list-actions"><button class="secondary" data-edit-flight="${f.id}">${f.locked?'View':'Edit'}</button>${f.locked?'':`<button class="danger" data-delete-flight="${f.id}">Delete</button>`}</div>`:''}</div></div>`}).join('')}
-async function render(){
-  reconcileAllDuties();const fs=load(FLIGHTS_KEY).sort((a,b)=>`${b.date}${b.onDuty||b.schedOut||''}`.localeCompare(`${a.date}${a.onDuty||a.schedOut||''}`));
-  $('mPic').textContent=fmt(sum(fs,picMins));$('mTri').textContent=fmt(sum(fs,flightInstrMins));$('mDuty').textContent=fmt(mergedDutyMinutes());$('recentFlights').innerHTML=flightHtml(fs.slice(0,6));$('allFlights').innerHTML=flightHtml(fs,true);
-  const ok=await renderFtl('dashboardFtl',true);$('mFtl').textContent=ok?'OK':'CHECK';$('mFtl').className=ok?'success':'danger-text';
-  await renderRoster()
+function monthLabel(date){
+  if(!date)return'';
+  const d=new Date(`${String(date).slice(0,7)}-01T00:00:00Z`);
+  try{return new Intl.DateTimeFormat('en-GB',{month:'long',year:'numeric',timeZone:'UTC'}).format(d)}
+  catch{return String(date).slice(0,7)}
+}
+function flightHtml(fs,full=false){
+  if(!fs.length)return'<div class="empty">No entries yet.</div>';
+  let html='',lastMonth='';
+  fs.forEach(f=>{
+    const month=String(f.date||'').slice(0,7);
+    if(full&&month&&month!==lastMonth){
+      html+=`<div class="month-separator"><span>${esc(monthLabel(f.date))}</span></div>`;
+      lastMonth=month;
+    }
+    const d=f.totalDuty?`<div class="small">Duty ${fmt(f.totalDuty)} • ${f.sectors||0} sectors</div>`:'';
+    const startInfo=isGround(f)&&f.onDuty?`<div class="small">Start ${esc(f.onDuty)} Z</div>`:'';
+    html+=`<div class="flight"><div><div class="route">${esc(f.dep||f.dutyType||'Entry')}${f.arr?` → ${esc(f.arr)}`:''}</div><div class="small">${esc(f.date)} ${esc(f.flightNo||'')}</div>${startInfo}<span class="pill">${esc(f.dutyType||'Flight')}</span>${f.type?`<span class="pill">${esc(f.type)}</span>`:''}${f.instructionType?`<span class="pill green">${esc(f.instructionType)}</span>`:''}${f.locked?'<span class="pill green">🔒 Locked</span>':''}${d}</div><div class="meta"><b>${fmt(isFlight(f)?f.block:isSim(f)?(Number(f.simulatorTime)||0):isGround(f)?300:isDhd(f)?scheduleBlockMins(f):0)}</b><br><span class="small">Credit ${fmt(entryCreditMins(f))}</span>${full?`<div class="list-actions"><button class="secondary" data-edit-flight="${f.id}">${f.locked?'View':'Edit'}</button>${f.locked?'':`<button class="danger" data-delete-flight="${f.id}">Delete</button>`}</div>`:''}</div></div>`;
+  });
+  return html;
 }
 async function renderRoster(){const groups=rosterGroups(),now=today(),up=groups.filter(g=>g.date>=now).slice(0,6);$('upcomingRoster').innerHTML=await rosterGroupHtml(up,false);$('rosterList').innerHTML=await rosterGroupHtml(groups,true)}
 function renderDuty(){const ds=load(DUTY_KEY).sort((a,b)=>String(b.date).localeCompare(String(a.date)));$('dutyList').innerHTML=ds.length?ds.map(d=>`<div class="rowitem"><div><b>${esc(d.type)}</b><div class="small">${esc(d.date)} • ${esc(d.notes||'')}</div></div><div class="meta"><b>${fmt(d.minutes)}</b><br>${esc(d.report||'')}–${esc(d.end||'')}<div class="list-actions"><button class="danger" data-delete-duty="${d.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No duties yet.</div>'}
@@ -703,6 +758,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   ['out','off','on','in','schedOut','schedIn','onDuty','offDuty','role','instructionType'].forEach(id=>$(id).addEventListener('input',()=>{calcEntry();if(['off','on'].includes(id))calcNightForForm()}));
   $('dutyTypeFlight').addEventListener('change',()=>{setEntryTypeUI();calcEntry()});
   $('courseType').addEventListener('input',()=>calcEntry());
+  $('onDuty').addEventListener('input',()=>calcEntry());
   $('creditDisplay').addEventListener('change',()=>{if(isDhd({dutyType:$('dutyTypeFlight').value}))$('creditDisplay').value=fmt(durMins($('creditDisplay').value))});
   $('flightForm').addEventListener('submit',async e=>{e.preventDefault();if($('dutyTypeFlight').value==='Flight')await calcNightForForm();const editing=!!$('editId').value;if(!persistEntry(false))return;resetEntry();await render();show('dashboardView');alert(editing?'Entry updated.':'Entry saved.')});
   $('clearForm').addEventListener('click',resetEntry);
@@ -714,7 +770,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('exportLogTen').addEventListener('click',logTenExport);
   $('logTenFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const r=logTenImport(await file.text());e.target.value='';autoDetectTrips(false);await render();$('logTenImportStatus').textContent=`Imported ${r.imported} new, repaired/updated ${r.updated}, simulators ${r.sims}, other duties ${r.other}.`;alert('LogTen import complete.')}catch(err){alert('LogTen import failed: '+err.message)}});
   $('calendarFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const events=parseIcs(await file.text());if(!events.length)throw new Error('No calendar events found.');const r=importCalendar(events);e.target.value='';autoDetectTrips(false);await render();$('calendarImportStatus').textContent=`Imported ${r.sectors} flight sectors, ${r.duties} duties and ${r.other} other entries. ${r.skipped} skipped.`;alert(`Imported: ${r.sectors} flights • ${r.duties} duties • ${r.other} other entries`)}catch(err){alert('Calendar import failed: '+err.message)}});
-  $('rosterFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const rows=parseCsv(await file.text());if(rows.length<2)return alert('CSV contains no data');const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),aliases={date:['date','day'],flightNo:['flightno','flightnumber','flight','flt'],dep:['dep','departure','from','origin'],arr:['arr','arrival','to','destination'],std:['std','departuretime','scheduleddeparture','offblock'],sta:['sta','arrivaltime','scheduledarrival','onblock']},fieldFor=h=>Object.keys(aliases).find(k=>aliases[k].includes(norm(h)))||null,map=rows[0].map(fieldFor),imp=rows.slice(1).map(r=>{const o={id:makeId(),status:'planned'};map.forEach((k,i)=>{if(k)o[k]=r[i]||''});o.date=normalDate(o.date);['dep','arr','flightNo'].forEach(k=>o[k]=upper(o[k]));return o}).filter(x=>x.date&&(x.dep||x.arr||x.flightNo));save(ROSTER_KEY,[...load(ROSTER_KEY),...imp]);e.target.value='';await render();alert(`${imp.length} roster sectors imported`)});
+  $('rosterFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const rows=parseCsv(await file.text());if(rows.length<2)return alert('CSV contains no data');const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),aliases={date:['date','day'],flightNo:['flightno','flightnumber','flight','flt'],dep:['dep','departure','from','origin'],arr:['arr','arrival','to','destination'],std:['std','departuretime','scheduleddeparture','offblock'],sta:['sta','arrivaltime','scheduledarrival','onblock']},fieldFor=h=>Object.keys(aliases).find(k=>aliases[k].includes(norm(h)))||null,map=rows[0].map(fieldFor),imp=rows.slice(1).map(r=>{const o={id:makeId(),status:'planned'};map.forEach((k,i)=>{if(k)o[k]=r[i]||''});o.date=normalDate(o.date);['dep','arr','flightNo'].forEach(k=>o[k]=upper(o[k]));if(o.flightNo)o.flightNo=rosterFlightLabel(o.flightNo);return o}).filter(x=>x.date&&(x.dep||x.arr||x.flightNo));const merged=dedupeRosterItems([...load(ROSTER_KEY),...imp]);save(ROSTER_KEY,merged);e.target.value='';await render();alert(`${imp.length} roster sectors imported`)});
   $('detectTripsBtn').addEventListener('click',()=>autoDetectTrips(true));
   $('appSettingsForm').addEventListener('submit',e=>{e.preventDefault();saveAppSettings({homeBase:upper($('setHomeBase').value)||'CMN',flightPrefix:cleanPrefix($('setFlightPrefix').value)||'MAC',aircraftPrefix:cleanPrefix($('setAircraftPrefix').value)||'CN-NM'});renderSettings();alert('Settings saved.')});
   $('refreshAirportsBtn').addEventListener('click',()=>ensureAirportDb(true));
