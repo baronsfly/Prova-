@@ -164,3 +164,13 @@
 - EASA PDF populates the standard Name(s) PIC field from PIC Name.
 - SIC and SO names are preserved in EASA Remarks/Endorsements when present.
 - Added best-effort LogTen crew-name import aliases when those source fields exist.
+
+## v5.1.7
+- Added Instructor / Examiner Name to Flight entries.
+- Corrected LogTen crew import using the actual TAB columns:
+  - `flight_selectedCrewPIC` → PIC Name
+  - `flight_selectedCrewSIC` → SIC Name
+  - `flight_selectedCrewStudent` → SO Name
+  - `flight_selectedCrewInstructor` → Instructor / Examiner Name
+- When Role = Examiner, PilotLog displays a reminder to document the line-check/examiner role in Remarks.
+- Instructor / Examiner Name is stored with the flight, restored during edit, included in Professional Experience CSV and preserved in EASA Remarks/Endorsements.

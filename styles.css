@@ -42,3 +42,5 @@
 .roster-month-separator:first-child{margin-top:4px}
 .roster-month-separator::after{content:"";height:1px;background:rgba(100,116,139,.25);flex:1}
 .roster-month-separator span{white-space:nowrap}
+
+.hint.warning{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:10px;padding:10px 12px;font-weight:600}
