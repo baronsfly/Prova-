@@ -174,3 +174,12 @@
   - `flight_selectedCrewInstructor` → Instructor / Examiner Name
 - When Role = Examiner, PilotLog displays a reminder to document the line-check/examiner role in Remarks.
 - Instructor / Examiner Name is stored with the flight, restored during edit, included in Professional Experience CSV and preserved in EASA Remarks/Endorsements.
+
+## v5.1.8
+- Fixed another duplicate-entry case visible after updates/imports: identical skeletal Flight placeholders with the same date and route but no flight number or times are now merged.
+- LogTen import now uses the same semantic operational matching as Cloud Sync before creating a new Flight entry.
+- LogTen import prefers `sourceRowKey`, then operational identity, then a single unambiguous skeletal same-date/same-route placeholder.
+- Existing entry + imported LogTen data are merged field-by-field rather than blindly overwriting the richer copy.
+- Semantic duplicate cleanup now runs before every LogTen save.
+- Existing duplicates are also cleaned once automatically when v5.1.8 first renders, with a local snapshot taken before cleanup.
+- Repeated real sectors are preserved when flight numbers or times distinguish them.

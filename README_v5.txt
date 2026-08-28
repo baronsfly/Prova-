@@ -98,3 +98,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.1.6: Flight entries store PIC Name, SIC Name and SO Name. PIC Name feeds the EASA Name(s) PIC column; SIC/SO names remain available for professional exports.
 
 - v5.1.7: added Instructor/Examiner Name, mapped LogTen Student→SO and Instructor→Instructor/Examiner correctly, and added an Examiner-role reminder for Remarks.
+
+- v5.1.8: duplicate prevention now applies to LogTen import and one-time startup cleanup, including identical date/route placeholder rows with no flight number or times.

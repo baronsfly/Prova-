@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.1.7';
+const VERSION='5.1.8';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -644,7 +644,28 @@ function logTenImport(text){
     const f=stamp({dutyType,date,flightNo:dutyType==='Flight'||dutyType==='DHD'?composeFlightNo(flightNoRaw):'',dep:upper(g(r,'flight_from')),arr:upper(g(r,'flight_to')),reg:upper(g(r,'aircraft_aircraftID')),type:upper(g(r,'aircraftType_type')),schedOut,schedIn,schedBlock,onDuty,offDuty,out:dutyType==='Flight'?out:'',off:dutyType==='Flight'?off:'',on:dutyType==='Flight'?on:'',in:dutyType==='Flight'?inn:'',block,flight:off&&on?diff(mins(off),mins(on)):0,simulatorTime:isSimulator?simDur:0,credit:dutyType==='DHD'?durMins(g(r,'flight_credit')):dutyType==='Flight'?paidFlightCreditMins({dutyType:'Flight',date,dep:upper(g(r,'flight_from')),schedOut,schedIn,schedBlock}):dutyType==='Simulator'?Math.round(paySettings().simCredit*60):dutyType==='Ground Course'?Math.round(paySettings().groundCredit*60):0,role:durMins(g(r,'flight_sic'))>0?'SIC':'PIC',instructionType:isSimulator&&dual>0?'SFI/SFE Instruction Sim':dutyType==='Flight'&&dual>0?'Flight Instruction':'',night:g(r,'flight_night')||'00:00',sim:isSimulator?'yes':'no',ifr:g(r,'flight_ifr')?'yes':'no',dayTakeoffs:dayTo,nightTakeoffs:nightTo,dayLandings:dayLd,nightLandings:nightLd,courseType:isGround?upper(remarks):'',remarks,picName:upper(g(r,'flight_selectedCrewPIC')||''),sicName:upper(g(r,'flight_selectedCrewSIC')||''),soName:upper(g(r,'flight_selectedCrewStudent')||''),instructorName:upper(g(r,'flight_selectedCrewInstructor')||''),source:'logten',sourceRowType:logTenType,sourceRowKey:[date,logTenType,flightNoRaw,g(r,'flight_from'),g(r,'flight_to'),g(r,'flight_scheduledDepartureTime'),g(r,'flight_scheduledArrivalTime'),onDuty,offDuty,remarks].map(x=>upper(x)).join('|')});
     let match=-1;
     if(dutyType==='Flight'){
-      match=fs.findIndex(x=>x.date===date&&upper(x.flightNo)===upper(f.flightNo)&&upper(x.dep)===f.dep&&upper(x.arr)===f.arr);
+      // Prefer stable LogTen source identity when available.
+      match=fs.findIndex(x=>x.source==='logten'&&x.sourceRowKey&&x.sourceRowKey===f.sourceRowKey);
+
+      // Then match the same operational flight even if it came from another device/import.
+      if(match<0){
+        match=fs.findIndex(x=>exactOperationalMatch(x,f));
+      }
+
+      // Compatibility with old placeholder entries that have no flight number or times.
+      // Merge only if exactly one such same-date/same-route candidate exists.
+      if(match<0){
+        const skeletalCandidates=fs
+          .map((x,i)=>({x,i}))
+          .filter(({x})=>
+            isFlight(x)&&x.date===date&&
+            upper(x.dep||'')===upper(f.dep||'')&&
+            upper(x.arr||'')===upper(f.arr||'')&&
+            !normalizedFlightDigits(x.flightNo)&&
+            !x.schedOut&&!x.schedIn&&!x.out&&!x.off&&!x.on&&!x.in
+          );
+        if(skeletalCandidates.length===1)match=skeletalCandidates[0].i;
+      }
     }else{
       // Re-import must repair a previously misclassified LogTen non-flight row.
       // First prefer the stable source-row key when available.
@@ -679,8 +700,25 @@ function logTenImport(text){
         );
       }
     }
-    if(match>=0){f.id=fs[match].id;fs[match]={...fs[match],...f};updated++}else{f.id=makeId();fs.push(f);imported++}if(isSimulator)sims++;if(!['Flight','Simulator'].includes(dutyType))other++;
-  });save(FLIGHTS_KEY,fs);reconcileAllDuties();return{imported,updated,sims,other}
+    if(match>=0){
+      f.id=fs[match].id;
+      fs[match]=mergeDuplicateEntries(fs[match],f);
+      updated++;
+    }else{
+      f.id=makeId();
+      fs.push(f);
+      imported++;
+    }
+    if(isSimulator)sims++;
+    if(!['Flight','Simulator'].includes(dutyType))other++;
+  });
+
+  const deduped=dedupeFlightEntriesSemantic(fs);
+  if(deduped.removed)snapshotFlights('before-logten-dedupe');
+  fs=deduped.entries;
+  save(FLIGHTS_KEY,fs);
+  reconcileAllDuties();
+  return{imported,updated,sims,other,duplicatesRemoved:deduped.removed}
 }
 
 /* Export */
@@ -1416,6 +1454,14 @@ function exactOperationalMatch(a,b){
     const commonTime=timesA.some(t=>timesB.includes(t));
     if(fa&&fb&&fa===fb)return true;
     if(commonTime)return true;
+
+    // If both rows are only skeletal placeholders, have the same date/route and
+    // contain no flight number or operational/scheduled times, there is nothing
+    // that distinguishes them operationally. Treat them as the same placeholder.
+    const noIdentityA=!fa&&timesA.length===0;
+    const noIdentityB=!fb&&timesB.length===0;
+    if(noIdentityA&&noIdentityB&&entryCompleteness(a)<=14&&entryCompleteness(b)<=14)return true;
+
     return false;
   }
 
@@ -1716,7 +1762,23 @@ function renderEntriesSafe(){
   }
 }
 
+
+function cleanupExistingDuplicatesOnce(){
+  const key=`pilotlog_dedupe_${VERSION}`;
+  if(localStorage.getItem(key)==='1')return 0;
+  const current=load(FLIGHTS_KEY);
+  const result=dedupeFlightEntriesSemantic(current);
+  if(result.removed){
+    snapshotFlights('before-version-dedupe');
+    save(FLIGHTS_KEY,result.entries);
+    reconcileAllDuties();
+  }
+  localStorage.setItem(key,'1');
+  return result.removed;
+}
+
 async function render(){
+  cleanupExistingDuplicatesOnce();
   snapshotFlights('before-render');
   const fs=renderEntriesSafe();
 
@@ -1892,7 +1954,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('exportLogTen').addEventListener('click',logTenExport);
   const updateEasaRangeUI=()=>{const period=$('easaExportMode').value==='period';$('easaFrom').disabled=!period;$('easaTo').disabled=!period};
   $('easaExportMode').addEventListener('change',updateEasaRangeUI);updateEasaRangeUI();
-  $('logTenFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const r=logTenImport(await file.text());e.target.value='';autoDetectTrips(false);await render();$('logTenImportStatus').textContent=`Imported ${r.imported} new, repaired/updated ${r.updated}, simulators ${r.sims}, other duties ${r.other}.`;alert('LogTen import complete.')}catch(err){alert('LogTen import failed: '+err.message)}});
+  $('logTenFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const r=logTenImport(await file.text());e.target.value='';autoDetectTrips(false);await render();$('logTenImportStatus').textContent=`Imported ${r.imported} new, repaired/updated ${r.updated}, simulators ${r.sims}, other duties ${r.other}${r.duplicatesRemoved?`, duplicates merged ${r.duplicatesRemoved}`:''}.`;alert(`LogTen import complete.${r.duplicatesRemoved?` ${r.duplicatesRemoved} duplicate${r.duplicatesRemoved===1?'':'s'} merged.`:''}`)}catch(err){alert('LogTen import failed: '+err.message)}});
   $('calendarFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const events=parseIcs(await file.text());if(!events.length)throw new Error('No calendar events found.');const r=importCalendar(events);e.target.value='';autoDetectTrips(false);await render();$('calendarImportStatus').textContent=`Imported ${r.sectors} flight sectors, ${r.duties} duties and ${r.other} other entries. ${r.skipped} skipped.`;alert(`Imported: ${r.sectors} flights • ${r.duties} duties • ${r.other} other entries`)}catch(err){alert('Calendar import failed: '+err.message)}});
   $('rosterFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const rows=parseCsv(await file.text());if(rows.length<2)return alert('CSV contains no data');const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),aliases={date:['date','day'],flightNo:['flightno','flightnumber','flight','flt'],dep:['dep','departure','from','origin'],arr:['arr','arrival','to','destination'],std:['std','departuretime','scheduleddeparture','offblock'],sta:['sta','arrivaltime','scheduledarrival','onblock']},fieldFor=h=>Object.keys(aliases).find(k=>aliases[k].includes(norm(h)))||null,map=rows[0].map(fieldFor),imp=rows.slice(1).map(r=>{const o={id:makeId(),status:'planned'};map.forEach((k,i)=>{if(k)o[k]=r[i]||''});o.date=normalDate(o.date);['dep','arr','flightNo'].forEach(k=>o[k]=upper(o[k]));if(o.flightNo)o.flightNo=rosterFlightLabel(o.flightNo);return o}).filter(x=>x.date&&(x.dep||x.arr||x.flightNo));const merged=dedupeRosterItems([...load(ROSTER_KEY),...imp]);save(ROSTER_KEY,merged);e.target.value='';await render();alert(`${imp.length} roster sectors imported`)});
   $('detectTripsBtn').addEventListener('click',()=>autoDetectTrips(true));
