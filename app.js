@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.8';
+const VERSION='5.0.9';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -492,8 +492,44 @@ function logTenImport(text){
       isDhd=isTransferType&&looksLikeTransfer,
       dutyType=isSimulator?'Simulator':isGround?'Ground Course':isStandby?'STBY':(isTransferType&&(looksLikeTransfer||!flightNoRaw))?'DHD':'Flight';
     const out=g(r,'flight_actualDepartureTime'),inn=g(r,'flight_actualArrivalTime'),off=g(r,'flight_takeoffTime'),on=g(r,'flight_landingTime'),schedOut=isSimulator?'':g(r,'flight_scheduledDepartureTime'),schedIn=isSimulator?'':g(r,'flight_scheduledArrivalTime'),schedBlock=diff(mins(schedOut),mins(schedIn)),total=durMins(g(r,'flight_totalTime')),block=dutyType==='Flight'?(total||diff(mins(out),mins(inn))):0,dual=durMins(g(r,'flight_dualGiven')),dayLd=Number(g(r,'flight_dayLandings')||0),nightLd=Number(g(r,'flight_nightLandings')||0),dayTo=Number(g(r,'flight_dayTakeoffs')||0),nightTo=Number(g(r,'flight_nightTakeoffs')||0),onDuty=g(r,'flight_onDutyTime'),offDuty=g(r,'flight_offDutyTime');
-    const f=stamp({dutyType,date,flightNo:dutyType==='Flight'||dutyType==='DHD'?composeFlightNo(flightNoRaw):'',dep:upper(g(r,'flight_from')),arr:upper(g(r,'flight_to')),reg:upper(g(r,'aircraft_aircraftID')),type:upper(g(r,'aircraftType_type')),schedOut,schedIn,schedBlock,onDuty,offDuty,out:dutyType==='Flight'?out:'',off:dutyType==='Flight'?off:'',on:dutyType==='Flight'?on:'',in:dutyType==='Flight'?inn:'',block,flight:off&&on?diff(mins(off),mins(on)):0,simulatorTime:isSimulator?simDur:0,credit:dutyType==='DHD'?durMins(g(r,'flight_credit')):dutyType==='Flight'?paidFlightCreditMins({dutyType:'Flight',date,dep:upper(g(r,'flight_from')),schedOut,schedIn,schedBlock}):dutyType==='Simulator'?Math.round(paySettings().simCredit*60):dutyType==='Ground Course'?Math.round(paySettings().groundCredit*60):0,role:durMins(g(r,'flight_sic'))>0?'SIC':'PIC',instructionType:isSimulator&&dual>0?'SFI/SFE Instruction Sim':dutyType==='Flight'&&dual>0?'Flight Instruction':'',night:g(r,'flight_night')||'00:00',sim:isSimulator?'yes':'no',ifr:g(r,'flight_ifr')?'yes':'no',dayTakeoffs:dayTo,nightTakeoffs:nightTo,dayLandings:dayLd,nightLandings:nightLd,courseType:isGround?upper(remarks):'',remarks,source:'logten'});
-    let match=dutyType==='Flight'?fs.findIndex(x=>x.date===date&&upper(x.flightNo)===upper(f.flightNo)&&upper(x.dep)===f.dep&&upper(x.arr)===f.arr):fs.findIndex(x=>x.date===date&&x.dutyType===dutyType&&upper(x.dep)===f.dep&&upper(x.arr)===f.arr);
+    const f=stamp({dutyType,date,flightNo:dutyType==='Flight'||dutyType==='DHD'?composeFlightNo(flightNoRaw):'',dep:upper(g(r,'flight_from')),arr:upper(g(r,'flight_to')),reg:upper(g(r,'aircraft_aircraftID')),type:upper(g(r,'aircraftType_type')),schedOut,schedIn,schedBlock,onDuty,offDuty,out:dutyType==='Flight'?out:'',off:dutyType==='Flight'?off:'',on:dutyType==='Flight'?on:'',in:dutyType==='Flight'?inn:'',block,flight:off&&on?diff(mins(off),mins(on)):0,simulatorTime:isSimulator?simDur:0,credit:dutyType==='DHD'?durMins(g(r,'flight_credit')):dutyType==='Flight'?paidFlightCreditMins({dutyType:'Flight',date,dep:upper(g(r,'flight_from')),schedOut,schedIn,schedBlock}):dutyType==='Simulator'?Math.round(paySettings().simCredit*60):dutyType==='Ground Course'?Math.round(paySettings().groundCredit*60):0,role:durMins(g(r,'flight_sic'))>0?'SIC':'PIC',instructionType:isSimulator&&dual>0?'SFI/SFE Instruction Sim':dutyType==='Flight'&&dual>0?'Flight Instruction':'',night:g(r,'flight_night')||'00:00',sim:isSimulator?'yes':'no',ifr:g(r,'flight_ifr')?'yes':'no',dayTakeoffs:dayTo,nightTakeoffs:nightTo,dayLandings:dayLd,nightLandings:nightLd,courseType:isGround?upper(remarks):'',remarks,source:'logten',sourceRowType:logTenType,sourceRowKey:[date,logTenType,flightNoRaw,g(r,'flight_from'),g(r,'flight_to'),g(r,'flight_scheduledDepartureTime'),g(r,'flight_scheduledArrivalTime'),onDuty,offDuty,remarks].map(x=>upper(x)).join('|')});
+    let match=-1;
+    if(dutyType==='Flight'){
+      match=fs.findIndex(x=>x.date===date&&upper(x.flightNo)===upper(f.flightNo)&&upper(x.dep)===f.dep&&upper(x.arr)===f.arr);
+    }else{
+      // Re-import must repair a previously misclassified LogTen non-flight row.
+      // First prefer the stable source-row key when available.
+      match=fs.findIndex(x=>x.source==='logten'&&x.sourceRowKey&&x.sourceRowKey===f.sourceRowKey);
+
+      // Compatibility with entries imported by older PilotLog versions, which did not store sourceRowKey.
+      if(match<0){
+        match=fs.findIndex(x=>
+          x.source==='logten' &&
+          x.date===date &&
+          !upper(x.flightNo) &&
+          upper(x.dep)===upper(f.dep) &&
+          upper(x.arr)===upper(f.arr) &&
+          String(x.schedOut||'')===String(f.schedOut||'') &&
+          String(x.schedIn||'')===String(f.schedIn||'') &&
+          String(x.onDuty||'')===String(f.onDuty||'') &&
+          String(x.offDuty||'')===String(f.offDuty||'') &&
+          upper(x.remarks||'')===upper(f.remarks||'')
+        );
+      }
+
+      // Last fallback for completely blank LogTen rows such as STBY type 7:
+      // same date + no flight/route/time data identifies the original row even if it was wrongly saved as Flight.
+      if(match<0 && dutyType==='STBY' && !f.flightNo && !f.dep && !f.arr && !f.schedOut && !f.schedIn && !f.onDuty && !f.offDuty){
+        match=fs.findIndex(x=>
+          x.source==='logten' &&
+          x.date===date &&
+          !upper(x.flightNo) &&
+          !upper(x.dep) &&
+          !upper(x.arr) &&
+          !x.schedOut && !x.schedIn && !x.onDuty && !x.offDuty
+        );
+      }
+    }
     if(match>=0){f.id=fs[match].id;fs[match]={...fs[match],...f};updated++}else{f.id=makeId();fs.push(f);imported++}if(isSimulator)sims++;if(!['Flight','Simulator'].includes(dutyType))other++;
   });save(FLIGHTS_KEY,fs);reconcileAllDuties();return{imported,updated,sims,other}
 }
@@ -626,7 +662,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('tripForm').addEventListener('submit',e=>{e.preventDefault();const c=tripCalc();if(!c)return alert('Enter a valid Trip Start and Trip End.');const ts=load(TRIPS_KEY),id=$('tripEditId').value||makeId(),t=stamp({id,base:upper(appSettings().homeBase||'CMN'),stations:upper($('tripStations').value),start:$('tripStart').value,end:$('tripEnd').value,trip:c.trip,duty:c.duty,layover:c.layover,allowance:c.allowance,remarks:$('tripRemarks').value.trim()}),i=ts.findIndex(x=>x.id===id);if(i>=0)ts[i]=t;else ts.push(t);save(TRIPS_KEY,ts);resetTrip();renderTrips();alert('Trip saved.')});
   $('exportCsv').addEventListener('click',()=>{const d=load(FLIGHTS_KEY);if(!d.length)return alert('No entries to export');const cols=['dutyType','date','flightNo','reg','type','dep','arr','schedOut','schedIn','schedBlock','onDuty','offDuty','totalDuty','sectors','out','off','on','in','block','flight','simulatorTime','credit','role','instructionType','night','dayTakeoffs','nightTakeoffs','dayLandings','nightLandings','ifr','remarks','locked'];download('pilotlog_logbook.csv',[cols.join(','),...d.map(r=>cols.map(c=>csv(r[c])).join(','))].join('\n'),'text/csv')});
   $('exportLogTen').addEventListener('click',logTenExport);
-  $('logTenFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const r=logTenImport(await file.text());e.target.value='';autoDetectTrips(false);await render();$('logTenImportStatus').textContent=`Imported ${r.imported} new, updated ${r.updated}, simulators ${r.sims}, other duties ${r.other}.`;alert('LogTen import complete.')}catch(err){alert('LogTen import failed: '+err.message)}});
+  $('logTenFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const r=logTenImport(await file.text());e.target.value='';autoDetectTrips(false);await render();$('logTenImportStatus').textContent=`Imported ${r.imported} new, repaired/updated ${r.updated}, simulators ${r.sims}, other duties ${r.other}.`;alert('LogTen import complete.')}catch(err){alert('LogTen import failed: '+err.message)}});
   $('calendarFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;try{const events=parseIcs(await file.text());if(!events.length)throw new Error('No calendar events found.');const r=importCalendar(events);e.target.value='';autoDetectTrips(false);await render();$('calendarImportStatus').textContent=`Imported ${r.sectors} flight sectors, ${r.duties} duties and ${r.other} other entries. ${r.skipped} skipped.`;alert(`Imported: ${r.sectors} flights • ${r.duties} duties • ${r.other} other entries`)}catch(err){alert('Calendar import failed: '+err.message)}});
   $('rosterFile').addEventListener('change',async e=>{const file=e.target.files[0];if(!file)return;const rows=parseCsv(await file.text());if(rows.length<2)return alert('CSV contains no data');const norm=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]/g,''),aliases={date:['date','day'],flightNo:['flightno','flightnumber','flight','flt'],dep:['dep','departure','from','origin'],arr:['arr','arrival','to','destination'],std:['std','departuretime','scheduleddeparture','offblock'],sta:['sta','arrivaltime','scheduledarrival','onblock']},fieldFor=h=>Object.keys(aliases).find(k=>aliases[k].includes(norm(h)))||null,map=rows[0].map(fieldFor),imp=rows.slice(1).map(r=>{const o={id:makeId(),status:'planned'};map.forEach((k,i)=>{if(k)o[k]=r[i]||''});o.date=normalDate(o.date);['dep','arr','flightNo'].forEach(k=>o[k]=upper(o[k]));return o}).filter(x=>x.date&&(x.dep||x.arr||x.flightNo));save(ROSTER_KEY,[...load(ROSTER_KEY),...imp]);e.target.value='';await render();alert(`${imp.length} roster sectors imported`)});
   $('detectTripsBtn').addEventListener('click',()=>autoDetectTrips(true));
