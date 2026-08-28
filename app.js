@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.5';
+const VERSION='5.0.6';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -318,9 +318,36 @@ async function rosterGroupHtml(groups,interactive=false){
 function entryInterval(f){const t=f.onDuty||f.out||f.schedOut,u=f.offDuty||f.in||f.schedIn;if(!f.date||!t||!u)return null;return dutyDateEnd(f.date,t,u)}
 function overlapMins(a,b,s,e){const x=Math.max(a.getTime(),s.getTime()),y=Math.min(b.getTime(),e.getTime());return Math.max(0,Math.round((y-x)/60000))}
 function tripChargeableDuty(s,e){
-  let total=0;const dates=[...new Set(load(FLIGHTS_KEY).map(f=>f.date).filter(Boolean))];
-  dates.forEach(date=>{const entries=dayEntries(date),ground=entries.some(isGround);if(ground){const marker=zuluDate(date,entries[0]?.onDuty||'00:00');if(marker>=s&&marker<=e)total+=300;return}const d=dutySummary(date);if(!d||!d.report||!d.end)return;const [a,b]=dutyDateEnd(date,d.report,d.end);total+=overlapMins(a,b,s,e)});
-  return total
+  let total=0;
+  const fs=load(FLIGHTS_KEY).filter(f=>f.date);
+  const dates=[...new Set(fs.map(f=>f.date).filter(Boolean))];
+
+  dates.forEach(date=>{
+    const entries=dayEntries(date,fs);
+    const groundEntries=entries.filter(isGround);
+    if(groundEntries.length){
+      // Ground Course is always charged as fixed 5:00 duty for layover purposes.
+      for(const g of groundEntries){
+        const marker=entryStart(g)||zuluDate(date,g.onDuty||'00:00');
+        if(marker && marker>=s && marker<=e) total+=300;
+      }
+    }
+
+    // DHD must never reduce paid layover.
+    const dutyEntries=entries.filter(x=>!isDhd(x)&&!isGround(x)&&!isStby(x));
+    if(!dutyEntries.length) return;
+
+    // Build the chargeable operational duty only from non-DHD/non-ground entries.
+    const first=dutyEntries[0], last=dutyEntries[dutyEntries.length-1];
+    const startTime=first.onDuty||shiftTime(first.schedOut||first.out,-60);
+    const endTime=last.offDuty||shiftTime(last.schedIn||last.in,30);
+    if(!startTime||!endTime) return;
+
+    const [a,b]=dutyDateEnd(date,startTime,endTime);
+    total+=overlapMins(a,b,s,e);
+  });
+
+  return total;
 }
 function tripCalc(){
   const s=new Date($('tripStart').value),e=new Date($('tripEnd').value);if(!Number.isFinite(s.getTime())||!Number.isFinite(e.getTime())||e<=s){$('tripLayover').value='0:00';$('tripAllowance').value='0.00';return null}
@@ -330,15 +357,89 @@ function tripCalc(){
 function resetTrip(){$('tripForm').reset();$('tripEditId').value='';$('tripLayover').value='0:00';$('tripAllowance').value='0.00'}
 function localDateTimeValue(d){const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
 function entryStart(f){return zuluDate(f.date,f.onDuty||f.schedOut||f.out||'00:00')}
+function tripSequenceStart(f){
+  // For trip boundaries use the actual beginning of the activity, not a derived duty/reporting time.
+  const t=f.schedOut||f.out||f.onDuty||'00:00';
+  return zuluDate(f.date,t);
+}
+function tripSequenceEnd(f){
+  // For trip boundaries use the actual end of the final activity.
+  const start=f.schedOut||f.out||f.onDuty||'00:00';
+  const end=f.schedIn||f.in||f.offDuty||f.on||start;
+  return endZuluDate(f.date,start,end);
+}
 function entryEnd(f){if(!f.date)return null;const t=f.offDuty||f.schedIn||f.in||f.onDuty||'00:00';return endZuluDate(f.date,f.onDuty||f.schedOut||f.out||'00:00',t)}
 function autoDetectTrips(showAlert=true){
-  const base=upper(appSettings().homeBase||'CMN'),fs=load(FLIGHTS_KEY).filter(f=>f.date).sort((a,b)=>(entryStart(a)?.getTime()||0)-(entryStart(b)?.getTime()||0));let ts=load(TRIPS_KEY),created=0,updated=0;
-  for(let i=0;i<fs.length;i++){const f=fs[i];if(!isDhd(f)||upper(f.dep)!==base||!f.arr||upper(f.arr)===base)continue;const start=entryStart(f);if(!start)continue;let end=null,last=i,stations=new Set([upper(f.arr)]);
-    for(let j=i+1;j<fs.length;j++){const x=fs[j];last=j;if(x.dep&&upper(x.dep)!==base)stations.add(upper(x.dep));if(x.arr&&upper(x.arr)!==base)stations.add(upper(x.arr));if(upper(x.arr)===base){end=entryEnd(x);break}}
-    if(!end||end<=start)continue;const trip=Math.round((end-start)/60000),duty=tripChargeableDuty(start,end),layover=Math.max(0,trip-duty),allowance=(layover/60)*Number(paySettings().layoverRate||0),startStr=localDateTimeValue(start),endStr=localDateTimeValue(end),sig=`AUTO|${startStr}|${endStr}|${base}`;
-    const k=ts.findIndex(t=>t.autoSig===sig||t.autoSourceId===f.id),obj=stamp({id:k>=0?ts[k].id:makeId(),base,stations:[...stations].filter(Boolean).join(', '),start:startStr,end:endStr,trip,duty,layover,allowance,remarks:'Automatically detected from DHD / out-of-base sequence',auto:true,autoSourceId:f.id,autoSig:sig});
-    if(k>=0){ts[k]={...ts[k],...obj};updated++}else{ts.push(obj);created++}i=last
-  }save(TRIPS_KEY,ts);renderTrips();renderPayroll();if(showAlert)alert(`Automatic Trips: ${created} created, ${updated} updated.`);return{created,updated}
+  const base=upper(appSettings().homeBase||'CMN');
+  const fs=load(FLIGHTS_KEY)
+    .filter(f=>f.date)
+    .sort((a,b)=>(tripSequenceStart(a)?.getTime()||0)-(tripSequenceStart(b)?.getTime()||0));
+
+  let ts=load(TRIPS_KEY),created=0,updated=0;
+
+  for(let i=0;i<fs.length;i++){
+    const f=fs[i];
+
+    // Opening logic: a DHD or any activity leaving home base and ending away from base.
+    if(upper(f.dep)!==base || !f.arr || upper(f.arr)===base) continue;
+
+    const start=tripSequenceStart(f);
+    if(!start) continue;
+
+    let end=null,last=i,stations=new Set(),includedIds=[];
+    for(let j=i;j<fs.length;j++){
+      const x=fs[j];
+      includedIds.push(x.id);
+      last=j;
+
+      if(x.dep&&upper(x.dep)!==base) stations.add(upper(x.dep));
+      if(x.arr&&upper(x.arr)!==base) stations.add(upper(x.arr));
+
+      // Trip closes only when the sequence physically returns to home base.
+      if(j>i && upper(x.arr)===base){
+        end=tripSequenceEnd(x);
+        break;
+      }
+    }
+
+    if(!end||end<=start) continue;
+
+    const trip=Math.round((end-start)/60000);
+    const duty=tripChargeableDuty(start,end);
+    const layover=Math.max(0,trip-duty);
+    const allowance=(layover/60)*Number(paySettings().layoverRate||0);
+    const startStr=localDateTimeValue(start),endStr=localDateTimeValue(end);
+    const sig=`AUTO|${startStr}|${endStr}|${base}`;
+
+    const k=ts.findIndex(t=>t.autoSig===sig||t.autoSourceId===f.id);
+    const obj=stamp({
+      id:k>=0?ts[k].id:makeId(),
+      base,
+      stations:[...stations].filter(Boolean).join(', '),
+      start:startStr,
+      end:endStr,
+      trip,
+      duty,
+      layover,
+      allowance,
+      remarks:'Automatically detected from out-of-base sequence',
+      auto:true,
+      autoSourceId:f.id,
+      autoSig:sig,
+      includedEntryIds:includedIds
+    });
+
+    if(k>=0){ts[k]={...ts[k],...obj};updated++}
+    else{ts.push(obj);created++}
+
+    i=last;
+  }
+
+  save(TRIPS_KEY,ts);
+  renderTrips();
+  renderPayroll();
+  if(showAlert)alert(`Automatic Trips: ${created} created, ${updated} updated.`);
+  return{created,updated};
 }
 
 /* Imports */
@@ -440,7 +541,52 @@ async function renderTotals(){const fs=load(FLIGHTS_KEY),flying=fs.filter(isFlig
   const ac={};fs.forEach(f=>{const t=upper(f.type||'Unspecified');if(!ac[t])ac[t]={f:0,s:0};if(isSim(f))ac[t].s+=Number(f.simulatorTime)||0;else if(isFlight(f))ac[t].f+=Number(f.block)||0});$('aircraftBreakdown').innerHTML=Object.entries(ac).map(([t,v])=>`<div class="stat-row"><span><b>${esc(t)}</b><div class="small">Flying ${fmt(v.f)} • Simulator ${fmt(v.s)}</div></span><b>${fmt(v.f+v.s)}</b></div>`).join('')||'<div class="empty">No aircraft data.</div>';
   const by={};[...new Set(fs.map(f=>f.date))].forEach(d=>{const x=dutySummary(d);if(!x)return;const type=x.entries.some(isSim)?'Simulator':x.entries.some(isGround)?'Ground Course':x.entries.some(isStby)?'Standby':'Flight Duty';by[type]=(by[type]||0)+x.minutes});$('dutyBreakdown').innerHTML=Object.entries(by).map(([n,v])=>`<div class="stat-row"><span>${esc(n)}</span><b>${fmt(v)}</b></div>`).join('')||'<div class="empty">No duty data.</div>'
 }
-function renderTrips(){const ts=load(TRIPS_KEY).sort((a,b)=>String(b.start).localeCompare(String(a.start)));$('tripList').innerHTML=ts.length?ts.map(t=>`<div class="rowitem"><div><b>${esc(t.base||'Trip')} ${t.stations?'• '+esc(t.stations):''}</b><div class="small">${esc(String(t.start).replace('T',' '))} → ${esc(String(t.end).replace('T',' '))}</div></div><div class="meta"><b>${fmt(t.layover)}</b><br><span class="small">${money(t.allowance??(t.layover/60*paySettings().layoverRate))} DHM allowance</span><div class="list-actions"><button class="danger" data-delete-trip="${t.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No trips yet.</div>'}
+
+function tripIncludedEntries(t){
+  const fs=load(FLIGHTS_KEY);
+  if(Array.isArray(t.includedEntryIds)&&t.includedEntryIds.length){
+    const set=new Set(t.includedEntryIds);
+    return fs.filter(f=>set.has(f.id)).sort((a,b)=>(tripSequenceStart(a)?.getTime()||0)-(tripSequenceStart(b)?.getTime()||0));
+  }
+  const s=new Date(t.start),e=new Date(t.end);
+  return fs.filter(f=>{
+    const a=tripSequenceStart(f),b=tripSequenceEnd(f);
+    return a&&b&&a<e&&b>s;
+  }).sort((a,b)=>(tripSequenceStart(a)?.getTime()||0)-(tripSequenceStart(b)?.getTime()||0));
+}
+function renderTripInspector(tripId){
+  const wrap=$('tripInspectorWrap'),box=$('tripInspector');
+  const t=load(TRIPS_KEY).find(x=>x.id===tripId);
+  if(!t){wrap.classList.add('hidden');box.innerHTML='';return}
+  const entries=tripIncludedEntries(t),s=new Date(t.start),e=new Date(t.end);
+  const rows=entries.map(f=>{
+    const a=tripSequenceStart(f),b=tripSequenceEnd(f);
+    const dur=a&&b?Math.round((b-a)/60000):0;
+    const charge=isDhd(f)?'Excluded from duty':isGround(f)?'5:00 fixed duty':isStby(f)?'Not deducted':'Included in duty';
+    return `<div class="rowitem">
+      <div>
+        <b>${esc(f.date)} • ${esc(f.dutyType||'Flight')} ${esc(f.flightNo||'')}</b>
+        <div class="small">${esc(f.dep||'')} ${f.arr?'→ '+esc(f.arr):''}</div>
+        <div class="small">${charge}</div>
+      </div>
+      <div class="meta">
+        <b>${a?esc(a.toISOString().slice(11,16)):'--:--'}–${b?esc(b.toISOString().slice(11,16)):'--:--'} Z</b>
+        <br><span class="small">${fmt(dur)}</span>
+      </div>
+    </div>`;
+  }).join('');
+  box.innerHTML=
+    `<div class="stat-row"><span>Trip start</span><b>${esc(s.toISOString().replace('T',' ').slice(0,16))} Z</b></div>
+     <div class="stat-row"><span>Trip end</span><b>${esc(e.toISOString().replace('T',' ').slice(0,16))} Z</b></div>
+     <div class="stat-row"><span>Total trip time</span><b>${fmt(t.trip)}</b></div>
+     <div class="stat-row"><span>Duty subtracted</span><b>${fmt(t.duty)}</b></div>
+     <div class="stat-row"><span>Paid layover</span><b>${fmt(t.layover)}</b></div>
+     <div class="section-title inner">Included entries</div>
+     ${rows||'<div class="empty">No entries found for this trip.</div>'}`;
+  wrap.classList.remove('hidden');
+  wrap.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function renderTrips(){const ts=load(TRIPS_KEY).sort((a,b)=>String(b.start).localeCompare(String(a.start)));$('tripList').innerHTML=ts.length?ts.map(t=>`<div class="rowitem"><div><b>${esc(t.base||'Trip')} ${t.stations?'• '+esc(t.stations):''}</b><div class="small">${esc(String(t.start).replace('T',' '))} → ${esc(String(t.end).replace('T',' '))}</div></div><div class="meta"><b>${fmt(t.layover)}</b><br><span class="small">${money(t.allowance??(t.layover/60*paySettings().layoverRate))} DHM allowance</span><div class="list-actions"><button class="secondary" data-view-trip="${t.id}">View duties</button><button class="danger" data-delete-trip="${t.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No trips yet.</div>'}
 function renderSettings(){const st=appSettings();$('setHomeBase').value=st.homeBase||'CMN';$('setFlightPrefix').value=st.flightPrefix||'MAC';$('setAircraftPrefix').value=st.aircraftPrefix||'CN-NM';$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||$('cloudEmail').value||'';updatePrefixUI();fillPaySettings();updateCloudStatus();ensureAirportDb(false)}
 function setEntryLockedUI(locked){$('flightForm').querySelectorAll('input:not(#editId),select,textarea').forEach(el=>{if(['blockDisplay','schedBlockDisplay','totalTimeDisplay','picDisplay','sicDisplay','flightInstructionDisplay','simInstructionDisplay','sectorDisplay','totalDutyDisplay','night'].includes(el.id))return;el.disabled=!!locked});$('creditDisplay').disabled=!!locked;$('saveEntryBtn').disabled=!!locked;$('lockEntryBtn').textContent=locked?'Unlock entry':'Save & Lock';$('entryLockStatus').textContent=locked?'LOCKED • All entry data are protected from editing.':'Unlocked. Lock the entry when all data are final.';$('entryLockStatus').classList.toggle('success',!!locked)}
 function resetEntry(){const f=$('flightForm');f.reset();$('editId').value='';updatePrefixUI();$('date').value=today();$('dutyTypeFlight').value='Flight';$('role').value='PIC';$('night').value='00:00';$('ifr').value='yes';['dayTakeoffs','nightTakeoffs','dayLandings','nightLandings'].forEach(id=>$(id).value=0);$('entryTitle').textContent='Add log entry';$('saveEntryBtn').textContent='Save entry';setEntryLockedUI(false);setEntryTypeUI();calcEntry();$('sectorDisplay').value='';$('totalDutyDisplay').value='';updateAirportInfo()}
@@ -486,7 +632,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.addEventListener('click',async e=>{let b=e.target.closest('[data-delete-flight]');if(b){if(!confirm('Confirm to delete this log entry?'))return;save(FLIGHTS_KEY,load(FLIGHTS_KEY).filter(f=>f.id!==b.dataset.deleteFlight));reconcileAllDuties();await render();return}
     b=e.target.closest('[data-edit-flight]');if(b){const f=load(FLIGHTS_KEY).find(x=>x.id===b.dataset.editFlight);if(f){loadEntryToForm(f);show('addView')}return}
     b=e.target.closest('[data-delete-duty]');if(b){if(!confirm('Confirm to delete this duty?'))return;save(DUTY_KEY,load(DUTY_KEY).filter(d=>d.id!==b.dataset.deleteDuty));reconcileAllDuties();renderDuty();await render();return}
-    b=e.target.closest('[data-delete-trip]');if(b){if(!confirm('Confirm to delete this trip?'))return;save(TRIPS_KEY,load(TRIPS_KEY).filter(t=>t.id!==b.dataset.deleteTrip));renderTrips();return}
+    b=e.target.closest('[data-view-trip]');if(b){renderTripInspector(b.dataset.viewTrip);return}
+    b=e.target.closest('[data-delete-trip]');if(b){if(!confirm('Confirm to delete this trip?'))return;save(TRIPS_KEY,load(TRIPS_KEY).filter(t=>t.id!==b.dataset.deleteTrip));renderTrips();$('tripInspectorWrap')?.classList.add('hidden');return}
     b=e.target.closest('[data-roster-action]');if(b){const rs=load(ROSTER_KEY),r=rs.find(x=>x.id===b.dataset.rosterAction);if(!r)return;const existing=load(FLIGHTS_KEY).find(f=>f.date===r.date&&upper(f.flightNo)===upper(r.flightNo)&&upper(f.dep)===upper(r.dep)&&upper(f.arr)===upper(r.arr));if(existing)loadEntryToForm(existing);else{resetEntry();$('date').value=r.date;$('flightNo').value=flightNoInput(composeFlightNo(r.flightNo));$('dep').value=r.dep;$('arr').value=r.arr;$('schedOut').value=r.std;$('schedIn').value=r.sta;calcEntry();$('remarks').value='Imported from roster';await updateAirportInfo()}r.status='done';save(ROSTER_KEY,rs);show('addView');await render()}
   });
   resetEntry();resetTrip();$('dutyDate').value=today();$('payrollMonth').value=monthNow();$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';fillPaySettings();renderDuty();renderSettings();render();show('dashboardView');console.log('PilotLog v'+VERSION+' loaded');

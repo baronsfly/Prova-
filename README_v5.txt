@@ -40,3 +40,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 
 - Ground Course entry UI is simplified to Date, Location (IATA), Course Type and editable Credit Hours.
 - Ground Course credit defaults from Settings but remains manually editable.
+
+- DHD is excluded from paid-layover duty subtraction.
+- Automatic trip boundaries use the exact start time of the first out-of-base activity and the exact end time of the final return-to-base activity.
+- Automatically generated trips store the IDs of included entries and expose a View duties inspector showing each included flight/duty, times, duration and whether it was deducted from layover.
