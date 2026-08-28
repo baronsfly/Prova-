@@ -195,3 +195,18 @@
 - If the outbound sector crosses midnight, the return flight date is advanced automatically by one day.
 - Sector-specific times and calculated values remain blank for the new return sector.
 - Return Flight uses the currently populated outbound form, or the most recent stored Flight if the form has no route.
+
+## v5.2.0
+- Add-entry form now persists locally while navigating; existing unlocked entries autosave edits.
+- Removed redundant Save/Update Entry; final action is Lock/Unlock with 🔒/🔓.
+- Lock keeps the screen on Add for review.
+- Entries display 🔒 or 🔓 state.
+- Added custom mobile autocomplete for crew names and Aircraft Type.
+- Off Duty follows actual IN + 30 minutes; scheduled IN +30 is fallback only.
+- Night time includes taxi-out and taxi-in when those portions occur at night.
+- Added PF Yes/No. PF=Yes automatically credits one take-off and one landing in the correct Day/Night bucket.
+- Added approach type and approach counts in Totals.
+- Added Last 6 months to Periods.
+- Corrected EASA ORO.FTL.205 Table 2 and added Maximum Daily FDP.
+- Rebuilt EASA duty accumulation as operational duty sessions, including midnight crossing, to prevent inflated 7/14/28-day totals.
+- Added offline PWA caching for core PilotLog files after first online load.

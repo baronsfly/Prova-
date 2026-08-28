@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.1.9">
+<link rel="stylesheet" href="styles.css?v=5.2.0">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.1.9</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.2.0</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -58,6 +58,8 @@
         <div data-entry-field="instruction"><label>Instruction</label><select id="instructionType"><option value="">None</option><option value="Flight Instruction">Flight Instruction</option><option value="SFI/SFE Instruction Sim">SFI/SFE Instruction Sim</option></select></div>
         <div data-entry-field="night"><label>Night time — auto</label><input id="night" value="00:00" readonly></div>
         <div data-entry-field="ifr"><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
+        <div data-entry-field="pf"><label>PF</label><select id="pf"><option value="no">No</option><option value="yes">Yes</option></select></div>
+        <div data-entry-field="approachType"><label>Type of approach</label><select id="approachType"><option value="">—</option><option>CAT3</option><option>ILS</option><option>LOC</option><option>RNAV</option><option>RNAV AR</option><option>VOR</option><option>NDB</option><option>CRCL</option><option>VIS</option><option>GOA</option></select></div>
       </div>
 
       <div class="section-title inner" id="breakdownTitle">Logbook time breakdown</div>
@@ -78,8 +80,8 @@
       <div class="full" id="remarksWrap"><label>Remarks</label><textarea id="remarks"></textarea></div>
       <div class="totals" id="calcPreview">Schedule Block 0:00 • Actual Block 0:00 • Flight 0:00 • Credit 0:00</div>
       <div class="hint" id="nightStatus">Night time is calculated automatically from airport coordinates and civil twilight when OFF/ON are available.</div>
-      <div class="actions"><button class="primary" type="submit" id="saveEntryBtn">Save entry</button><button class="secondary" type="button" id="lockEntryBtn">Save & Lock</button><button class="secondary" type="button" id="returnFlight">Return Flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
-      <div class="hint" id="entryLockStatus">Unlocked. Lock the entry when all data are final.</div>
+      <div class="actions"><button class="primary lock-button" type="button" id="lockEntryBtn">🔒 Lock</button><button class="secondary" type="button" id="returnFlight">Return Flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
+      <div class="hint" id="entryLockStatus">Draft autosaves on this device. Lock the entry when all data are final.</div>
     </form>
   </div>
 </section>
@@ -119,6 +121,7 @@
     <div class="stat-row"><span>A320 Instruction Simulator Time</span><b id="tA320SimInstruction">0:00</b></div>
   </div>
   <div class="section-title">Periods / logbook hours</div><div class="card" id="periodTotals"></div>
+  <div class="section-title">Approaches</div><div class="card" id="approachTotals"></div>
   <div class="section-title">A320 Aircraft Breakdown</div><div class="card" id="aircraftBreakdown"></div>
 </section>
 
@@ -321,5 +324,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.1.9" defer></script>
+<script src="app.js?v=5.2.0" defer></script>
 </body></html>
