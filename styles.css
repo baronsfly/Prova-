@@ -5,3 +5,14 @@
 .month-separator{display:flex;align-items:center;gap:12px;margin:24px 0 10px;font-weight:800;font-size:1.08rem;color:var(--text,#172033)}
 .month-separator::after{content:"";height:1px;background:rgba(100,116,139,.25);flex:1}
 .month-separator span{white-space:nowrap}
+
+.duty-week-row{display:grid;grid-template-columns:105px 1fr auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(100,116,139,.18)}
+.duty-week-row:last-child{border-bottom:0}
+.duty-week-date{display:flex;flex-direction:column;gap:2px}
+.duty-week-date span{font-size:.86rem;color:var(--muted,#6b7280)}
+.duty-week-main{min-width:0}
+.duty-week-time{text-align:right;white-space:nowrap}
+@media(max-width:700px){
+  .duty-week-row{grid-template-columns:82px 1fr;align-items:start}
+  .duty-week-time{grid-column:2;text-align:left}
+}

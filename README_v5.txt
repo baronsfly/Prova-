@@ -70,3 +70,6 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.0.16 Morocco night premium pairing logic: each flight sector departing Morocco is evaluated independently by scheduled local departure time. Its result (day or +50% night) also applies only to the immediately following return sector. Example: CMN-BCN 14:00 + BCN-CMN = day; CMN-AGP 18:10 + AGP-CMN = night +50%.
 
 - v5.0.17 Morocco night premium simplified and hardened: a sector departing Morocco is evaluated directly from its own scheduled local departure time. A sector departing abroad inherits day/night status only from the immediately preceding operating sector when that preceding sector departed Morocco. This supports independent sector pairs in 4-sector duties and works correctly during Add/Edit before saving.
+
+- v5.0.18 Dashboard simplified: Recent Entries and Upcoming Roster removed from Dashboard.
+- Added Duty — Today + next 6 days, showing a compact seven-day operational view with actual entries first, then planned roster/duty data, and OFF / No duty for empty days.

@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.17';
+const VERSION='5.0.18';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -731,6 +731,70 @@ function flightHtml(fs,full=false){
   });
   return html;
 }
+
+function isoDateLocal(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),day=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function dashboardDuty7Days(){
+  const today=new Date(), roster=load(ROSTER_KEY), duties=load(DUTIES_KEY), flights=load(FLIGHTS_KEY);
+  const rows=[];
+
+  for(let i=0;i<7;i++){
+    const d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+i);
+    const date=isoDateLocal(d);
+    const dayLabel=i===0?'Today':new Intl.DateTimeFormat('en-GB',{weekday:'short'}).format(d);
+
+    const actual=dayEntries(date,flights).filter(f=>!isDhd(f));
+    const actualFlights=actual.filter(isFlight);
+    const planned=dedupeRosterItems(roster.filter(r=>r.date===date));
+    const ext=duties.find(x=>x.date===date);
+
+    let type='OFF / No duty',report='',end='',sectors=0,route='',detail='';
+
+    if(actual.length){
+      if(actualFlights.length){
+        const first=actualFlights[0],last=actualFlights[actualFlights.length-1];
+        type='Flight Duty';
+        report=first.onDuty||ext?.report||shiftTime(first.schedOut||first.out,-60);
+        end=last.offDuty||ext?.end||shiftTime(last.schedIn||last.in,30);
+        sectors=actualFlights.length;
+        const home=upper(appSettings().homeBase||'CMN');
+        const dest=actualFlights.find(x=>upper(x.dep)===home&&upper(x.arr)!==home)?.arr||first.arr||'';
+        route=`${first.dep||home}${dest?' → '+dest:''}`;
+      }else{
+        const first=actual[0],last=actual[actual.length-1];
+        type=first.dutyType||'Duty';
+        report=first.onDuty||ext?.report||'';
+        end=last.offDuty||ext?.end||'';
+        route=first.dep||first.courseType||'';
+      }
+    }else if(planned.length){
+      planned.sort((a,b)=>(a.std||'').localeCompare(b.std||''));
+      const first=planned[0],last=planned[planned.length-1];
+      type='Planned Flight Duty';
+      report=ext?.report||shiftTime(first.std,-60);
+      end=ext?.end||shiftTime(last.sta,30);
+      sectors=planned.filter(x=>x.flightNo).length;
+      const home=upper(appSettings().homeBase||'CMN');
+      const dest=planned.find(x=>upper(x.dep)===home&&upper(x.arr)!==home)?.arr||first.arr||'';
+      route=`${first.dep||home}${dest?' → '+dest:''}`;
+    }else if(ext){
+      type=ext.type||'Duty';
+      report=ext.report||'';
+      end=ext.end||'';
+      detail=ext.remarks||'';
+    }
+
+    rows.push(`<div class="duty-week-row">
+      <div class="duty-week-date"><b>${esc(dayLabel)}</b><span>${esc(date)}</span></div>
+      <div class="duty-week-main"><b>${esc(type)}</b>${route?`<div class="small">${esc(route)}</div>`:''}${detail?`<div class="small">${esc(detail)}</div>`:''}</div>
+      <div class="duty-week-time">${report||end?`<b>${esc(report||'--:--')} – ${esc(end||'--:--')}</b><div class="small">${sectors?`${sectors} sector${sectors===1?'':'s'}`:'Duty'}</div>`:'<span class="small">—</span>'}</div>
+    </div>`);
+  }
+  return rows.join('');
+}
+
 async function render(){
   reconcileAllDuties();
   const fs=load(FLIGHTS_KEY).sort((a,b)=>{
@@ -741,7 +805,7 @@ async function render(){
   $('mPic').textContent=fmt(sum(fs,picMins));
   $('mTri').textContent=fmt(sum(fs,flightInstrMins));
   $('mDuty').textContent=fmt(mergedDutyMinutes());
-  $('recentFlights').innerHTML=flightHtml(fs.slice(0,6));
+  if($('dashboardDutyWeek'))$('dashboardDutyWeek').innerHTML=dashboardDuty7Days();
   $('allFlights').innerHTML=flightHtml(fs,true);
   const ok=await renderFtl('dashboardFtl',true);
   $('mFtl').textContent=ok?'OK':'CHECK';
