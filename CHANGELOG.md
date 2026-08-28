@@ -137,3 +137,11 @@
 - Root cause: `rosterMonthLabel()` had accidentally been declared `async`, while its result was interpolated synchronously.
 - `rosterMonthLabel()` is now a synchronous formatter and returns the month/year string directly.
 - Added pre-release guard to reject async month-label formatting in the Roster.
+
+## v5.1.4
+- Reworked Supabase Cloud Sync to remove the runtime dependency on loading `@supabase/supabase-js` from jsDelivr.
+- Authentication and data sync now use Supabase HTTP APIs directly.
+- Added a 10-second timeout to every cloud request, so status can no longer remain indefinitely on “Checking cloud connection…”.
+- Cloud Status immediately reports “Not signed in” when no local session exists.
+- Passwords remain non-persistent; only the remembered email and cloud session tokens are stored.
+- Existing cloud data merge format is preserved.

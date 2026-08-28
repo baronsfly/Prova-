@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.1.3';
+const VERSION='5.1.4';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -1276,19 +1276,201 @@ let payrollRenderToken=0;
 async function renderPayroll(){const token=++payrollRenderToken,month=$('payrollMonth').value||monthNow();$('payrollMonth').value=month;const ex=monthExtras(month);$('payDayOffCount').value=ex.dayOffCount||0;$('payArrears').value=ex.arrears||0;const p=payrollData(month);$('payCredits').textContent=fmt(p.creditMins);$('payLayover').textContent=fmt(p.layMins);$('payTrainingSectors').textContent=p.training;$('paySimCount').textContent=p.sims;$('payTotalDhm').textContent=`${money(p.total)} DHM`;$('payTotalEur').textContent='…';$('payBreakdown').innerHTML=[['Fixed salary',p.fixed],['Seniority ('+money(p.seniorPct)+'%)',p.seniority],['Credit hours pay',p.flightPay],['Training sectors ('+p.training+')',p.trainingPay],['Layover ('+p.layHours.toFixed(2)+' h)',p.layoverPay],['Simulator allowance ('+p.sims+')',p.simPay],['Day OFF premium ('+(p.extras.dayOffCount||0)+')',p.dayOffPay],['Arrears / adjustments',p.arrears]].map(([n,v])=>`<div class="stat-row"><span>${esc(n)}</span><b class="money">${money(v)} DHM</b></div>`).join('');$('payFxStatus').textContent='Loading EUR/MAD…';try{const fx=await getMonthFx(month);if(token!==payrollRenderToken)return;if(!fx.rate){$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX not available for a future month.';return}$('payTotalEur').textContent=`≈ €${money(p.total/fx.rate)}`;$('payFxStatus').innerHTML=`EUR/MAD ${money(fx.rate)} • ${esc(displayDate(fx.date))} ${fx.locked?'<span class="fx-lock">LOCKED</span>':'<span class="fx-live">LIVE</span>'}${fx.provisional?' • provisional until lock rule':''}`}catch{$('payTotalEur').textContent='—';$('payFxStatus').textContent='FX unavailable. Payroll in DHM is unaffected.'}}
 
 /* Cloud */
-const SUPABASE_URL='https://ytlfygmojojipdjeppic.supabase.co',SUPABASE_PUBLISHABLE_KEY='sb_publishable_a3P-hh1BBqsQ0zRiY1uquA_YgiFcIg0',SUPABASE_TABLE='pilotlog_entries';
-const SYNC_KINDS=[[FLIGHTS_KEY,'flights'],[ROSTER_KEY,'roster'],[DUTY_KEY,'duties'],[TRIPS_KEY,'trips']],SYNC_SINGLETONS=[[PAY_SETTINGS_KEY,'paySettings'],[PAY_MONTH_KEY,'payMonth'],[FX_KEY,'fx'],[APP_SETTINGS_KEY,'appSettings']];
-let supabaseClient=null;
-async function getSupabase(){if(supabaseClient)return supabaseClient;const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/+esm');supabaseClient=mod.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage,storageKey:'pilotlog-supabase-auth'}});supabaseClient.auth.onAuthStateChange(()=>updateCloudStatus().catch(()=>{}));return supabaseClient}
+const SUPABASE_URL='https://ytlfygmojojipdjeppic.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY='sb_publishable_a3P-hh1BBqsQ0zRiY1uquA_YgiFcIg0';
+const SUPABASE_TABLE='pilotlog_entries';
+const CLOUD_SESSION_KEY='pilotlog_cloud_session_v2';
+
+const SYNC_KINDS=[[FLIGHTS_KEY,'flights'],[ROSTER_KEY,'roster'],[DUTY_KEY,'duties'],[TRIPS_KEY,'trips']];
+const SYNC_SINGLETONS=[[PAY_SETTINGS_KEY,'paySettings'],[PAY_MONTH_KEY,'payMonth'],[FX_KEY,'fx'],[APP_SETTINGS_KEY,'appSettings']];
+
+function cloudStoredSession(){return loadObject(CLOUD_SESSION_KEY,null)}
+function saveCloudSession(s){
+  if(!s){localStorage.removeItem(CLOUD_SESSION_KEY);return}
+  const expiresAt=s.expires_at||Math.floor(Date.now()/1000)+(Number(s.expires_in)||3600);
+  localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify({...s,expires_at:expiresAt}));
+}
+async function cloudFetch(path,{method='GET',body=null,token='',headers={}}={}){
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),10000);
+  try{
+    const res=await fetch(`${SUPABASE_URL}${path}`,{
+      method,
+      signal:ctrl.signal,
+      headers:{
+        apikey:SUPABASE_PUBLISHABLE_KEY,
+        Authorization:`Bearer ${token||SUPABASE_PUBLISHABLE_KEY}`,
+        ...(body?{'Content-Type':'application/json'}:{}),
+        ...headers
+      },
+      body:body?JSON.stringify(body):undefined
+    });
+    const text=await res.text();
+    let data=null;
+    if(text){try{data=JSON.parse(text)}catch{data=text}}
+    if(!res.ok){
+      const msg=(data&&typeof data==='object'&&(data.msg||data.message||data.error_description||data.error))||`HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return data;
+  }catch(e){
+    if(e?.name==='AbortError')throw new Error('Cloud request timed out. Check the internet connection.');
+    throw e;
+  }finally{clearTimeout(timer)}
+}
+async function refreshCloudSession(session){
+  if(!session?.refresh_token)return null;
+  const data=await cloudFetch('/auth/v1/token?grant_type=refresh_token',{
+    method:'POST',body:{refresh_token:session.refresh_token}
+  });
+  saveCloudSession(data);
+  return data;
+}
+async function cloudSession(){
+  let s=cloudStoredSession();
+  if(!s)return null;
+  const now=Math.floor(Date.now()/1000);
+  if(!s.access_token||Number(s.expires_at||0)<=now+60){
+    try{s=await refreshCloudSession(s)}
+    catch(e){saveCloudSession(null);return null}
+  }
+  return s;
+}
 function recordKey(kind,id){return `${kind}:${id}`}
-function collectCloudRecords(){const now=new Date().toISOString(),rows=[];SYNC_KINDS.forEach(([key,kind])=>{const arr=load(key);arr.forEach(o=>{if(!o.id)o.id=makeId();if(!o._updatedAt)o._updatedAt=now;rows.push({id:recordKey(kind,o.id),data:{kind,itemId:o.id,payload:o,_updatedAt:o._updatedAt}})});save(key,arr)});SYNC_SINGLETONS.forEach(([key,kind])=>{const raw=localStorage.getItem(key);if(!raw)return;const o=loadObject(key,{});if(!o._updatedAt){o._updatedAt=now;localStorage.setItem(key,JSON.stringify(o))}rows.push({id:recordKey(kind,'singleton'),data:{kind,itemId:'singleton',payload:o,_updatedAt:o._updatedAt}})});return rows}
-function applyCloudRows(rows){const by={};rows.forEach(r=>{const d=r.data||{};if(d.kind&&d.payload)(by[d.kind]||(by[d.kind]=[])).push(d)});SYNC_KINDS.forEach(([key,kind])=>{const map=new Map(load(key).map(o=>[o.id,o]));for(const d of by[kind]||[]){const cur=map.get(d.itemId);if(!cur||String(d._updatedAt||'')>String(cur._updatedAt||''))map.set(d.itemId,d.payload)}save(key,[...map.values()])});SYNC_SINGLETONS.forEach(([key,kind])=>{const d=(by[kind]||[]).sort((a,b)=>String(b._updatedAt||'').localeCompare(String(a._updatedAt||'')))[0];if(d){const cur=loadObject(key,{});if(!cur._updatedAt||String(d._updatedAt||'')>String(cur._updatedAt||''))localStorage.setItem(key,JSON.stringify(d.payload))}})}
-async function cloudSession(){const sb=await getSupabase();const {data:{session}}=await sb.auth.getSession();return session}
-async function updateCloudStatus(){const el=$('cloudStatus');try{const s=await cloudSession(),last=localStorage.getItem('pilotlog_last_cloud_sync');if(!s){el.textContent='Not signed in';el.dataset.state='';return}localStorage.setItem(LAST_EMAIL_KEY,s.user.email||$('cloudEmail').value||'');$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';el.textContent=`Signed in as ${s.user.email}${last?' • Last sync '+new Date(last).toLocaleString():''}`;el.dataset.state='ok'}catch(e){el.textContent='Cloud unavailable: '+e.message;el.dataset.state='error'}}
-async function cloudSignUp(){const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;if(!email||password.length<6)return alert('Enter an email and a password of at least 6 characters.');localStorage.setItem(LAST_EMAIL_KEY,email);const sb=await getSupabase(),{data,error}=await sb.auth.signUp({email,password,options:{emailRedirectTo:'https://baronsfly.github.io/Prova-/'}});if(error)throw error;alert(data.session?'Account created and signed in.':'Account created. Check your email to confirm it, then sign in.');await updateCloudStatus()}
-async function cloudSignIn(){const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;if(!email||!password)return alert('Enter email and password.');localStorage.setItem(LAST_EMAIL_KEY,email);const sb=await getSupabase(),{error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;$('cloudPassword').value='';await updateCloudStatus();alert('Signed in.')}
-async function cloudSignOut(){const email=$('cloudEmail').value.trim()||localStorage.getItem(LAST_EMAIL_KEY)||'';if(email)localStorage.setItem(LAST_EMAIL_KEY,email);const sb=await getSupabase();await sb.auth.signOut();$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';$('cloudPassword').value='';await updateCloudStatus()}
-async function syncSupabase(){const btn=$('syncCloudBtn');btn.disabled=true;$('cloudStatus').textContent='Syncing…';try{const sb=await getSupabase(),session=await cloudSession();if(!session)throw new Error('Sign in first.');const {data:cloud,error}=await sb.from(SUPABASE_TABLE).select('id,data,updated_at');if(error)throw error;applyCloudRows(cloud||[]);reconcileAllDuties();const merged=collectCloudRecords().map(r=>({...r,user_id:session.user.id,updated_at:r.data._updatedAt||new Date().toISOString()}));if(merged.length){const {error:e}=await sb.from(SUPABASE_TABLE).upsert(merged,{onConflict:'id'});if(e)throw e}localStorage.setItem('pilotlog_last_cloud_sync',new Date().toISOString());await render();renderTrips();renderPayroll();renderSettings();await updateCloudStatus();alert(`Cloud sync complete. ${merged.length} records synced.`)}catch(e){$('cloudStatus').textContent='Sync failed: '+e.message;$('cloudStatus').dataset.state='error';alert('Cloud Sync failed: '+e.message)}finally{btn.disabled=false}}
+function collectCloudRecords(){
+  const now=new Date().toISOString(),rows=[];
+  SYNC_KINDS.forEach(([key,kind])=>{
+    const arr=load(key);
+    arr.forEach(o=>{
+      if(!o.id)o.id=makeId();
+      if(!o._updatedAt)o._updatedAt=now;
+      rows.push({id:recordKey(kind,o.id),data:{kind,itemId:o.id,payload:o,_updatedAt:o._updatedAt}});
+    });
+    save(key,arr)
+  });
+  SYNC_SINGLETONS.forEach(([key,kind])=>{
+    const raw=localStorage.getItem(key);if(!raw)return;
+    const o=loadObject(key,{});
+    if(!o._updatedAt){o._updatedAt=now;localStorage.setItem(key,JSON.stringify(o))}
+    rows.push({id:recordKey(kind,'singleton'),data:{kind,itemId:'singleton',payload:o,_updatedAt:o._updatedAt}})
+  });
+  return rows
+}
+function applyCloudRows(rows){
+  const by={};
+  rows.forEach(r=>{const d=r.data||{};if(d.kind&&d.payload)(by[d.kind]||(by[d.kind]=[])).push(d)});
+  SYNC_KINDS.forEach(([key,kind])=>{
+    const map=new Map(load(key).map(o=>[o.id,o]));
+    for(const d of by[kind]||[]){
+      const cur=map.get(d.itemId);
+      if(!cur||String(d._updatedAt||'')>String(cur._updatedAt||''))map.set(d.itemId,d.payload)
+    }
+    save(key,[...map.values()])
+  });
+  SYNC_SINGLETONS.forEach(([key,kind])=>{
+    const d=(by[kind]||[]).sort((a,b)=>String(b._updatedAt||'').localeCompare(String(a._updatedAt||'')))[0];
+    if(d){
+      const cur=loadObject(key,{});
+      if(!cur._updatedAt||String(d._updatedAt||'')>String(cur._updatedAt||''))localStorage.setItem(key,JSON.stringify(d.payload))
+    }
+  })
+}
+async function updateCloudStatus(){
+  const el=$('cloudStatus');if(!el)return;
+  try{
+    const s=await cloudSession(),last=localStorage.getItem('pilotlog_last_cloud_sync');
+    if(!s){el.textContent='Not signed in';el.dataset.state='';return}
+    const email=s.user?.email||localStorage.getItem(LAST_EMAIL_KEY)||'';
+    if(email)localStorage.setItem(LAST_EMAIL_KEY,email);
+    if($('cloudEmail'))$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';
+    el.textContent=`Signed in${email?' as '+email:''}${last?' • Last sync '+new Date(last).toLocaleString():''}`;
+    el.dataset.state='ok'
+  }catch(e){
+    el.textContent='Cloud unavailable: '+e.message;
+    el.dataset.state='error'
+  }
+}
+async function cloudSignUp(){
+  const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;
+  if(!email||password.length<6)return alert('Enter an email and a password of at least 6 characters.');
+  localStorage.setItem(LAST_EMAIL_KEY,email);
+  $('cloudStatus').textContent='Creating account…';
+  const data=await cloudFetch('/auth/v1/signup',{
+    method:'POST',body:{email,password},headers:{'x-client-info':'pilotlog-web'}
+  });
+  if(data?.access_token){
+    saveCloudSession(data);
+    $('cloudPassword').value='';
+    await updateCloudStatus();
+    alert('Account created and signed in.')
+  }else{
+    $('cloudStatus').textContent='Account created. Check your email to confirm it, then sign in.';
+    alert('Account created. Check your email to confirm it, then sign in.')
+  }
+}
+async function cloudSignIn(){
+  const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;
+  if(!email||!password)return alert('Enter email and password.');
+  localStorage.setItem(LAST_EMAIL_KEY,email);
+  $('cloudStatus').textContent='Signing in…';
+  const data=await cloudFetch('/auth/v1/token?grant_type=password',{
+    method:'POST',body:{email,password},headers:{'x-client-info':'pilotlog-web'}
+  });
+  saveCloudSession(data);
+  $('cloudPassword').value='';
+  await updateCloudStatus();
+  alert('Signed in.')
+}
+async function cloudSignOut(){
+  const email=$('cloudEmail').value.trim()||localStorage.getItem(LAST_EMAIL_KEY)||'';
+  if(email)localStorage.setItem(LAST_EMAIL_KEY,email);
+  const s=await cloudSession();
+  if(s?.access_token){
+    try{await cloudFetch('/auth/v1/logout',{method:'POST',token:s.access_token})}catch{}
+  }
+  saveCloudSession(null);
+  $('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';
+  $('cloudPassword').value='';
+  await updateCloudStatus()
+}
+async function syncSupabase(){
+  const btn=$('syncCloudBtn');
+  btn.disabled=true;
+  $('cloudStatus').textContent='Syncing…';
+  try{
+    const session=await cloudSession();
+    if(!session?.access_token)throw new Error('Sign in first.');
+
+    const cloud=await cloudFetch(`/rest/v1/${SUPABASE_TABLE}?select=id,data,updated_at`,{
+      token:session.access_token,headers:{Accept:'application/json'}
+    });
+    applyCloudRows(Array.isArray(cloud)?cloud:[]);
+    reconcileAllDuties();
+
+    const merged=collectCloudRecords().map(r=>({
+      ...r,user_id:session.user?.id,updated_at:r.data._updatedAt||new Date().toISOString()
+    }));
+
+    if(merged.length){
+      await cloudFetch(`/rest/v1/${SUPABASE_TABLE}?on_conflict=id`,{
+        method:'POST',token:session.access_token,body:merged,
+        headers:{Prefer:'resolution=merge-duplicates,return=minimal'}
+      })
+    }
+
+    localStorage.setItem('pilotlog_last_cloud_sync',new Date().toISOString());
+    await render();
+    renderTrips();
+    renderPayroll();
+    renderSettings();
+    await updateCloudStatus();
+    alert(`Cloud sync complete. ${merged.length} records synced.`)
+  }catch(e){
+    $('cloudStatus').textContent='Sync failed: '+e.message;
+    $('cloudStatus').dataset.state='error';
+    alert('Cloud Sync failed: '+e.message)
+  }finally{btn.disabled=false}
+}
 
 /* UI render */
 function show(id){document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hidden',s.id!==id));document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===id));if(id==='totalsView')renderTotals();if(id==='tripsView')renderTrips();if(id==='payrollView')renderPayroll();if(id==='settingsView')renderSettings();if(id==='rosterView')renderRoster();scrollTo(0,0)}
