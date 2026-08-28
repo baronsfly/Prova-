@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.0.6">
+<link rel="stylesheet" href="styles.css?v=5.0.7">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.0.6</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.0.7</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="grid">
@@ -125,7 +125,7 @@
 <section id="tripsView" class="hidden">
   <div class="section-title">Trip / Layover</div>
   <div class="card"><div class="actions"><button class="primary" type="button" id="detectTripsBtn">Detect Trips automatically</button></div>
-    <div class="hint">A DHD leaving Home Base can open a trip and the return to base closes it. DHD time is NOT subtracted from paid layover. Ground Course counts as fixed 5:00 duty.</div>
+    <div class="hint">Only a DHD leaving Home Base opens a trip; the return to base closes it. DHD time is NOT subtracted from paid layover. Ground Course counts as fixed 5:00 duty.</div>
   </div>
   <div class="card spaced"><form id="tripForm"><input type="hidden" id="tripEditId"><div class="form-grid">
     <div><label>Layover station(s)</label><input id="tripStations" placeholder="TNG, SAW..." data-upper></div>
@@ -242,5 +242,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="dutyView">Duty</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.0.6" defer></script>
+<script src="app.js?v=5.0.7" defer></script>
 </body></html>

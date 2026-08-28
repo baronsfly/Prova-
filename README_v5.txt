@@ -44,3 +44,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - DHD is excluded from paid-layover duty subtraction.
 - Automatic trip boundaries use the exact start time of the first out-of-base activity and the exact end time of the final return-to-base activity.
 - Automatically generated trips store the IDs of included entries and expose a View duties inspector showing each included flight/duty, times, duration and whether it was deducted from layover.
+
+- Only DHD entries can open an automatic trip. Normal operating flights can be included inside an already-open trip but can never generate a trip by themselves.

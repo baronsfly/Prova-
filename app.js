@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.6';
+const VERSION='5.0.7';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -380,8 +380,9 @@ function autoDetectTrips(showAlert=true){
   for(let i=0;i<fs.length;i++){
     const f=fs[i];
 
-    // Opening logic: a DHD or any activity leaving home base and ending away from base.
-    if(upper(f.dep)!==base || !f.arr || upper(f.arr)===base) continue;
+    // A trip can ONLY be opened by a DHD leaving Home Base and ending away from base.
+    // Normal operating flights must never create a trip by themselves.
+    if(!isDhd(f) || upper(f.dep)!==base || !f.arr || upper(f.arr)===base) continue;
 
     const start=tripSequenceStart(f);
     if(!start) continue;
