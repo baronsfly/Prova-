@@ -84,3 +84,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.0.22: EASA-style export redesigned for A4 portrait. Each page keeps its entries and page/previous/to-date summaries together; zero values are blank, remarks are left aligned, dates are dd/mm/yyyy, and FSTD sessions use the standard-style FSTD columns.
 
 - v5.1.0: added autonomous screenshot OCR import with editable review/confirmation and European dd/mm/yyyy date presentation across the main interface. No screenshot data are saved before explicit review confirmation.
+
+- v5.1.1: EASA export now generates a true fixed-size A4 PDF rather than an HTML print page, avoiding Safari/iPhone automatic scaling during printing.

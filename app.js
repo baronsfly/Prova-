@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.1.0';
+const VERSION='5.1.1';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -676,69 +676,44 @@ function logTenImport(text){
 /* Export */
 
 
-const EASA_ROWS_PER_PAGE=11;
+
+const EASA_ROWS_PER_PAGE=8;
 
 function euDate(v){
-  const s=String(v||'').slice(0,10);
-  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const s=String(v||'').slice(0,10),m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   return m?`${m[3]}/${m[2]}/${m[1]}`:s;
 }
-function blankIfZero(v){
-  const n=Number(v)||0;
-  return n>0?fmt(n):'';
-}
-function blankCount(v){
-  const n=Number(v)||0;
-  return n>0?String(n):'';
-}
-function safeTime(v){return String(v||'').trim()}
+function blankIfZero(v){const n=Number(v)||0;return n>0?fmt(n):''}
+function blankCount(v){const n=Number(v)||0;return n>0?String(n):''}
 function experienceFlights(){
-  return load(FLIGHTS_KEY).filter(isFlight).sort((a,b)=>{
-    const ka=`${a.date||''}${a.off||a.out||a.schedOut||''}`,
-          kb=`${b.date||''}${b.off||b.out||b.schedOut||''}`;
-    return ka.localeCompare(kb);
-  });
+  return load(FLIGHTS_KEY).filter(isFlight).sort((a,b)=>`${a.date||''}${a.off||a.out||a.schedOut||''}`.localeCompare(`${b.date||''}${b.off||b.out||b.schedOut||''}`));
 }
 function experienceSims(){
-  return load(FLIGHTS_KEY).filter(isSim).sort((a,b)=>{
-    const ka=`${a.date||''}${a.onDuty||''}`,
-          kb=`${b.date||''}${b.onDuty||''}`;
-    return ka.localeCompare(kb);
-  });
+  return load(FLIGHTS_KEY).filter(isSim).sort((a,b)=>`${a.date||''}${a.onDuty||''}`.localeCompare(`${b.date||''}${b.onDuty||''}`));
 }
 function experienceRows(){
   const includeSim=($('easaIncludeSim')?.value||'yes')==='yes';
-  const rows=[
+  return [
     ...experienceFlights().map(f=>({...f,_experienceKind:'flight'})),
     ...(includeSim?experienceSims().map(f=>({...f,_experienceKind:'sim'})):[])
-  ];
-  return rows.sort((a,b)=>{
+  ].sort((a,b)=>{
     const ta=a._experienceKind==='flight'?(a.off||a.out||a.schedOut||'00:00'):(a.onDuty||'00:00');
     const tb=b._experienceKind==='flight'?(b.off||b.out||b.schedOut||'00:00'):(b.onDuty||'00:00');
     return `${a.date||''}${ta}`.localeCompare(`${b.date||''}${tb}`);
   });
 }
 function expTotals(list){
-  const flights=list.filter(x=>x._experienceKind!=='sim' && isFlight(x));
-  const sims=list.filter(x=>x._experienceKind==='sim' || isSim(x));
+  const flights=list.filter(x=>x._experienceKind!=='sim'&&isFlight(x));
+  const sims=list.filter(x=>x._experienceKind==='sim'||isSim(x));
   return{
-    total:sum(flights,totalFlightMins),
-    pic:sum(flights,picMins),
-    sic:sum(flights,sicMins),
-    instr:sum(flights,flightInstrMins),
-    night:sum(flights,f=>durMins(f.night)),
+    total:sum(flights,totalFlightMins),pic:sum(flights,picMins),sic:sum(flights,sicMins),
+    instr:sum(flights,flightInstrMins),night:sum(flights,f=>durMins(f.night)),
     ifr:sum(flights,f=>String(f.ifr||'').toLowerCase()==='yes'?totalFlightMins(f):0),
-    ldDay:sum(flights,f=>Number(f.dayLandings)||0),
-    ldNight:sum(flights,f=>Number(f.nightLandings)||0),
-    sim:sum(sims,f=>Number(f.simulatorTime)||0),
-    simInstr:sum(sims,simInstrMins)
+    ldDay:sum(flights,f=>Number(f.dayLandings)||0),ldNight:sum(flights,f=>Number(f.nightLandings)||0),
+    sim:sum(sims,f=>Number(f.simulatorTime)||0),simInstr:sum(sims,simInstrMins)
   };
 }
-function plusTotals(a,b){
-  const out={};
-  Object.keys(a).forEach(k=>out[k]=(Number(a[k])||0)+(Number(b[k])||0));
-  return out;
-}
+function plusTotals(a,b){const o={};Object.keys(a).forEach(k=>o[k]=(Number(a[k])||0)+(Number(b[k])||0));return o}
 function selectedExperiencePageRange(){
   const all=experienceRows(),mode=$('easaExportMode')?.value||'last2';
   if(mode==='period'){
@@ -746,194 +721,170 @@ function selectedExperiencePageRange(){
     return{all,selected:all.filter(f=>(!from||f.date>=from)&&(!to||f.date<=to)),firstPage:null,lastPages:false};
   }
   if(mode==='all')return{all,selected:all,firstPage:0,lastPages:false};
-  const n=Number(mode.replace('last',''))||2;
-  const totalPages=Math.max(1,Math.ceil(all.length/EASA_ROWS_PER_PAGE));
-  const firstPage=Math.max(0,totalPages-n);
+  const n=Number(mode.replace('last',''))||2,totalPages=Math.max(1,Math.ceil(all.length/EASA_ROWS_PER_PAGE)),firstPage=Math.max(0,totalPages-n);
   return{all,selected:all.slice(firstPage*EASA_ROWS_PER_PAGE),firstPage,lastPages:true};
 }
-function easaRowHtml(f){
-  const sim=f._experienceKind==='sim'||isSim(f);
-  if(sim){
-    return `<tr>
-      <td>${euDate(f.date)}</td>
-      <td></td><td></td><td></td><td></td>
-      <td>${esc(f.type||'A320')}</td><td></td><td></td>
-      <td></td><td></td>
-      <td></td><td></td><td></td>
-      <td></td><td></td><td></td>
-      <td>${euDate(f.date)}</td><td>${esc(f.type||'A320 SIM')}</td><td>${blankIfZero(Number(f.simulatorTime)||0)}</td>
-      <td class="remarks">${esc(f.remarks||'')}</td>
-    </tr>`;
-  }
 
-  const total=totalFlightMins(f);
-  const pic=picMins(f),sic=sicMins(f),instr=flightInstrMins(f);
-  const ifr=String(f.ifr||'').toLowerCase()==='yes'?total:0;
-  return `<tr>
-    <td>${euDate(f.date)}</td>
-    <td>${esc(f.dep||'')}</td><td>${safeTime(f.off||f.out||'')}</td>
-    <td>${esc(f.arr||'')}</td><td>${safeTime(f.on||f.in||'')}</td>
-    <td>${esc(f.type||'')}</td><td>${esc(f.reg||'')}</td><td>${esc(f.picName||'')}</td>
-    <td>${blankIfZero(total)}</td><td>${blankCount(f.dayLandings)}</td><td>${blankCount(f.nightLandings)}</td>
-    <td>${blankIfZero(durMins(f.night))}</td><td>${blankIfZero(ifr)}</td>
-    <td>${blankIfZero(pic)}</td><td>${blankIfZero(sic)}</td><td>${blankIfZero(instr)}</td>
-    <td></td><td></td><td></td>
-    <td class="remarks">${esc(f.remarks||'')}</td>
-  </tr>`;
+/* Minimal PDF writer: produces a real fixed-size A4 PDF, so Safari print scaling
+   no longer changes the logbook geometry. */
+function pdfEsc(v){
+  return String(v??'')
+    .replace(/[^\x20-\x7E]/g,c=>({'à':'a','è':'e','é':'e','ì':'i','ò':'o','ù':'u','À':'A','È':'E','É':'E','Ì':'I','Ò':'O','Ù':'U','°':' deg '}[c]||'?'))
+    .replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)');
 }
-function emptyEasaRows(n){
-  return Array.from({length:n},()=>'<tr class="blank-row">'+Array.from({length:20},()=>'<td>&nbsp;</td>').join('')+'</tr>').join('');
+function pdfText(x,y,size,text,align='left',width=0,bold=false){
+  const s=pdfEsc(text);
+  let tx=x;
+  if(align!=='left'&&width){
+    const approx=s.length*size*0.49;
+    if(align==='center')tx=x+(width-approx)/2;
+    if(align==='right')tx=x+width-approx-2;
+  }
+  return `BT /${bold?'F2':'F1'} ${size} Tf 1 0 0 1 ${tx.toFixed(2)} ${y.toFixed(2)} Tm (${s}) Tj ET\n`;
 }
-function totalsLine(label,t,cls=''){
-  return `<tr class="${cls}">
-    <td colspan="8" class="total-label">${esc(label)}</td>
-    <td>${blankIfZero(t.total)}</td>
-    <td>${blankCount(t.ldDay)}</td>
-    <td>${blankCount(t.ldNight)}</td>
-    <td>${blankIfZero(t.night)}</td>
-    <td>${blankIfZero(t.ifr)}</td>
-    <td>${blankIfZero(t.pic)}</td>
-    <td>${blankIfZero(t.sic)}</td>
-    <td>${blankIfZero(t.instr)}</td>
-    <td></td><td></td><td>${blankIfZero(t.sim)}</td><td></td>
-  </tr>`;
+function pdfLine(x1,y1,x2,y2,w=.35){return `${w} w ${x1} ${y1} m ${x2} ${y2} l S\n`}
+function pdfRect(x,y,w,h,line=.35){return `${line} w ${x} ${y} ${w} ${h} re S\n`}
+function pdfCellText(x,y,w,h,text,size=6,align='center',bold=false){
+  const val=String(text||'');
+  if(!val)return'';
+  const max=Math.max(2,Math.floor(w/(size*.52)));
+  const clipped=val.length>max?val.slice(0,Math.max(1,max-1))+'…':val;
+  return pdfText(x+1.5,y+h/2-size*.32,size,clipped,align,w-3,bold);
 }
-function easaFlightPagesHtml(){
+function pdfTable(content,x,top,widths,headers,rows,rowH,headerH){
+  const totalW=widths.reduce((a,b)=>a+b,0);
+  let y=top-headerH;
+  content.push(pdfRect(x,y,totalW,headerH));
+  let cx=x;
+  headers.forEach((h,i)=>{
+    if(i)content.push(pdfLine(cx,y,cx,y+headerH));
+    content.push(pdfCellText(cx,y,widths[i],headerH,h,5.7,'center',true));
+    cx+=widths[i];
+  });
+  rows.forEach(row=>{
+    y-=rowH;
+    content.push(pdfRect(x,y,totalW,rowH));
+    cx=x;
+    row.forEach((v,i)=>{
+      if(i)content.push(pdfLine(cx,y,cx,y+rowH));
+      const align=i===row.length-1?'left':'center';
+      content.push(pdfCellText(cx,y,widths[i],rowH,v,6.2,align,false));
+      cx+=widths[i];
+    });
+  });
+  return y;
+}
+function pdfTotalsRows(t){
+  return {
+    primary:[blankIfZero(t.total),blankCount(t.ldDay),blankCount(t.ldNight)],
+    secondary:[blankIfZero(t.night),blankIfZero(t.ifr),blankIfZero(t.pic),blankIfZero(t.sic),blankIfZero(t.sim),blankIfZero(t.instr+t.simInstr)]
+  };
+}
+function buildEasaPdfPage(rows,prior,pageTotal,toDate,pageNo){
+  const c=[];
+  const W=595.28,H=841.89,margin=24,usable=W-margin*2;
+  c.push(pdfText(margin,H-26,12,'PILOT LOGBOOK','left',0,true));
+  c.push(pdfText(margin,H-39,7,'EASA-style professional experience record'));
+  c.push(pdfText(W-margin-45,H-28,7,`Page ${pageNo}`,'right',45,true));
+
+  const pWidths=[22,48,34,33,34,33,55,45,62,48,47,47];
+  const pScale=usable/pWidths.reduce((a,b)=>a+b,0);
+  const pw=pWidths.map(v=>v*pScale);
+  const pHeaders=['#','DATE','DEP','TIME','ARR','TIME','A/C TYPE','REG.','NAME(S) PIC','TOTAL','LDG D','LDG N'];
+  const pRows=rows.map((f,i)=>{
+    const sim=f._experienceKind==='sim'||isSim(f);
+    if(sim)return [i+1,euDate(f.date),'FSTD','','','',''+(f.type||'A320'),'','','','',''];
+    return [i+1,euDate(f.date),f.dep||'',f.off||f.out||'',f.arr||'',f.on||f.in||'',f.type||'',f.reg||'',f.picName||'',blankIfZero(totalFlightMins(f)),blankCount(f.dayLandings),blankCount(f.nightLandings)];
+  });
+  while(pRows.length<EASA_ROWS_PER_PAGE)pRows.push(Array(12).fill(''));
+
+  let y=pdfTable(c,margin,H-58,pw,pHeaders,pRows,23,21);
+
+  const pt=pdfTotalsRows(pageTotal),pr=pdfTotalsRows(prior),td=pdfTotalsRows(toDate);
+  const pTotalRows=[
+    ['', '', '', '', '', '', '', '', 'TOTAL FROM THIS PAGE',pt.primary[0],pt.primary[1],pt.primary[2]],
+    ['', '', '', '', '', '', '', '', 'TOTAL FROM PREVIOUS PAGES',pr.primary[0],pr.primary[1],pr.primary[2]],
+    ['', '', '', '', '', '', '', '', 'TOTAL TO DATE',td.primary[0],td.primary[1],td.primary[2]]
+  ];
+  y=pdfTable(c,margin,y,pw,Array(12).fill(''),pTotalRows,17,0);
+
+  const sWidths=[22,44,44,42,48,60,65,55,55,112];
+  const sScale=usable/sWidths.reduce((a,b)=>a+b,0);
+  const sw=sWidths.map(v=>v*sScale);
+  const sHeaders=['#','NIGHT','IFR','PIC','CO-PILOT','FSTD DATE','FSTD TYPE','FSTD TIME','FI / SFI','REMARKS / ENDORSEMENTS'];
+  const sRows=rows.map((f,i)=>{
+    const sim=f._experienceKind==='sim'||isSim(f);
+    if(sim)return [i+1,'','','','',euDate(f.date),f.type||'A320 SIM',blankIfZero(Number(f.simulatorTime)||0),blankIfZero(simInstrMins(f)),f.remarks||''];
+    const total=totalFlightMins(f);
+    return [i+1,blankIfZero(durMins(f.night)),String(f.ifr||'').toLowerCase()==='yes'?blankIfZero(total):'',blankIfZero(picMins(f)),blankIfZero(sicMins(f)),'','','',blankIfZero(flightInstrMins(f)),f.remarks||''];
+  });
+  while(sRows.length<EASA_ROWS_PER_PAGE)sRows.push(Array(10).fill(''));
+
+  const secondTop=y-24;
+  y=pdfTable(c,margin,secondTop,sw,sHeaders,sRows,23,21);
+
+  const sTotalRows=[
+    ['',pt.secondary[0],pt.secondary[1],pt.secondary[2],pt.secondary[3],'','',pt.secondary[4],pt.secondary[5],'TOTAL FROM THIS PAGE'],
+    ['',pr.secondary[0],pr.secondary[1],pr.secondary[2],pr.secondary[3],'','',pr.secondary[4],pr.secondary[5],'TOTAL FROM PREVIOUS PAGES'],
+    ['',td.secondary[0],td.secondary[1],td.secondary[2],td.secondary[3],'','',td.secondary[4],td.secondary[5],'TOTAL TO DATE']
+  ];
+  y=pdfTable(c,margin,y,sw,Array(10).fill(''),sTotalRows,17,0);
+
+  c.push(pdfText(margin,18,5.8,'I certify that the entries on this page are true and correct.'));
+  c.push(pdfText(W-margin-190,18,5.8,"PILOT'S SIGNATURE __________________________"));
+  return c.join('');
+}
+function makePdfDocument(pageStreams){
+  const objects=[];
+  const add=o=>{objects.push(o);return objects.length};
+  const catalog=add('');
+  const pagesObj=add('');
+  const font1=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
+  const font2=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>');
+  const pageRefs=[];
+  for(const stream of pageStreams){
+    const content=add(`<< /Length ${new TextEncoder().encode(stream).length} >>\nstream\n${stream}endstream`);
+    const page=add(`<< /Type /Page /Parent ${pagesObj} 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 ${font1} 0 R /F2 ${font2} 0 R >> >> /Contents ${content} 0 R >>`);
+    pageRefs.push(page);
+  }
+  objects[catalog-1]=`<< /Type /Catalog /Pages ${pagesObj} 0 R >>`;
+  objects[pagesObj-1]=`<< /Type /Pages /Kids [${pageRefs.map(n=>`${n} 0 R`).join(' ')}] /Count ${pageRefs.length} >>`;
+
+  let pdf='%PDF-1.4\n%\xE2\xE3\xCF\xD3\n',offsets=[0];
+  for(let i=0;i<objects.length;i++){
+    offsets.push(new TextEncoder().encode(pdf).length);
+    pdf+=`${i+1} 0 obj\n${objects[i]}\nendobj\n`;
+  }
+  const xref=new TextEncoder().encode(pdf).length;
+  pdf+=`xref\n0 ${objects.length+1}\n0000000000 65535 f \n`;
+  for(let i=1;i<offsets.length;i++)pdf+=String(offsets[i]).padStart(10,'0')+' 00000 n \n';
+  pdf+=`trailer\n<< /Size ${objects.length+1} /Root ${catalog} 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  return new Blob([new TextEncoder().encode(pdf)],{type:'application/pdf'});
+}
+function exportEasaStylePdf(){
   const {all,selected,firstPage,lastPages}=selectedExperiencePageRange();
-  if(!selected.length)return{html:'',count:0};
-
-  const chunks=[];
-  for(let i=0;i<selected.length;i+=EASA_ROWS_PER_PAGE){
-    chunks.push(selected.slice(i,i+EASA_ROWS_PER_PAGE));
-  }
-
-  const pages=chunks.map((rows,pageIndex)=>{
+  if(!selected.length)return alert('No professional experience matches this selection.');
+  const chunks=[];for(let i=0;i<selected.length;i+=EASA_ROWS_PER_PAGE)chunks.push(selected.slice(i,i+EASA_ROWS_PER_PAGE));
+  const streams=chunks.map((rows,pageIndex)=>{
     let prior,pageNo;
     if(lastPages){
       const absolutePage=(firstPage||0)+pageIndex;
       prior=expTotals(all.slice(0,absolutePage*EASA_ROWS_PER_PAGE));
       pageNo=absolutePage+1;
     }else{
-      const firstSelectedIndex=all.findIndex(x=>x.id===rows[0]?.id && x._experienceKind===rows[0]?._experienceKind);
-      prior=expTotals(firstSelectedIndex>0?all.slice(0,firstSelectedIndex):[]);
-      pageNo=firstSelectedIndex>=0?Math.floor(firstSelectedIndex/EASA_ROWS_PER_PAGE)+1:pageIndex+1;
+      const idx=all.findIndex(x=>x.id===rows[0]?.id&&x._experienceKind===rows[0]?._experienceKind);
+      prior=expTotals(idx>0?all.slice(0,idx):[]);
+      pageNo=idx>=0?Math.floor(idx/EASA_ROWS_PER_PAGE)+1:pageIndex+1;
     }
     const pageTotal=expTotals(rows),toDate=plusTotals(prior,pageTotal);
-
-    return `<section class="easa-page">
-      <div class="easa-title">
-        <div><b>PILOT LOGBOOK</b><span>EASA-style professional experience record</span></div>
-        <div>Page ${pageNo}</div>
-      </div>
-      <table class="easa-table">
-        <thead>
-          <tr>
-            <th rowspan="2">DATE<br><small>dd/mm/yyyy</small></th>
-            <th colspan="2">DEPARTURE</th>
-            <th colspan="2">ARRIVAL</th>
-            <th colspan="2">AIRCRAFT</th>
-            <th rowspan="2">NAME(S) PIC</th>
-            <th rowspan="2">TOTAL TIME<br>OF FLIGHT</th>
-            <th colspan="2">NO. LDG</th>
-            <th colspan="2">CONDITIONS OF FLIGHT</th>
-            <th colspan="3">PILOT FUNCTION TIME</th>
-            <th colspan="3">FSTD SESSION</th>
-            <th rowspan="2">REMARKS AND ENDORSEMENTS</th>
-          </tr>
-          <tr>
-            <th>PLACE</th><th>TIME</th>
-            <th>PLACE</th><th>TIME</th>
-            <th>MAKE / MODEL</th><th>REG.</th>
-            <th>DAY</th><th>NIGHT</th>
-            <th>NIGHT</th><th>IFR</th>
-            <th>PIC</th><th>CO-PILOT</th><th>FI</th>
-            <th>DATE</th><th>TYPE</th><th>TIME</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map(easaRowHtml).join('')}
-          ${emptyEasaRows(Math.max(0,EASA_ROWS_PER_PAGE-rows.length))}
-          ${totalsLine('TOTAL FROM THIS PAGE',pageTotal,'page-total')}
-          ${totalsLine('TOTAL FROM PREVIOUS PAGES',prior,'previous-total')}
-          ${totalsLine('TOTAL TO DATE',toDate,'grand-total')}
-        </tbody>
-      </table>
-      <div class="easa-signature">
-        <span>I certify that the entries on this page are true and correct.</span>
-        <span>PILOT'S SIGNATURE __________________________</span>
-      </div>
-    </section>`;
+    return buildEasaPdfPage(rows,prior,pageTotal,toDate,pageNo);
   });
-  return{html:pages.join(''),count:pages.length};
-}
-function exportEasaStylePdf(){
-  const pages=easaFlightPagesHtml();
-  if(!pages.count)return alert('No professional experience matches this selection.');
-  const w=window.open('','_blank');
-  if(!w)return alert('Please allow pop-ups for PilotLog to create the printable logbook.');
-
-  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>PilotLog EASA Logbook</title>
-  <style>
-    @page{size:A4 portrait;margin:5.5mm}
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;color:#111;background:#fff}
-    .easa-page{
-      page-break-after:always;
-      break-after:page;
-      width:100%;
-      height:285mm;
-      display:flex;
-      flex-direction:column;
-      overflow:hidden;
-    }
-    .easa-page:last-child{page-break-after:auto;break-after:auto}
-    .easa-title{display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 2mm;font-size:7.5px}
-    .easa-title b{display:block;font-size:12px;letter-spacing:.2px}
-    .easa-title span{display:block;font-size:6.5px;color:#444;margin-top:.6mm}
-    table{border-collapse:collapse;width:100%}
-    .easa-table{table-layout:fixed;font-size:5.4px;line-height:1.05}
-    .easa-table th,.easa-table td{
-      border:.28mm solid #444;
-      padding:.55mm .35mm;
-      text-align:center;
-      vertical-align:middle;
-      height:13.3mm;
-      overflow:hidden;
-      word-break:break-word;
-    }
-    .easa-table thead th{
-      background:#f1f1f1;
-      font-size:4.9px;
-      height:7.5mm;
-      font-weight:700;
-    }
-    .easa-table small{font-size:4.3px}
-    .easa-table td:nth-child(1){width:7%}
-    .easa-table th:nth-child(20),.easa-table td:nth-child(20){width:14%}
-    .remarks{text-align:left!important;padding-left:.7mm!important}
-    .blank-row td{height:13.3mm}
-    .page-total td,.previous-total td,.grand-total td{height:6.2mm;font-weight:700}
-    .page-total td{background:#f7f7f7}
-    .previous-total td{background:#fafafa}
-    .grand-total td{background:#ececec}
-    .total-label{text-align:right!important;padding-right:1.5mm!important}
-    .easa-signature{
-      margin-top:2mm;
-      display:flex;
-      justify-content:space-between;
-      gap:5mm;
-      font-size:5.2px;
-      line-height:1.2;
-    }
-    @media print{
-      .easa-page{page-break-inside:avoid;break-inside:avoid-page}
-    }
-  </style></head><body>${pages.html}</body></html>`;
-
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  setTimeout(()=>{try{w.focus();w.print()}catch(e){console.error(e)}},500);
+  const blob=makePdfDocument(streams);
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.target='_blank';a.rel='noopener';a.download=`PilotLog_EASA_${today()}.pdf`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
 function exportExperienceCsv(){

@@ -113,3 +113,13 @@
 - Date presentation in the main UI is now European dd/mm/yyyy while ISO YYYY-MM-DD remains the internal storage/ordering format.
 - Updated visible dates in Dashboard duties, Entries, Roster, FTL daily rows, Duty records, Trips, Trip inspector and FX display.
 - Existing protected Entries rendering, storage-key validation and DOM-ID pre-release checks remain in place.
+
+## v5.1.1
+- Replaced browser `window.print()` EASA export with direct generation of a real PDF file.
+- Fixes iPhone/Safari print-preview scaling that made the otherwise-correct browser layout too small on the physical A4 page.
+- PDF MediaBox is fixed to real A4 portrait dimensions (595.28 x 841.89 pt).
+- EASA information is split into two linked stacked blocks per page for physical readability: Flight/Aircraft/Landings and Conditions/Pilot Function/FSTD/Remarks.
+- Rows use matching line numbers across both blocks.
+- Eight experience rows per page; page totals, previous-page totals and total-to-date remain on the same PDF page.
+- Zero values stay blank and Remarks remain left aligned.
+- PDF generation has no external JavaScript dependency and does not rely on browser print CSS.

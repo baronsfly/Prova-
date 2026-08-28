@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="styles.css?v=5.1.0">
+<link rel="stylesheet" href="styles.css?v=5.1.1">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.1.0</span></div></header>
+<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.1.1</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -252,7 +252,7 @@
       <button class="secondary" id="exportExperienceCsv" type="button">Export Experience CSV</button>
       <button class="secondary" id="exportBackupJson" type="button">Export Full Backup JSON</button>
     </div>
-    <div class="hint">PDF opens a print-ready A4 portrait logbook. On iPhone/Mac choose Print/Share → Save as PDF. “Last pages” exports complete logbook pages with carried-forward totals.</div>
+    <div class="hint">PilotLog generates a real A4 portrait PDF. Open/share the PDF directly; browser print scaling is not used. “Last pages” exports complete logbook pages with carried-forward totals.</div>
     <div class="section-title inner">LogTen Pro</div>
     <div class="actions top"><label class="filebtn primary" for="logTenFile">Import from LogTen Pro</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden"><button class="secondary" id="exportCsv">Export Operational CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button></div>
     <div class="hint" id="logTenImportStatus">Use LogTen Pro → Export Flights (Tab).</div>
@@ -315,5 +315,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="app.js?v=5.1.0" defer></script>
+<script src="app.js?v=5.1.1" defer></script>
 </body></html>
