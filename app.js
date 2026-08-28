@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.19';
+const VERSION='5.0.20';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -737,7 +737,7 @@ function isoDateLocal(d){
   return `${y}-${m}-${day}`;
 }
 function dashboardDuty7Days(){
-  const today=new Date(), roster=load(ROSTER_KEY), duties=load(DUTIES_KEY), flights=load(FLIGHTS_KEY);
+  const today=new Date(), roster=load(ROSTER_KEY), duties=load(DUTY_KEY), flights=load(FLIGHTS_KEY);
   const rows=[];
 
   for(let i=0;i<7;i++){

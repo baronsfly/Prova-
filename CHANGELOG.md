@@ -63,3 +63,9 @@
 - Added five rolling automatic local snapshots of the flight database.
 - Added DOM-reference integrity checks before release.
 - Added chronological CHANGELOG.md.
+
+## v5.0.20
+- Fixed Dashboard “Duty — Today + next 6 days” showing “temporarily unavailable”.
+- Root cause: `DUTIES_KEY` typo; the real storage key constant is `DUTY_KEY`.
+- Entries remain isolated from Dashboard failures and no reimport is required.
+- Added static pre-release validation for undefined `*_KEY` identifiers.

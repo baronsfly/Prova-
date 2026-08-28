@@ -76,3 +76,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 
 - v5.0.19 stability hardening: Entries is rendered independently before Dashboard/Roster/FTL; stale Upcoming Roster reference removed; five rolling local flight-data snapshots are kept automatically.
 - CHANGELOG.md now records changes chronologically by version.
+
+- v5.0.20: fixed Dashboard 7-day duty view storage-key typo; no data migration required.
