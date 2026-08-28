@@ -57,3 +57,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - Ground Course now includes a Start time (Zulu) used for chronological ordering with DHD/other entries.
 - Roster deduplicates the same sector imported as both 3Oxxx and MACxxx, counts the physical sector once, and displays the roster flight designator as 3Oxxx.
 - Future-month payroll uses the latest live EUR/MAD rate provisionally until the existing month-rate locking rule is satisfied.
+
+- v5.0.12 emergency fix: restores the render() function accidentally removed in v5.0.11. Existing localStorage logbook entries were not deleted; the previous version failed to render them.

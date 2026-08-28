@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.11';
+const VERSION='5.0.12';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -689,6 +689,24 @@ function flightHtml(fs,full=false){
   });
   return html;
 }
+async function render(){
+  reconcileAllDuties();
+  const fs=load(FLIGHTS_KEY).sort((a,b)=>{
+    const kb=`${b.date}${b.onDuty||b.schedOut||b.out||''}`;
+    const ka=`${a.date}${a.onDuty||a.schedOut||a.out||''}`;
+    return kb.localeCompare(ka);
+  });
+  $('mPic').textContent=fmt(sum(fs,picMins));
+  $('mTri').textContent=fmt(sum(fs,flightInstrMins));
+  $('mDuty').textContent=fmt(mergedDutyMinutes());
+  $('recentFlights').innerHTML=flightHtml(fs.slice(0,6));
+  $('allFlights').innerHTML=flightHtml(fs,true);
+  const ok=await renderFtl('dashboardFtl',true);
+  $('mFtl').textContent=ok?'OK':'CHECK';
+  $('mFtl').className=ok?'success':'danger-text';
+  await renderRoster();
+}
+
 async function renderRoster(){const groups=rosterGroups(),now=today(),up=groups.filter(g=>g.date>=now).slice(0,6);$('upcomingRoster').innerHTML=await rosterGroupHtml(up,false);$('rosterList').innerHTML=await rosterGroupHtml(groups,true)}
 function renderDuty(){const ds=load(DUTY_KEY).sort((a,b)=>String(b.date).localeCompare(String(a.date)));$('dutyList').innerHTML=ds.length?ds.map(d=>`<div class="rowitem"><div><b>${esc(d.type)}</b><div class="small">${esc(d.date)} • ${esc(d.notes||'')}</div></div><div class="meta"><b>${fmt(d.minutes)}</b><br>${esc(d.report||'')}–${esc(d.end||'')}<div class="list-actions"><button class="danger" data-delete-duty="${d.id}">Delete</button></div></div></div>`).join(''):'<div class="empty">No duties yet.</div>'}
 async function renderTotals(){const fs=load(FLIGHTS_KEY),flying=fs.filter(isFlight);$('tDuty').textContent=fmt(mergedDutyMinutes());$('tPic').textContent=fmt(sum(fs,picMins));$('tInstruction').textContent=fmt(sum(fs,flightInstrMins));$('tSimInstruction').textContent=fmt(sum(fs,simInstrMins));$('tNight').textContent=fmt(sum(fs,f=>durMins(f.night)));$('tSim').textContent=fmt(sum(fs,f=>isSim(f)?Number(f.simulatorTime)||0:0));$('tSimTrainer').textContent=fmt(sum(fs,simTrainerMins));$('tSimTrainee').textContent=fmt(sum(fs,simTraineeMins));await renderFtl('ftlTotals',false);
