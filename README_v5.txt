@@ -50,3 +50,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - LogTen import mapping updated: flight_type 7 = STBY, flight_type 2 = Ground Course, flight_type 3 = Simulator, blank = normal Flight. flight_type 1 is treated as transfer/DHD when transfer evidence is present or no operating flight number exists.
 
 - v5.0.9 re-import repair: LogTen non-flight rows are matched independently of their previously stored dutyType. Re-importing can therefore convert old misclassified entries (for example flight_type 7 previously saved as Flight) into STBY instead of duplicating them.
+
+- v5.0.10 duty fix: DHD never receives operational duty metadata and never defines duty boundaries. On days containing operating flights, On Duty is assigned to the first flight and Off Duty/Total Duty to the last flight. A DHD-only day has zero operational duty.

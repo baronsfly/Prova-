@@ -1,6 +1,6 @@
 (() => {
 'use strict';
-const VERSION='5.0.9';
+const VERSION='5.0.10';
 const FLIGHTS_KEY='pilotlog_flights_v1', ROSTER_KEY='pilotlog_roster_v2', DUTY_KEY='pilotlog_duties_v2', TRIPS_KEY='pilotlog_trips_v1', PAY_SETTINGS_KEY='pilotlog_pay_settings_v1', PAY_MONTH_KEY='pilotlog_pay_month_v1', FX_KEY='pilotlog_fx_v1', APP_SETTINGS_KEY='pilotlog_app_settings_v1', LAST_EMAIL_KEY='pilotlog_last_email_v1';
 const $=id=>document.getElementById(id);
 const load=k=>{try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]}};
@@ -234,22 +234,72 @@ function dayEntries(date,fs=load(FLIGHTS_KEY)){return fs.filter(f=>f.date===date
 function externalDutyForDate(date){return load(DUTY_KEY).filter(d=>d.date===date).sort((a,b)=>(a.report||'').localeCompare(b.report||''))[0]||null}
 function recalcDutyDay(date,fs){
   const arr=dayEntries(date,fs);if(!arr.length)return;
-  const d=externalDutyForDate(date), flights=arr.filter(isFlight), sectors=flights.length;
+
+  // DHD is positioning time only: it must never create, extend or receive operational Duty.
+  const dutyArr=arr.filter(f=>!isDhd(f));
+  const flights=dutyArr.filter(isFlight), sectors=flights.length;
+
+  // Always clear previously-calculated duty metadata first, especially on old DHD imports.
+  arr.forEach(f=>{
+    f.totalDuty=0;
+    f.sectors=isDhd(f)?0:sectors;
+    if(isDhd(f)){f.onDuty='';f.offDuty=''}
+  });
+
+  if(!dutyArr.length){
+    arr.forEach(f=>f._updatedAt=new Date().toISOString());
+    return;
+  }
+
+  const d=externalDutyForDate(date);
   let report=d&&d.report?d.report:'', end=d&&d.end?d.end:'';
-  if(!report){const first=arr[0];report=first.onDuty||shiftTime(first.schedOut||first.out,-60)}
-  if(!end){const last=arr[arr.length-1];end=last.offDuty||shiftTime(last.schedIn||last.in,30)}
-  if(arr.length===1&&isGround(arr[0])){report=arr[0].onDuty||report;end=arr[0].offDuty||end}
+
+  // If flights exist, operational duty belongs to the flight sequence only.
+  // A DHD before/after the flight sequence must not move the duty boundaries.
+  const sequence=flights.length?flights:dutyArr;
+  const first=sequence[0], last=sequence[sequence.length-1];
+
+  if(!report)report=first.onDuty||shiftTime(first.schedOut||first.out,-60);
+  if(!end)end=last.offDuty||shiftTime(last.schedIn||last.in,30);
+
+  if(sequence.length===1&&isGround(sequence[0])){
+    report=sequence[0].onDuty||report;
+    end=sequence[0].offDuty||end;
+  }
+
   const duty=report&&end?diff(mins(report),mins(end)):0;
-  arr.forEach((f,i)=>{f.onDuty=i===0?report:'';f.offDuty=i===arr.length-1?end:'';f.totalDuty=i===arr.length-1?duty:0;f.sectors=sectors;f._updatedAt=new Date().toISOString()});
+
+  dutyArr.forEach(f=>{f.onDuty='';f.offDuty='';f.totalDuty=0;f.sectors=sectors});
+  first.onDuty=report||'';
+  last.offDuty=end||'';
+  last.totalDuty=duty;
+  arr.forEach(f=>f._updatedAt=new Date().toISOString());
 }
 function reconcileAllDuties(){
   const fs=load(FLIGHTS_KEY), dates=[...new Set(fs.map(f=>f.date).filter(Boolean))];
   dates.forEach(d=>recalcDutyDay(d,fs));save(FLIGHTS_KEY,fs)
 }
 function dutySummary(date){
-  const arr=dayEntries(date);if(!arr.length)return null;const first=arr[0],last=arr[arr.length-1];
-  const report=first.onDuty||externalDutyForDate(date)?.report||'',end=last.offDuty||externalDutyForDate(date)?.end||'';
-  return{date,entries:arr,report,end,minutes:report&&end?diff(mins(report),mins(end)):0,sectors:arr.filter(isFlight).length,dep:arr.find(x=>x.dep)?.dep||'',arr:[...arr].reverse().find(x=>x.arr)?.arr||''}
+  const all=dayEntries(date);if(!all.length)return null;
+  const dutyEntries=all.filter(f=>!isDhd(f));
+  if(!dutyEntries.length)return{date,entries:all,report:'',end:'',minutes:0,sectors:0,dep:all.find(x=>x.dep)?.dep||'',arr:[...all].reverse().find(x=>x.arr)?.arr||''};
+
+  const flights=dutyEntries.filter(isFlight);
+  const sequence=flights.length?flights:dutyEntries;
+  const first=sequence[0],last=sequence[sequence.length-1];
+  const ext=externalDutyForDate(date);
+  const report=first.onDuty||ext?.report||'',end=last.offDuty||ext?.end||'';
+
+  return{
+    date,
+    entries:all,
+    report,
+    end,
+    minutes:report&&end?diff(mins(report),mins(end)):0,
+    sectors:flights.length,
+    dep:sequence.find(x=>x.dep)?.dep||'',
+    arr:[...sequence].reverse().find(x=>x.arr)?.arr||''
+  }
 }
 function mergedDutyMinutes(start=null,end=null){
   const dates=[...new Set(load(FLIGHTS_KEY).map(f=>f.date).filter(Boolean))];let total=0;
