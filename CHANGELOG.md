@@ -424,3 +424,31 @@
 - Manual edits made from the Roster are marked as overrides and are preserved on later AeroLINE imports.
 - DHD activities with no route in the AeroLINE data remain route-incomplete instead of being displayed as a fabricated Home Base → Home Base sector.
 - Training metadata from `trainingCrewScheduleInfoList` is retained on matching roster sectors for future use.
+
+## v5.11.0
+- Added a complete LogTen migration workflow for the original `LogTenCoreDataStore.sql` database.
+- Complete migration packages carry normalized PilotLog entries plus the untouched original SQLite database in one file.
+- PilotLog stores the original LogTen SQLite database byte-for-byte in a dedicated IndexedDB archive; it is not uploaded through Cloud Sync.
+- Added `Export archived LogTen database` so the exact archived SQLite file can be recovered from PilotLog later.
+- Stable LogTen `ZLOGTEN_UNIQUEID` values are retained on imported entries and used for safe re-import/update matching.
+- Complete database mapping handles LogTen flight types 0 Flight, 1 DHD, 2 Ground Course, 3 Simulator and 7 STBY.
+- Imports currently supported operational fields including dates/times, route, aircraft/type, PIC/SIC role, crew names, instruction, night, IFR, PF, approaches, take-offs/landings, remarks and lock state.
+- Fields and relationships not yet surfaced by PilotLog remain preserved in the embedded original SQLite archive for future implementation.
+- Existing LogTen Tab import remains available as a secondary compatibility import.
+- Existing PilotLog storage keys and cloud-sync schema are unchanged; a new local-only LogTen archive metadata key was added.
+
+## v6.0.0
+- Built from the complete v5.11.0 baseline, retaining the complete LogTen migration/archive workflow.
+- Added AeroLINE Connect controls in Roster: month selector, official AeroLINE login shortcut and direct Sync AeroLINE test.
+- AeroLINE crew ID/profile ID can be learned from a normal AeroLINE JSON import and are stored only on the device; AeroLINE passwords, cookies and Auth-Token values are not stored by PilotLog.
+- Direct sync requests the structured `TrackingService/getCrewSchedule` endpoint for the selected month and feeds the response through the existing v5.10.3 AeroLINE roster importer.
+- Existing Import AeroLINE JSON remains available as the reliable fallback while browser cross-origin/session behavior is validated on each device.
+- Existing PilotLog Auto Sync and manual Sync now are unchanged.
+
+## v6.0.1
+- Stability/consolidation release based on the complete v6.0.0 codebase derived from v5.11.0.
+- Release package slimmed to runtime assets only; duplicate generated files, modular build sources and build scripts are excluded from the deployable ZIP.
+- Versioned CSS, JavaScript and service-worker assets prevent mixed old/new files after an update.
+- Service worker uses cache-first only for immutable versioned app assets and network-first for navigation, reducing unnecessary cache rewrites while retaining offline startup.
+- Existing logbook, LogTen migration/archive, cloud sync, manual Sync now, roster, AeroLINE Connect, FTL, trips, payroll, exports and local data formats are unchanged.
+- Existing DOM-reference and JavaScript syntax integrity checks retained.

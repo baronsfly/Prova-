@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-5.10.3.css">
+<link rel="stylesheet" href="pilotlog-6.0.1.css">
 </head>
 <body>
 <header>
@@ -26,7 +26,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v5.10.3</span>
+    <span class="version-badge">v6.0.1</span>
   </div>
 </header>
 <main>
@@ -120,10 +120,28 @@
 <section id="rosterView" class="hidden">
   <div class="section-title">Upcoming roster — grouped by duty</div>
   <div class="card roster-aeroline-card">
+    <div class="section-title inner aeroline-title">AeroLINE Connect</div>
+    <div class="hint">Sign in on the official AeroLINE website. PilotLog never stores your AeroLINE password. Direct Sync reuses the browser session when AeroLINE/browser security permits it.</div>
+    <div class="form-grid aeroline-sync-grid">
+      <div><label>Roster month</label><input id="aerolineSyncMonth" type="month"></div>
+      <div class="aeroline-sync-action"><label>&nbsp;</label><button class="primary" id="aerolineSyncBtn" type="button">Sync AeroLINE</button></div>
+    </div>
     <div class="actions">
-      <label class="filebtn primary" for="aerolineRosterFile">Import AeroLINE</label>
+      <button class="secondary" id="aerolineLoginBtn" type="button">Open AeroLINE Login</button>
+      <label class="filebtn secondary" for="aerolineRosterFile">Import AeroLINE JSON</label>
       <input id="aerolineRosterFile" type="file" accept=".json,application/json,text/json" class="hidden">
     </div>
+    <details class="aeroline-setup">
+      <summary>Connection setup</summary>
+      <div class="form-grid spaced">
+        <div><label>Crew ID</label><input id="aerolineCrewId" inputmode="numeric" autocomplete="off" placeholder="Auto-detected from JSON"></div>
+        <div><label>Crew Profile ID</label><input id="aerolineCrewProfileId" inputmode="numeric" autocomplete="off" placeholder="Auto-detected from JSON"></div>
+        <div><label>Crew Type</label><select id="aerolineCrewType"><option value="">Auto</option><option value="CP">CP</option><option value="FO">FO</option><option value="SO">SO</option></select></div>
+      </div>
+      <div class="actions"><button class="secondary" id="saveAerolineSetupBtn" type="button">Save setup</button></div>
+      <div class="hint">These identifiers are kept only on this device. No AeroLINE password, cookie or Auth-Token is saved.</div>
+    </details>
+    <div class="sync-status aeroline-status" id="aerolineConnectStatus" data-state="idle">AeroLINE connection not tested yet.</div>
     <div class="hint" id="aerolineImportStatus">Import the AeroLINE roster JSON. Re-importing the same month updates the existing roster instead of creating duplicates.</div>
   </div>
   <div class="card"><div class="hint">Roster times are shown in the local time of the relevant airport. Logbook entry times remain Zulu.</div></div>
@@ -418,8 +436,14 @@
     </div>
     <div class="hint">PilotLog generates a real A4 portrait PDF. Open/share the PDF directly; browser print scaling is not used. “Last pages” exports complete logbook pages with carried-forward totals.</div>
     <div class="section-title inner">LogTen Pro</div>
-    <div class="actions top"><label class="filebtn primary" for="logTenFile">Import from LogTen Pro</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden"><button class="secondary" id="exportCsv">Export Operational CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button></div>
-    <div class="hint" id="logTenImportStatus">Use LogTen Pro → Export Flights (Tab).</div>
+    <div class="actions top">
+      <label class="filebtn primary" for="logTenFullFile">Import complete LogTen migration</label><input id="logTenFullFile" type="file" accept=".pilotlog-logten,application/octet-stream" class="hidden">
+      <label class="filebtn secondary" for="logTenFile">Import LogTen Tab</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden">
+      <button class="secondary" id="exportLogTenArchive" type="button">Export archived LogTen database</button>
+      <button class="secondary" id="exportCsv">Export Operational CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button>
+    </div>
+    <div class="hint" id="logTenImportStatus">Complete migration imports the usable logbook fields and keeps the original LogTen SQLite database byte-for-byte in local archive storage. The archive is not uploaded to Cloud Sync.</div>
+    <div class="hint" id="logTenArchiveStatus">No complete LogTen database archived yet.</div>
     <div class="section-title inner">Duty / Roster</div>
     <div class="actions"><label class="filebtn primary" for="calendarFile">Import Calendar (.ics)</label><input id="calendarFile" type="file" accept=".ics,text/calendar" class="hidden"><label class="filebtn secondary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden"><button class="secondary" id="exportRoster">Export roster CSV</button></div>
     <div class="hint" id="calendarImportStatus">No calendar imported yet.</div>
@@ -510,5 +534,5 @@
   <button data-view="dashboardView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.5 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-5.10.3.js" defer></script>
+<script src="pilotlog-6.0.1.js" defer></script>
 </body></html>
