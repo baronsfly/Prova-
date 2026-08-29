@@ -303,3 +303,25 @@
 - Added a dedicated Expiry section scaffold, intentionally separate from Settings, ready for licence/medical/visa/training validity tracking.
 - Added lighter navigation/view transitions and a scrollable menu for a smoother interface without changing stored data.
 - No database/storage migration is required.
+
+## v5.7.0
+- Removed the `Flight Time — Left Seat` statistic from Dashboard/Totals. Seat Position remains stored per entry and Right Seat hours remain available.
+- Added `Call from Day OFF` checkbox to Add/Edit Entry, including DHD and Ground Course minimal forms.
+- Call-from-Day-OFF flags are persisted, drafted, synced and exported. Logbook shows a `Day OFF call` badge.
+- Payroll now counts Day OFF premium automatically from flagged entries, once per calendar date, using the existing `Day OFF premium DHM` setting.
+- Payroll shows each Day OFF call date, duty/route, premium and an editable monthly Remark field for payment follow-up.
+- Added full Expiry manager with multiple Licences, Medicals, Instructor Ratings and Recurrent Courses.
+- Licence fields: licence/type, authority, number, last check, expiry and remarks.
+- Medical fields: authority, certificate number, last check, expiry, issuer and remarks.
+- Instructor Rating fields: rating, authority, number, last check, expiry and remarks.
+- Course fields: editable course name, authority, course date, expiry, provider/issuer and remarks. Common suggestions include CRM, SMS, GRT, DGR, AVSEC, SEP, First Aid, UPRT and EBT/CBTA.
+- Expiry rows are green above 30 days remaining, yellow from 30 days through expiry day, and red after expiry. Days remaining are shown automatically.
+- Expiry records participate in Cloud Sync, deletion tombstones and the weekly backup.
+- Roster UI now displays only the current month followed by the next month. Past months and months beyond the next are hidden from this page without deleting data.
+- Roster automatically anchors to today / the first activity after today when opened.
+
+## v5.7.1
+- Cleaned the Logbook screen by removing the redundant descriptive text, `Log entries` heading and explanatory card above the entries list.
+- Improved the Logbook current-day anchor: opening Logbook now positions at today when present, otherwise at the exact boundary between future and past entries.
+- The anchor is placed before the current-month separator so the current date area is visible immediately instead of landing too far down the list.
+- No stored data or logbook ordering changed.

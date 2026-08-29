@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-5.6.0.css">
+<link rel="stylesheet" href="pilotlog-5.7.1.css">
 </head>
 <body>
-<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.6.0</span></div></header>
+<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.7.1</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -51,6 +51,10 @@
         <div data-entry-field="credit"><label>Credit Hours</label><input id="creditDisplay"></div>
         <div data-entry-field="role"><label>Role</label><select id="role"><option>PIC</option><option>SIC</option><option>Instructor</option><option>Examiner</option></select></div>
         <div data-entry-field="seatPosition"><label>Seat position</label><select id="seatPosition"><option value="">—</option><option value="Left">Left</option><option value="Right">Right</option></select></div>
+        <div data-entry-field="callFromDayOff" class="entry-check-field">
+          <label>Call from Day OFF</label>
+          <label class="check-option"><input id="callFromDayOff" type="checkbox"> Called to work from a scheduled day off</label>
+        </div>
         <div data-entry-field="picName"><label>PIC Name</label><input id="picName" placeholder="CAPTAIN NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
         <div data-entry-field="sicName"><label>SIC Name</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
         <div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
@@ -91,11 +95,9 @@
 <section id="flightsView" class="hidden">
   <div class="view-toolbar">
     <div>
-          <div class="hint">Flight, Simulator, DHD, Ground Course and STBY entries.</div>
-    </div>
+        </div>
     <button class="primary view-add-btn" id="logbookAddBtn" type="button">＋ Add entry</button>
   </div>
-  <div class="section-title">Log entries</div>
   <div class="card"><div class="hint">Flights, DHD, Ground Courses, Standby and Simulator duties are all retained in the same operational log.</div></div>
   <div class="card spaced" id="allFlights"></div>
 </section>
@@ -127,7 +129,6 @@
     <div class="stat-row"><span>A320 SIC</span><b id="tA320Sic">0:00</b></div>
     <div class="stat-row"><span>A320 Instruction Flight Time</span><b id="tA320FlightInstruction">0:00</b></div>
     <div class="stat-row"><span>A320 Instruction Simulator Time</span><b id="tA320SimInstruction">0:00</b></div>
-    <div class="stat-row"><span>Flight Time — Left Seat</span><b id="tLeftSeat">0:00</b></div>
     <div class="stat-row"><span>Flight Time — Right Seat</span><b id="tRightSeat">0:00</b></div>
   </div>
   <div class="section-title">Periods / logbook hours</div><div class="card" id="periodTotals"></div>
@@ -161,7 +162,7 @@
   <div class="card">
     <div class="form-grid payroll-head">
       <div><label>Payroll month</label><input id="payrollMonth" type="month"></div>
-      <div><label>Day OFF worked</label><input id="payDayOffCount" type="number" min="0" step="1" value="0"></div>
+      <div><label>Call from Day OFF</label><input id="payDayOffCount" type="number" min="0" step="1" value="0" readonly></div>
       <div><label>Arrears / adjustments (DHM)</label><input id="payArrears" type="number" step="0.01" value="0"></div>
       <div class="payroll-action"><button class="primary" type="button" id="recalcPayroll">Recalculate</button></div>
     </div>
@@ -180,13 +181,61 @@
     <div class="hint" id="payFxStatus">FX rate not loaded.</div>
   </div>
   <div class="section-title">Breakdown</div><div class="card" id="payBreakdown"></div>
+  <div class="section-title">Call from Day OFF details</div>
+  <div class="card" id="payDayOffDetails"><div class="empty">No Day OFF calls in this payroll month.</div></div>
 </section>
 
 <section id="expiryView" class="hidden">
-  <h2>Expiry</h2>
-  <div class="card">
-    <div class="empty">No expiries configured yet.</div>
-    <div class="hint">This section is reserved for licence, medical, visa, training and other validity dates.</div>
+  <div class="section-title">Expiry</div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>Licences</h3><button class="primary" type="button" data-add-expiry="license">＋ Add licence</button></div>
+    <div class="card" id="expiryLicences"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>Medical</h3><button class="primary" type="button" data-add-expiry="medical">＋ Add medical</button></div>
+    <div class="card" id="expiryMedicals"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>Instructor Ratings</h3><button class="primary" type="button" data-add-expiry="instructor">＋ Add rating</button></div>
+    <div class="card" id="expiryInstructorRatings"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>Recurrent Courses</h3><button class="primary" type="button" data-add-expiry="course">＋ Add course</button></div>
+    <div class="hint">Common examples are CRM, SMS, GRT, DGR, AVSEC, SEP, First Aid, UPRT and EBT/CBTA. The course name remains fully editable.</div>
+    <div class="card" id="expiryCourses"></div>
+  </div>
+
+  <div id="expiryEditorWrap" class="hidden">
+    <div class="section-title" id="expiryEditorTitle">Add expiry</div>
+    <div class="card">
+      <form id="expiryForm">
+        <input type="hidden" id="expiryEditId">
+        <input type="hidden" id="expiryCategory" value="license">
+        <div class="form-grid">
+          <div data-expiry-field><label id="expiryNameLabel">Licence / type</label><input id="expiryName" list="expiryNameSuggestions" placeholder="ATPL"></div>
+          <div data-expiry-field><label>Authority</label><input id="expiryAuthority" list="expiryAuthoritySuggestions" placeholder="EASA / GCAA / other"></div>
+          <div data-expiry-field><label id="expiryNumberLabel">Licence / certificate number</label><input id="expiryNumber"></div>
+          <div data-expiry-field><label>Last check</label><input id="expiryLastCheck" type="date"></div>
+          <div data-expiry-field><label>Course date</label><input id="expiryCourseDate" type="date"></div>
+          <div data-expiry-field><label>Expiry date</label><input id="expiryExpiry" type="date" required></div>
+          <div data-expiry-field><label id="expiryIssuerLabel">Issued by</label><input id="expiryIssuer"></div>
+          <div data-expiry-field class="full"><label>Remarks</label><input id="expiryRemarks"></div>
+        </div>
+        <datalist id="expiryAuthoritySuggestions"><option value="EASA"><option value="GCAA"></datalist>
+        <datalist id="expiryNameSuggestions">
+          <option value="ATPL"><option value="CPL"><option value="TRI"><option value="SFI"><option value="CRMI"><option value="TRE">
+          <option value="CRM"><option value="SMS"><option value="GRT"><option value="DGR"><option value="AVSEC"><option value="SEP"><option value="First Aid"><option value="UPRT"><option value="EBT/CBTA">
+        </datalist>
+        <div class="actions">
+          <button class="primary" type="submit">Save</button>
+          <button class="secondary" id="expiryCancelBtn" type="button">Cancel</button>
+        </div>
+      </form>
+    </div>
   </div>
 </section>
 
@@ -375,5 +424,5 @@
   <button data-view="dashboardView" class="active">Dashboard</button>
   <button data-view="settingsView">Settings</button>
 </nav>
-<script src="pilotlog-5.6.0.js" defer></script>
+<script src="pilotlog-5.7.1.js" defer></script>
 </body></html>

@@ -124,3 +124,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.5.1: Roster now includes SIM, STBY, DHD and Ground Course, not only flight sectors. EASA daily FDP remains flight-duty-only.
 
 - v5.6.0: new navigation architecture. Entries is now Logbook with an internal Add button; Dashboard and Totals are combined; a dedicated Expiry section is added; menu order is Roster → Logbook → Payroll → Expiry → Trips → Dashboard → Settings.
+
+- v5.7.0: automatic Day OFF-call payroll tracking with dated remarks; full multi-record Expiry manager with 30-day colour warnings; Roster view restricted to current + next month and anchored at today; Left Seat total removed.
+
+- v5.7.1: simplified Logbook header and improved the automatic today anchor.
