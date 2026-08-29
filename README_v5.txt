@@ -120,3 +120,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.4.1: cross-device deletions are now synchronized with tombstones. Deleted flights/roster/duties/trips do not reappear from older cloud copies.
 
 - v5.5.0: Auto Sync plus one rotating weekly IndexedDB backup. Storage remains bounded because the weekly snapshot always overwrites the previous one.
+
+- v5.5.1: Roster now includes SIM, STBY, DHD and Ground Course, not only flight sectors. EASA daily FDP remains flight-duty-only.
+
+- v5.6.0: new navigation architecture. Entries is now Logbook with an internal Add button; Dashboard and Totals are combined; a dedicated Expiry section is added; menu order is Roster → Logbook → Payroll → Expiry → Trips → Dashboard → Settings.

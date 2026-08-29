@@ -286,3 +286,20 @@
 - Passwords and Supabase session/access/refresh tokens are excluded.
 - Settings displays the backup date/version and provides Backup now and Restore weekly backup.
 - Restore replaces local working data and intentionally does not immediately auto-sync, allowing the restored state to be reviewed first.
+
+## v5.5.1
+- Fixed Roster being flight-only.
+- Roster now displays Simulator, STBY, DHD and Ground Course activities from Entries in chronological order together with grouped flight duties.
+- Standalone non-flight calendar duties stored only in Duties are also displayed when no equivalent Entry exists.
+- DHD shows its route/flight number when available; Simulator and Ground Course show location/details.
+- Entry-backed non-flight activities can be opened directly from the Roster page.
+- EASA daily/next FDP selection now explicitly considers only duty sessions containing flight sectors; SIM/STBY/DHD/Ground Course remain duty activities but cannot be mistaken for an FDP.
+
+## v5.6.0
+- Reorganized the main navigation in the requested workflow order: Roster, Logbook, Payroll, Expiry, Trips, Dashboard, Settings.
+- Renamed Entries to Logbook.
+- Removed Add from the main navigation; Logbook now has a prominent `+ Add entry` button for Flight, Simulator, DHD, Ground Course and STBY entries.
+- Dashboard and Totals are now presented as one combined Dashboard view while preserving the existing calculation/render functions internally.
+- Added a dedicated Expiry section scaffold, intentionally separate from Settings, ready for licence/medical/visa/training validity tracking.
+- Added lighter navigation/view transitions and a scrollable menu for a smoother interface without changing stored data.
+- No database/storage migration is required.

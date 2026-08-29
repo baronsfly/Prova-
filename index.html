@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-5.5.0.css">
+<link rel="stylesheet" href="pilotlog-5.6.0.css">
 </head>
 <body>
-<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.5.0</span></div></header>
+<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.6.0</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -89,6 +89,12 @@
 </section>
 
 <section id="flightsView" class="hidden">
+  <div class="view-toolbar">
+    <div>
+          <div class="hint">Flight, Simulator, DHD, Ground Course and STBY entries.</div>
+    </div>
+    <button class="primary view-add-btn" id="logbookAddBtn" type="button">＋ Add entry</button>
+  </div>
   <div class="section-title">Log entries</div>
   <div class="card"><div class="hint">Flights, DHD, Ground Courses, Standby and Simulator duties are all retained in the same operational log.</div></div>
   <div class="card spaced" id="allFlights"></div>
@@ -174,6 +180,14 @@
     <div class="hint" id="payFxStatus">FX rate not loaded.</div>
   </div>
   <div class="section-title">Breakdown</div><div class="card" id="payBreakdown"></div>
+</section>
+
+<section id="expiryView" class="hidden">
+  <h2>Expiry</h2>
+  <div class="card">
+    <div class="empty">No expiries configured yet.</div>
+    <div class="hint">This section is reserved for licence, medical, visa, training and other validity dates.</div>
+  </div>
 </section>
 
 <section id="settingsView" class="hidden">
@@ -352,6 +366,14 @@
 </section>
 </main>
 
-<nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="pilotlog-5.5.0.js" defer></script>
+<nav class="nav">
+  <button data-view="rosterView">Roster</button>
+  <button data-view="flightsView">Logbook</button>
+  <button data-view="payrollView">Payroll</button>
+  <button data-view="expiryView">Expiry</button>
+  <button data-view="tripsView">Trips</button>
+  <button data-view="dashboardView" class="active">Dashboard</button>
+  <button data-view="settingsView">Settings</button>
+</nav>
+<script src="pilotlog-5.6.0.js" defer></script>
 </body></html>
