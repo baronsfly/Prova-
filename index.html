@@ -8,19 +8,17 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-5.7.1.css">
+<link rel="stylesheet" href="pilotlog-5.7.3.css">
 </head>
 <body>
-<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.7.1</span></div></header>
+<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.7.3</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
   <div class="card" id="dashboardTodayDuty"></div>
   <div class="section-title">Next Duties</div>
   <div class="card" id="dashboardNextDuties"></div>
-  <div class="section-title">EASA FTL</div>
-  <div class="card metric dashboard-ftl"><b id="mFtl">OK</b><span>Current status</span></div>
-  <div class="section-title">EASA FTL rolling limits</div>
+  <div class="section-title">EASA FTL limits</div>
   <div class="hint">Duty rolling limits are rebuilt from the actual operational sequence. Future duty time is excluded.</div>
   <div class="card" id="dashboardFtl"></div>
 </section>
@@ -421,8 +419,8 @@
   <button data-view="payrollView">Payroll</button>
   <button data-view="expiryView">Expiry</button>
   <button data-view="tripsView">Trips</button>
-  <button data-view="dashboardView" class="active">Dashboard</button>
+  <button data-view="dashboardView" class="active">Totals</button>
   <button data-view="settingsView">Settings</button>
 </nav>
-<script src="pilotlog-5.7.1.js" defer></script>
+<script src="pilotlog-5.7.3.js" defer></script>
 </body></html>

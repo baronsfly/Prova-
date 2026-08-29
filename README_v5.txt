@@ -128,3 +128,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.7.0: automatic Day OFF-call payroll tracking with dated remarks; full multi-record Expiry manager with 30-day colour warnings; Roster view restricted to current + next month and anchored at today; Left Seat total removed.
 
 - v5.7.1: simplified Logbook header and improved the automatic today anchor.
+
+- v5.7.2: Roster includes explicit Day OFF and synthetic Blank day rows for every empty date in current + next month; Roster anchor fixed; Logbook opens at the next upcoming duty rather than today.
+
+- v5.7.3: Dashboard is now labelled Totals. Removed the FTL Current Status card; each EASA limit is green with >5h remaining, yellow with <=5h remaining, and red only when exceeded.

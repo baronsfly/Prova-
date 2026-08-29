@@ -325,3 +325,22 @@
 - Improved the Logbook current-day anchor: opening Logbook now positions at today when present, otherwise at the exact boundary between future and past entries.
 - The anchor is placed before the current-month separator so the current date area is visible immediately instead of landing too far down the list.
 - No stored data or logbook ordering changed.
+
+## v5.7.2
+- Calendar roster import no longer ignores `OFF` / `DAY OFF` events; they are stored as explicit `Day OFF` duty records.
+- Roster now renders every calendar date in the current month and following month.
+- A date with an explicit OFF record is shown as `Day OFF`.
+- A date with no flight, SIM, STBY, DHD, Ground Course or explicit Day OFF record is shown as `Blank day`.
+- Fixed the Roster anchor on iPad/Safari: the generic navigation scroll-to-top no longer overrides the Roster anchor, and the anchor scroll is performed after two animation frames.
+- Roster anchors exactly to today's calendar row.
+- Logbook anchor changed from today/boundary to the next upcoming duty/activity. It uses the earliest upcoming operational/report start; if there is no future entry, it falls back to the most recent past entry.
+
+## v5.7.3
+- Renamed the visible Dashboard navigation item to `Totals`.
+- Removed the EASA FTL `Current status` / `OK` / `CHECK` summary card.
+- EASA FTL limits now use one consistent traffic-light rule based on remaining allowance:
+  - green when more than 5:00 remains;
+  - yellow when 5:00 or less remains, including exactly at the limit;
+  - red only after the limit has been exceeded.
+- The same 5-hour rule is applied to Current/Next/Last daily FDP and all 7/14/28-day and flight-time limits.
+- FTL limit rows receive a light matching background as well as colored values for faster scanning.
