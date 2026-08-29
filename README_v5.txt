@@ -132,3 +132,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.7.2: Roster includes explicit Day OFF and synthetic Blank day rows for every empty date in current + next month; Roster anchor fixed; Logbook opens at the next upcoming duty rather than today.
 
 - v5.7.3: Dashboard is now labelled Totals. Removed the FTL Current Status card; each EASA limit is green with >5h remaining, yellow with <=5h remaining, and red only when exceeded.
+
+- v5.7.4: Air Arabia Crew Schedule screenshot import now uses OCR layout coordinates and calendar-cell reconstruction.

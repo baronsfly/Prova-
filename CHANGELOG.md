@@ -344,3 +344,12 @@
   - red only after the limit has been exceeded.
 - The same 5-hour rule is applied to Current/Next/Last daily FDP and all 7/14/28-day and flight-time limits.
 - FTL limit rows receive a light matching background as well as colored values for faster scanning.
+
+## v5.7.4
+- Rebuilt Screenshot Roster parsing for Air Arabia `Individual Crew Schedule Report`.
+- OCR now requests positional Tesseract `blocks` and preserves word bounding boxes.
+- The parser reconstructs dated calendar cells from X/Y coordinates instead of flattening the roster grid into linear text.
+- Supports OFF/Day OFF, DHD, HSBY/STBY, GRT/CRM/SMS/SEP/DGR/AVSEC/ground courses and multiple 3O/MAC flight sectors in one day.
+- Flights are reviewed/imported as Roster sectors; non-flight activities as Logbook entries; OFF as Day OFF.
+- Where the screenshot does not print routes, PilotLog tries to infer route from previous Logbook/Roster history for the same flight number; otherwise fields remain blank for Review.
+- Added Day OFF to Screenshot Review and fixed scheduled-block calculation precedence.
