@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-5.7.4.css">
+<link rel="stylesheet" href="pilotlog-5.7.5.css">
 </head>
 <body>
-<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.7.4</span></div></header>
+<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.7.5</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -288,7 +288,8 @@
     </div>
     <div id="screenshotReviewWrap" class="hidden">
       <div class="section-title inner">Review Import</div>
-      <div class="hint">Correct any field before importing. Uncheck rows you do not want. For roster screenshots PilotLog may create an internal Duty row plus the detected sectors.</div>
+      <div class="hint">PilotLog fills what it can read. Yellow fields need your confirmation or completion. If a roster cell cannot be interpreted it is kept as <b>To complete</b> with the original OCR text in Remarks. Nothing incomplete is imported until you complete it or uncheck that row.</div>
+      <div id="screenshotReviewSummary" class="screenshot-review-summary"></div>
       <div class="screenshot-review-scroll">
         <table class="screenshot-review-table">
           <thead><tr>
@@ -422,5 +423,5 @@
   <button data-view="dashboardView" class="active">Totals</button>
   <button data-view="settingsView">Settings</button>
 </nav>
-<script src="pilotlog-5.7.4.js" defer></script>
+<script src="pilotlog-5.7.5.js" defer></script>
 </body></html>

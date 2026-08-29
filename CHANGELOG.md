@@ -353,3 +353,14 @@
 - Flights are reviewed/imported as Roster sectors; non-flight activities as Logbook entries; OFF as Day OFF.
 - Where the screenshot does not print routes, PilotLog tries to infer route from previous Logbook/Roster history for the same flight number; otherwise fields remain blank for Review.
 - Added Day OFF to Screenshot Review and fixed scheduled-block calculation precedence.
+
+## v5.7.5
+- Reworked Screenshot import as a tolerant review workflow instead of all-or-nothing parsing.
+- PilotLog now pre-fills every field it can read and leaves uncertain/missing fields blank and highlighted yellow.
+- Added `To complete`: a non-empty roster cell that cannot be safely classified is preserved as an editable review row rather than discarded.
+- Original OCR cell text and parser notes are retained in Remarks so the user can see what PilotLog was trying to interpret.
+- If the calendar grid cannot be reconstructed at all, recovered activity lines are returned as `To complete` rows instead of producing a misleading single import.
+- Review displays a live `ready / to complete` count and states exactly which fields are missing.
+- Selected incomplete rows are blocked from import; the user can complete the yellow fields or uncheck those rows and safely import the rest.
+- Added type-specific completeness rules for Flight, DHD, STBY and Simulator rows.
+- Added bounded image preprocessing for small roster text: upscaling up to 2.5× / about 12 MP, grayscale and mild contrast enhancement before OCR.

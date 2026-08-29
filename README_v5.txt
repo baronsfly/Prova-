@@ -134,3 +134,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.7.3: Dashboard is now labelled Totals. Removed the FTL Current Status card; each EASA limit is green with >5h remaining, yellow with <=5h remaining, and red only when exceeded.
 
 - v5.7.4: Air Arabia Crew Schedule screenshot import now uses OCR layout coordinates and calendar-cell reconstruction.
+
+- v5.7.5: tolerant screenshot import. Whatever PilotLog cannot read is returned as editable `To complete` rows with yellow fields instead of being discarded or guessed.
