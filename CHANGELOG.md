@@ -373,3 +373,12 @@
 - Partial text is never guessed: clipped times and unknown routes remain yellow fields to complete in Review.
 - Unclassified but readable cells become `To complete` with the raw cell OCR retained.
 - The v5.7.5 tolerant positional/full-page parsers remain as fallbacks if the Smart Cell grid cannot be reconstructed.
+
+## v5.9.0
+- Professional visual redesign only; operational logic and stored data are unchanged.
+- New restrained light airline-tool visual language: navy/white palette, sharper typography, quieter cards, borders and shadows.
+- Added a simple line-art PilotLog brand mark in the app header without external assets.
+- Reworked primary navigation with consistent monochrome line icons.
+- On phones and smaller iPad widths, navigation is now a native-style bottom tab bar; wide layouts retain a compact navigation rail.
+- Refined forms, focus states, buttons, roster rows, Totals, Payroll, Expiry and FTL presentation for a more professional cockpit/operations feel.
+- Kept all existing views, IDs, storage keys, sync controls, Smart Cell Scan, manual Sync now, imports and exports unchanged.
