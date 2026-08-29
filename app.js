@@ -2235,24 +2235,25 @@ async function renderPayroll(){
   $('payrollMonth').value=month;
   const ex=monthExtras(month),p=payrollData(month);
 
+  $('payDayOffCount').value=p.dayOffCount;
   $('payArrears').value=ex.arrears||0;
+  $('payCredits').textContent=fmt(p.creditMins);
+  $('payLayover').textContent=fmt(p.layMins);
+  $('payTrainingSectors').textContent=p.training;
+  $('paySimCount').textContent=p.sims;
   $('payTotalDhm').textContent=`${money(p.total)} DHM`;
   $('payTotalEur').textContent='…';
 
   $('payBreakdown').innerHTML=[
-    ['Fixed salary','',p.fixed],
-    ['Seniority',money(p.seniorPct)+'%',p.seniority],
-    ['Credit H',fmt(p.creditMins),p.flightPay],
-    ['Training sectors',String(p.training),p.trainingPay],
-    ['Layover',fmt(p.layMins),p.layoverPay],
-    ['Simulator allowance',String(p.sims),p.simPay],
-    ['Call from Day OFF',String(p.dayOffCount),p.dayOffPay],
-    ['Arrears / adjustments','',p.arrears]
-  ].map(([n,q,v],i)=>`<div class="pay-breakdown-row ${i%2?'pay-breakdown-alt':''}">
-    <span class="pay-breakdown-label">${esc(n)}</span>
-    <span class="pay-breakdown-qty">${esc(q)}</span>
-    <b class="money pay-breakdown-amount">${money(v)} DHM</b>
-  </div>`).join('');
+    ['Fixed salary',p.fixed],
+    ['Seniority ('+money(p.seniorPct)+'%)',p.seniority],
+    ['Credit hours pay',p.flightPay],
+    ['Training sectors ('+p.training+')',p.trainingPay],
+    ['Layover ('+p.layHours.toFixed(2)+' h)',p.layoverPay],
+    ['Simulator allowance ('+p.sims+')',p.simPay],
+    ['Call from Day OFF ('+p.dayOffCount+')',p.dayOffPay],
+    ['Arrears / adjustments',p.arrears]
+  ].map(([n,v])=>`<div class="stat-row"><span>${esc(n)}</span><b class="money">${money(v)} DHM</b></div>`).join('');
 
   const remarks=p.extras.dayOffRemarks||{};
   $('payDayOffDetails').innerHTML=p.dayOffEvents.length?p.dayOffEvents.map(ev=>{
@@ -2288,8 +2289,7 @@ async function renderPayroll(){
 }
 
 /* Expiry / validity tracking */
-const EXPIRY_CATEGORIES=['license','medical','instructor','course','aircraft','english'];
-let expiryPendingPhotoData='';
+const EXPIRY_CATEGORIES=['license','medical','instructor','course'];
 
 function expiryDaysRemaining(expiry,now=new Date()){
   if(!expiry)return null;
@@ -2300,18 +2300,13 @@ function expiryDaysRemaining(expiry,now=new Date()){
 }
 function expiryStatus(expiry,now=new Date()){
   const days=expiryDaysRemaining(expiry,now);
-  if(days===null)return{days:null,state:'unknown',label:'NO EXPIRY'};
-  if(days<0)return{days,state:'expired',label:`EXPIRED ${Math.abs(days)} DAY${Math.abs(days)===1?'':'S'} AGO`};
-  if(days<=30)return{days,state:'warning',label:`${days} DAY${days===1?'':'S'} REMAINING`};
-  return{days,state:'valid',label:`${days} DAYS REMAINING`};
+  if(days===null)return{days:null,state:'unknown',label:'No expiry'};
+  if(days<0)return{days,state:'expired',label:`Expired ${Math.abs(days)} day${Math.abs(days)===1?'':'s'} ago`};
+  if(days<=30)return{days,state:'warning',label:`${days} day${days===1?'':'s'} remaining`};
+  return{days,state:'valid',label:`${days} days remaining`};
 }
 function expiryCategoryLabel(category){
-  return category==='license'?'LICENCE':
-    category==='medical'?'MEDICAL':
-    category==='instructor'?'INSTRUCTOR RATING':
-    category==='course'?'RECURRENT COURSE':
-    category==='aircraft'?'AIRCRAFT ENDORSED':
-    category==='english'?'LPC ENGLISH':'EXPIRY';
+  return category==='license'?'Licence':category==='medical'?'Medical':category==='instructor'?'Instructor Rating':'Recurrent Course';
 }
 function expiryRecords(category){
   return load(EXPIRY_KEY)
@@ -2319,44 +2314,34 @@ function expiryRecords(category){
     .sort((a,b)=>String(a.expiry||'9999-99-99').localeCompare(String(b.expiry||'9999-99-99')));
 }
 function expiryTitle(x){
-  if(x.category==='medical')return [x.medicalClass||'MEDICAL','MEDICAL',x.authority].filter(Boolean).join(' • ');
-  if(x.category==='course')return upper(x.name||'COURSE');
-  if(x.category==='instructor')return upper(x.name||'INSTRUCTOR RATING');
-  if(x.category==='aircraft')return ['AIRCRAFT ENDORSED',x.aircraftType||x.name].filter(Boolean).join(' • ');
-  if(x.category==='english')return ['LPC ENGLISH',x.englishLevel?`LEVEL ${x.englishLevel}`:''].filter(Boolean).join(' • ');
-  return [x.authority,x.name||'LICENCE'].filter(Boolean).join(' • ');
+  if(x.category==='medical')return `${x.authority||'Medical'} Medical`;
+  if(x.category==='course')return x.name||'Course';
+  if(x.category==='instructor')return x.name||'Instructor Rating';
+  return [x.authority,x.name||'Licence'].filter(Boolean).join(' • ');
 }
 function expirySubtitle(x){
   const parts=[];
-  if(x.number)parts.push(`NO. ${upper(x.number)}`);
-  if(x.lastCheck)parts.push(`${x.category==='aircraft'?'ENDORSED':'LAST CHECK'} ${displayDate(x.lastCheck)}`);
-  if(x.courseDate)parts.push(`${x.category==='english'?'DATE PERFORMED':'COURSE'} ${displayDate(x.courseDate)}`);
-  if(x.endorsedBy)parts.push(`ENDORSED BY ${upper(x.endorsedBy)}`);
-  if(x.issuer)parts.push(upper(x.issuer));
-  if(x.category==='aircraft'&&x.authority)parts.push(upper(x.authority));
-  if(x.category==='english'&&x.authority)parts.push(upper(x.authority));
+  if(x.number)parts.push(`No. ${x.number}`);
+  if(x.lastCheck)parts.push(`Last check ${displayDate(x.lastCheck)}`);
+  if(x.courseDate)parts.push(`Course ${displayDate(x.courseDate)}`);
+  if(x.issuer)parts.push(x.issuer);
   return parts.join(' • ');
 }
 function expiryRowHtml(x){
   const s=expiryStatus(x.expiry);
-  const noExpiry=x.category==='english'&&String(x.englishLevel)==='6'&&!x.expiry;
-  const actions=[];
-  if(x.photoData)actions.push(`<button class="secondary" data-view-expiry-photo="${x.id}">VIEW</button>`);
-  actions.push(`<button class="secondary" data-toggle-expiry-lock="${x.id}">${x.locked?'UNLOCK':'LOCK'}</button>`);
-  if(!x.locked){
-    actions.push(`<button class="secondary" data-edit-expiry="${x.id}">EDIT</button>`);
-    actions.push(`<button class="danger" data-delete-expiry="${x.id}">DELETE</button>`);
-  }
-  return `<div class="expiry-row expiry-${s.state}${x.locked?' expiry-locked':''}">
+  return `<div class="expiry-row expiry-${s.state}">
     <div class="expiry-main">
-      <div class="expiry-title-line"><b>${esc(upper(expiryTitle(x)))}</b>${x.locked?'<span class="pill expiry-lock-pill">LOCKED</span>':''}</div>
-      ${expirySubtitle(x)?`<div class="small">${esc(upper(expirySubtitle(x)))}</div>`:''}
-      ${x.remarks?`<div class="small">${esc(upper(x.remarks))}</div>`:''}
+      <b>${esc(expiryTitle(x))}</b>
+      ${expirySubtitle(x)?`<div class="small">${esc(expirySubtitle(x))}</div>`:''}
+      ${x.remarks?`<div class="small">${esc(x.remarks)}</div>`:''}
     </div>
     <div class="expiry-meta">
-      <b>${x.expiry?esc(displayDate(x.expiry)):(noExpiry?'NO EXPIRY':'—')}</b>
-      <span>${esc(upper(s.label))}</span>
-      <div class="list-actions">${actions.join('')}</div>
+      <b>${x.expiry?esc(displayDate(x.expiry)):'—'}</b>
+      <span>${esc(s.label)}</span>
+      <div class="list-actions">
+        <button class="secondary" data-edit-expiry="${x.id}">Edit</button>
+        <button class="danger" data-delete-expiry="${x.id}">Delete</button>
+      </div>
     </div>
   </div>`;
 }
@@ -2365,118 +2350,66 @@ function renderExpiry(){
     license:'expiryLicences',
     medical:'expiryMedicals',
     instructor:'expiryInstructorRatings',
-    course:'expiryCourses',
-    aircraft:'expiryAircraft',
-    english:'expiryEnglish'
+    course:'expiryCourses'
   };
   Object.entries(map).forEach(([category,id])=>{
     const rows=expiryRecords(category);
-    $(id).innerHTML=rows.length?rows.map(expiryRowHtml).join(''):'<div class="empty">NO RECORDS YET.</div>';
+    $(id).innerHTML=rows.length?rows.map(expiryRowHtml).join(''):'<div class="empty">No records yet.</div>';
   });
 }
 function setExpiryFieldVisible(id,visible){
   const el=$(id)?.closest('[data-expiry-field]');
   if(el)el.classList.toggle('hidden',!visible);
 }
-function setExpiryFields(ids){
-  const all=['expiryName','expiryAuthority','expiryNumber','expiryLastCheck','expiryCourseDate','expiryMedicalClass','expiryEnglishLevel','expiryAircraftType','expiryEndorsedBy','expiryExpiry','expiryIssuer','expiryPhotoInput','expiryRemarks'];
-  all.forEach(id=>setExpiryFieldVisible(id,ids.includes(id)));
-}
-function addYearsIso(date,years){
-  const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if(!m)return'';
-  const y=Number(m[1])+Number(years),mo=Number(m[2]),d=Number(m[3]);
-  const last=new Date(Date.UTC(y,mo,0)).getUTCDate();
-  return `${String(y).padStart(4,'0')}-${String(mo).padStart(2,'0')}-${String(Math.min(d,last)).padStart(2,'0')}`;
-}
-function easaEnglishExpiry(date,level){
-  if(String(level)==='4')return addYearsIso(date,4);
-  if(String(level)==='5')return addYearsIso(date,6);
-  if(String(level)==='6')return'';
-  return'';
-}
-function applyEnglishExpiryDefault(){
-  if($('expiryCategory').value!=='english')return;
-  const authority=upper($('expiryAuthority').value||'');
-  if(authority&&authority!=='EASA')return;
-  const date=$('expiryCourseDate').value,level=$('expiryEnglishLevel').value;
-  if(!date||!level)return;
-  $('expiryExpiry').value=easaEnglishExpiry(date,level);
-  $('expiryExpiryHint').textContent=String(level)==='6'
-    ?'EASA FCL.055: LEVEL 6 DOES NOT REQUIRE REASSESSMENT. EXPIRY REMAINS EDITABLE FOR OTHER AUTHORITIES.'
-    :`EASA FCL.055 DEFAULT: LEVEL ${level} • ${level==='4'?'4':'6'} YEARS. EXPIRY REMAINS EDITABLE.`;
-}
 function configureExpiryEditor(category){
   const c=category||'license';
   $('expiryCategory').value=c;
-  $('expiryEditorTitle').textContent=`${$('expiryEditId').value?'EDIT':'ADD'} ${expiryCategoryLabel(c)}`;
-  $('expiryExpiry').required=true;
-  $('expiryExpiryHint').textContent='';
-  $('expiryNameLabel').textContent='LICENCE / TYPE';
-  $('expiryNumberLabel').textContent='LICENCE / CERTIFICATE NUMBER';
-  $('expiryLastCheckLabel').textContent='LAST CHECK';
-  $('expiryCourseDateLabel').textContent='COURSE DATE';
-  $('expiryIssuerLabel').textContent='ISSUED BY';
+  $('expiryEditorTitle').textContent=`${$('expiryEditId').value?'Edit':'Add'} ${expiryCategoryLabel(c)}`;
+
+  ['expiryName','expiryAuthority','expiryNumber','expiryLastCheck','expiryCourseDate','expiryExpiry','expiryIssuer','expiryRemarks'].forEach(id=>setExpiryFieldVisible(id,true));
 
   if(c==='license'){
-    setExpiryFields(['expiryName','expiryAuthority','expiryNumber','expiryLastCheck','expiryExpiry','expiryRemarks']);
+    $('expiryNameLabel').textContent='Licence / type';
     $('expiryName').placeholder='ATPL';
+    setExpiryFieldVisible('expiryCourseDate',false);
+    setExpiryFieldVisible('expiryIssuer',false);
   }else if(c==='medical'){
-    setExpiryFields(['expiryAuthority','expiryMedicalClass','expiryNumber','expiryLastCheck','expiryExpiry','expiryIssuer','expiryRemarks']);
-    $('expiryNumberLabel').textContent='MEDICAL CERTIFICATE NUMBER';
+    setExpiryFieldVisible('expiryName',false);
+    setExpiryFieldVisible('expiryCourseDate',false);
+    $('expiryNumberLabel').textContent='Medical certificate number';
+    $('expiryIssuerLabel').textContent='Issued by';
   }else if(c==='instructor'){
-    setExpiryFields(['expiryName','expiryAuthority','expiryNumber','expiryLastCheck','expiryExpiry','expiryRemarks']);
-    $('expiryNameLabel').textContent='INSTRUCTOR RATING';
+    $('expiryNameLabel').textContent='Instructor rating';
     $('expiryName').placeholder='TRI / SFI / CRMI / TRE';
-  }else if(c==='course'){
-    setExpiryFields(['expiryName','expiryAuthority','expiryCourseDate','expiryExpiry','expiryIssuer','expiryRemarks']);
-    $('expiryNameLabel').textContent='COURSE';
-    $('expiryName').placeholder='CRM / SMS / GRT / DGR';
-    $('expiryIssuerLabel').textContent='PROVIDER / ISSUER';
-  }else if(c==='aircraft'){
-    setExpiryFields(['expiryAircraftType','expiryAuthority','expiryLastCheck','expiryEndorsedBy','expiryExpiry','expiryPhotoInput','expiryRemarks']);
-    $('expiryLastCheckLabel').textContent='DATE ENDORSED';
-  }else if(c==='english'){
-    setExpiryFields(['expiryAuthority','expiryCourseDate','expiryEnglishLevel','expiryExpiry','expiryRemarks']);
-    $('expiryCourseDateLabel').textContent='DATE PERFORMED';
-    if(!$('expiryEditId').value&&!$('expiryAuthority').value)$('expiryAuthority').value='EASA';
-    $('expiryExpiryHint').textContent='EASA FCL.055: LEVEL 4 = 4 YEARS • LEVEL 5 = 6 YEARS • LEVEL 6 = NO REASSESSMENT. EXPIRY IS EDITABLE.';
-    if($('expiryEnglishLevel').value==='6')$('expiryExpiry').required=false;
+    setExpiryFieldVisible('expiryCourseDate',false);
+    setExpiryFieldVisible('expiryIssuer',false);
+  }else{
+    $('expiryNameLabel').textContent='Course';
+    $('expiryName').placeholder='CRM / SMS / GRT...';
+    setExpiryFieldVisible('expiryNumber',false);
+    setExpiryFieldVisible('expiryLastCheck',false);
+    $('expiryIssuerLabel').textContent='Provider / issuer';
   }
-  updateExpiryPhotoControls();
 }
 function resetExpiryEditor(category='license'){
   $('expiryForm').reset();
   $('expiryEditId').value='';
   $('expiryCategory').value=category;
-  expiryPendingPhotoData='';
-  $('expiryPhotoInput').value='';
   configureExpiryEditor(category);
-}
-function updateExpiryPhotoControls(){
-  const has=!!expiryPendingPhotoData;
-  $('expiryFormPhotoViewBtn')?.classList.toggle('hidden',!has);
-  $('expiryFormPhotoRemoveBtn')?.classList.toggle('hidden',!has);
 }
 function openExpiryEditor(category,item=null){
   resetExpiryEditor(category);
   if(item){
-    if(item.locked){alert('THIS EXPIRY ITEM IS LOCKED. UNLOCK IT BEFORE EDITING.');return}
     $('expiryEditId').value=item.id;
     $('expiryCategory').value=item.category;
-    $('expiryName').value=upper(item.name||'');
-    $('expiryAuthority').value=upper(item.authority||'');
-    $('expiryNumber').value=upper(item.number||'');
+    $('expiryName').value=item.name||'';
+    $('expiryAuthority').value=item.authority||'';
+    $('expiryNumber').value=item.number||'';
     $('expiryLastCheck').value=item.lastCheck||'';
     $('expiryCourseDate').value=item.courseDate||'';
-    $('expiryMedicalClass').value=upper(item.medicalClass||'');
-    $('expiryEnglishLevel').value=String(item.englishLevel||'');
-    $('expiryAircraftType').value=upper(item.aircraftType||'');
-    $('expiryEndorsedBy').value=upper(item.endorsedBy||'');
     $('expiryExpiry').value=item.expiry||'';
-    $('expiryIssuer').value=upper(item.issuer||'');
-    $('expiryRemarks').value=upper(item.remarks||'');
-    expiryPendingPhotoData=item.photoData||'';
+    $('expiryIssuer').value=item.issuer||'';
+    $('expiryRemarks').value=item.remarks||'';
     configureExpiryEditor(item.category);
   }
   $('expiryEditorWrap').classList.remove('hidden');
@@ -2485,33 +2418,20 @@ function openExpiryEditor(category,item=null){
 function saveExpiryFromForm(){
   const category=$('expiryCategory').value;
   const expiry=$('expiryExpiry').value;
-  const level=$('expiryEnglishLevel').value;
-  if(category==='medical'&&!$('expiryMedicalClass').value)return alert('SELECT CLASS 1 OR CLASS 2.');
-  if(category==='aircraft'&&!$('expiryAircraftType').value.trim())return alert('ENTER THE AIRCRAFT ENDORSED.');
-  if(category==='english'&&!$('expiryCourseDate').value)return alert('ENTER THE DATE PERFORMED.');
-  if(category==='english'&&!level)return alert('SELECT THE ENGLISH LEVEL.');
-  if(!expiry&&!(category==='english'&&level==='6'))return alert('PLEASE ENTER AN EXPIRY DATE.');
+  if(!expiry)return alert('Please enter an expiry date.');
 
   const rows=load(EXPIRY_KEY),id=$('expiryEditId').value||makeId(),existing=rows.find(x=>x.id===id);
-  if(existing?.locked)return alert('THIS EXPIRY ITEM IS LOCKED.');
-
   const item=stamp({
     id,
     category,
-    name:category==='english'?'LPC ENGLISH':category==='aircraft'?'AIRCRAFT ENDORSED':upper($('expiryName').value.trim()),
-    authority:upper($('expiryAuthority').value.trim()),
-    number:upper($('expiryNumber').value.trim()),
+    name:$('expiryName').value.trim(),
+    authority:$('expiryAuthority').value.trim(),
+    number:$('expiryNumber').value.trim(),
     lastCheck:$('expiryLastCheck').value,
     courseDate:$('expiryCourseDate').value,
-    medicalClass:upper($('expiryMedicalClass').value),
-    englishLevel:level,
-    aircraftType:upper($('expiryAircraftType').value.trim()),
-    endorsedBy:upper($('expiryEndorsedBy').value.trim()),
     expiry,
-    issuer:upper($('expiryIssuer').value.trim()),
-    remarks:upper($('expiryRemarks').value.trim()),
-    photoData:expiryPendingPhotoData||'',
-    locked:!!existing?.locked,
+    issuer:$('expiryIssuer').value.trim(),
+    remarks:$('expiryRemarks').value.trim(),
     source:existing?.source||'manual'
   });
   const i=rows.findIndex(x=>x.id===id);
@@ -2521,96 +2441,11 @@ function saveExpiryFromForm(){
   renderExpiry();
   scheduleAutoSync('expiry-save');
 }
-async function expiryPhotoDataFromFile(file){
-  if(!file||!String(file.type||'').startsWith('image/'))throw new Error('SELECT AN IMAGE FILE.');
-  const bitmap=await createImageBitmap(file);
-  try{
-    const max=1400,scale=Math.min(1,max/Math.max(bitmap.width,bitmap.height));
-    const canvas=document.createElement('canvas');
-    canvas.width=Math.max(1,Math.round(bitmap.width*scale));
-    canvas.height=Math.max(1,Math.round(bitmap.height*scale));
-    const ctx=canvas.getContext('2d',{alpha:false});
-    ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(bitmap,0,0,canvas.width,canvas.height);
-    let data=canvas.toDataURL('image/jpeg',.72);
-    if(data.length>900000)data=canvas.toDataURL('image/jpeg',.55);
-    if(data.length>1400000)throw new Error('IMAGE TOO LARGE. CHOOSE A SMALLER PHOTO.');
-    return data;
-  }finally{if(bitmap.close)bitmap.close()}
-}
-function showExpiryPhoto(data){
-  if(!data)return;
-  $('expiryPhotoViewerImg').src=data;
-  $('expiryPhotoViewer').classList.remove('hidden');
-  $('expiryPhotoViewer').setAttribute('aria-hidden','false');
-}
-function hideExpiryPhoto(){
-  $('expiryPhotoViewer').classList.add('hidden');
-  $('expiryPhotoViewer').setAttribute('aria-hidden','true');
-  $('expiryPhotoViewerImg').removeAttribute('src');
-}
-function hideExpiryAddMenu(){
-  $('expiryAddMenu').classList.add('hidden');
-  $('expiryAddMenu').setAttribute('aria-hidden','true');
-}
-function showExpiryAddMenu(){
-  $('expiryAddMenu').classList.remove('hidden');
-  $('expiryAddMenu').setAttribute('aria-hidden','false');
-}
 function bindExpiryEvents(){
-  $('expiryAddBtn').addEventListener('click',showExpiryAddMenu);
-  $('expiryAddCancel').addEventListener('click',hideExpiryAddMenu);
-  $('expiryAddMenu').addEventListener('click',e=>{
-    if(e.target===$('expiryAddMenu'))hideExpiryAddMenu();
-    const b=e.target.closest('[data-add-expiry]');
-    if(!b)return;
-    hideExpiryAddMenu();
-    openExpiryEditor(b.dataset.addExpiry);
-  });
-
+  document.querySelectorAll('[data-add-expiry]').forEach(b=>b.addEventListener('click',()=>openExpiryEditor(b.dataset.addExpiry)));
   $('expiryCancelBtn').addEventListener('click',()=>{$('expiryEditorWrap').classList.add('hidden');resetExpiryEditor()});
   $('expiryForm').addEventListener('submit',e=>{e.preventDefault();saveExpiryFromForm()});
-  $('expiryEnglishLevel').addEventListener('change',()=>{
-    $('expiryExpiry').required=$('expiryEnglishLevel').value!=='6';
-    applyEnglishExpiryDefault();
-  });
-  $('expiryCourseDate').addEventListener('change',applyEnglishExpiryDefault);
-  $('expiryAuthority').addEventListener('change',applyEnglishExpiryDefault);
-
-  $('expiryPhotoInput').addEventListener('change',async e=>{
-    const file=e.target.files?.[0];if(!file)return;
-    try{
-      expiryPendingPhotoData=await expiryPhotoDataFromFile(file);
-      updateExpiryPhotoControls();
-    }catch(err){alert(err.message||'PHOTO COULD NOT BE ADDED.')}
-    finally{e.target.value=''}
-  });
-  $('expiryFormPhotoViewBtn').addEventListener('click',()=>showExpiryPhoto(expiryPendingPhotoData));
-  $('expiryFormPhotoRemoveBtn').addEventListener('click',()=>{
-    if(!confirm('REMOVE THE ATTACHED PHOTO?'))return;
-    expiryPendingPhotoData='';
-    updateExpiryPhotoControls();
-  });
-  $('expiryPhotoCloseBtn').addEventListener('click',hideExpiryPhoto);
-  $('expiryPhotoViewer').addEventListener('click',e=>{if(e.target===$('expiryPhotoViewer'))hideExpiryPhoto()});
-
   document.addEventListener('click',e=>{
-    const photo=e.target.closest('[data-view-expiry-photo]');
-    if(photo){
-      const x=load(EXPIRY_KEY).find(v=>v.id===photo.dataset.viewExpiryPhoto);
-      if(x?.photoData)showExpiryPhoto(x.photoData);
-      return;
-    }
-    const lock=e.target.closest('[data-toggle-expiry-lock]');
-    if(lock){
-      const rows=load(EXPIRY_KEY),x=rows.find(v=>v.id===lock.dataset.toggleExpiryLock);
-      if(!x)return;
-      const next=!x.locked;
-      if(!confirm(next?'LOCK THIS EXPIRY ITEM?':'UNLOCK THIS EXPIRY ITEM?'))return;
-      x.locked=next;x._updatedAt=new Date().toISOString();
-      save(EXPIRY_KEY,rows);renderExpiry();scheduleAutoSync(next?'expiry-lock':'expiry-unlock');
-      return;
-    }
     const edit=e.target.closest('[data-edit-expiry]');
     if(edit){
       const x=load(EXPIRY_KEY).find(v=>v.id===edit.dataset.editExpiry);
@@ -2619,9 +2454,7 @@ function bindExpiryEvents(){
     }
     const del=e.target.closest('[data-delete-expiry]');
     if(del){
-      const x=load(EXPIRY_KEY).find(v=>v.id===del.dataset.deleteExpiry);
-      if(x?.locked)return alert('THIS EXPIRY ITEM IS LOCKED. UNLOCK IT BEFORE DELETING.');
-      if(!confirm('DELETE THIS EXPIRY RECORD?'))return;
+      if(!confirm('Delete this expiry record?'))return;
       markCloudDeleted('expiry',del.dataset.deleteExpiry);
       save(EXPIRY_KEY,load(EXPIRY_KEY).filter(x=>x.id!==del.dataset.deleteExpiry));
       renderExpiry();
@@ -3704,6 +3537,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('online',()=>scheduleAutoSync('online',300));
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')scheduleAutoSync('visible',500)});
   setInterval(()=>scheduleAutoSync('periodic',300),10*60*1000);
-  updateAppHeader();resetEntry();refreshEntrySuggestions();['picName','sicName','soName','instructorName','expiryEndorsedBy'].forEach(id=>setupSmartAutocomplete(id,()=>entrySuggestionDb.crew));setupSmartAutocomplete('type',()=>entrySuggestionDb.types);restoreEntryDraft();resetTrip();$('dutyDate').value=today();$('payrollMonth').value=monthNow();$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';fillPaySettings();renderDuty();renderSettings();render();show('dashboardView');scheduleAutoSync('startup',1500);if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw-5.10.0.js').catch(e=>console.warn('Offline cache unavailable',e));console.log('PilotLog v'+VERSION+' loaded');
+  updateAppHeader();resetEntry();refreshEntrySuggestions();['picName','sicName','soName','instructorName'].forEach(id=>setupSmartAutocomplete(id,()=>entrySuggestionDb.crew));setupSmartAutocomplete('type',()=>entrySuggestionDb.types);restoreEntryDraft();resetTrip();$('dutyDate').value=today();$('payrollMonth').value=monthNow();$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||'';fillPaySettings();renderDuty();renderSettings();render();show('dashboardView');scheduleAutoSync('startup',1500);if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw-5.9.0.js').catch(e=>console.warn('Offline cache unavailable',e));console.log('PilotLog v'+VERSION+' loaded');
 });
 })();
