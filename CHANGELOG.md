@@ -382,3 +382,45 @@
 - On phones and smaller iPad widths, navigation is now a native-style bottom tab bar; wide layouts retain a compact navigation rail.
 - Refined forms, focus states, buttons, roster rows, Totals, Payroll, Expiry and FTL presentation for a more professional cockpit/operations feel.
 - Kept all existing views, IDs, storage keys, sync controls, Smart Cell Scan, manual Sync now, imports and exports unchanged.
+
+## v5.10.0
+- EXPIRY text and free-text values are now stored/displayed in uppercase.
+- Added MEDICAL CLASS selector with CLASS 1 and CLASS 2.
+- Added AIRCRAFT ENDORSED as a dedicated expiry category.
+- AIRCRAFT ENDORSED includes ENDORSED BY with autocomplete from the same crew-name database used by flight entries.
+- AIRCRAFT ENDORSED supports an optional image attachment. On iPhone/iPad the normal image picker can offer Camera, Photo Library and Files. The image is never shown inline; it appears only after pressing VIEW.
+- Attached images are resized/compressed before being stored and remain part of the normal Expiry cloud sync/weekly backup payload.
+- Added LOCK / UNLOCK to every Expiry record. Locked records cannot be edited or deleted until explicitly unlocked.
+- Replaced all separate Expiry Add buttons with one ADD button at the end and a type-selection action sheet.
+- Added LPC ENGLISH with DATE PERFORMED, LEVEL 4/5/6 and editable EXPIRY DATE.
+- EASA FCL.055 defaults: Level 4 = 4 years, Level 5 = 6 years, Level 6 = no required reassessment. The calculated expiry remains editable for other authorities.
+- Payroll month control is now visually reduced to a clean top/bottom-line treatment instead of a boxed field.
+- Removed the redundant Call from Day OFF count field and the four separate Payroll metric cards.
+- Payroll BREAKDOWN is now an app-style three-column zebra grid: ITEM / HOURS-COUNT / DHM, with no horizontal divider lines.
+- Renamed “Credit hours pay” to “Credit H” and placed the actual credit hours in the new middle column.
+
+## v5.10.1
+- Trips screen reordered: Saved trips now appears first.
+- Auto Detect is now a compact standalone button without the explanatory text block.
+- Trip cards are renamed automatically using only the destination of the first DHD followed by the reference month and year (for example: NAP AUGUST 2026).
+- Version strings and service worker cache updated to v5.10.1.
+
+## v5.10.2
+- Roster now performs persistent semantic duplicate cleanup. Duplicate planned sectors and duplicate non-flight roster activities are merged, keeping the more complete record and preserving cloud tombstones so removed copies do not return after sync.
+- Duplicate activity cleanup is conservative: two fully timed activities with different times remain separate; an untimed/partial copy of the same DHD, Simulator, STBY or Ground Course is merged into the more complete record.
+- Added Edit controls for individual roster sectors, non-flight roster activities and duty-only rows.
+- Added a dedicated Roster Activity editor for date, type, flight number, aircraft, route, start/end and remarks/course.
+- Logbook View/Edit Entry now has a Back button. When an entry was opened from Logbook, Back returns to Logbook anchored exactly on that entry.
+- Opening Logbook from the main navigation still uses the existing next-upcoming-duty anchor logic.
+- When an entry is opened from Roster, Back returns to Roster.
+
+## v5.10.3
+- Added native AeroLINE JSON import directly in the Roster screen.
+- Reads the structured AeroLINE `mainCrewScheduleInfoList` rather than OCR.
+- Imports flight sectors into Roster using `flightLegId` / `crewScheduleBlockId` metadata and updates the same sector on re-import instead of duplicating it.
+- Imports unique OFF, DHD, HSBY/STBY and structured training activities; repeated event data attached to multiple flight rows is collapsed to one activity.
+- AeroLINE flight imports never create planned Flight entries in the operational Logbook, so actual Logbook data are not overwritten.
+- Re-importing a full AeroLINE period removes stale AeroLINE-only planned records that disappeared from the new roster, while preserving locked/manual records.
+- Manual edits made from the Roster are marked as overrides and are preserved on later AeroLINE imports.
+- DHD activities with no route in the AeroLINE data remain route-incomplete instead of being displayed as a fabricated Home Base → Home Base sector.
+- Training metadata from `trainingCrewScheduleInfoList` is retained on matching roster sectors for future use.
