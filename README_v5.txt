@@ -136,3 +136,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.7.4: Air Arabia Crew Schedule screenshot import now uses OCR layout coordinates and calendar-cell reconstruction.
 
 - v5.7.5: tolerant screenshot import. Whatever PilotLog cannot read is returned as editable `To complete` rows with yellow fields instead of being discarded or guessed.
+
+- v5.8.0: Smart Cell Scan uses a full-page structure pass followed by separate high-resolution OCR of each roster calendar day.

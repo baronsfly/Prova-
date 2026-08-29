@@ -364,3 +364,12 @@
 - Selected incomplete rows are blocked from import; the user can complete the yellow fields or uncheck those rows and safely import the rest.
 - Added type-specific completeness rules for Flight, DHD, STBY and Simulator rows.
 - Added bounded image preprocessing for small roster text: upscaling up to 2.5× / about 12 MP, grayscale and mild contrast enhancement before OCR.
+
+## v5.8.0
+- Replaced Crew Schedule screenshot parsing with a two-pass Smart Cell Scan.
+- Pass 1 reads the whole page only to locate the dated roster grid.
+- Pass 2 crops every calendar day separately, excludes the daily-total strip, upscales the crop and OCRs that cell alone.
+- Each day is then interpreted independently as Flight, Day OFF, DHD, STBY/HSBY, Simulator/FSTD or recurrent course.
+- Partial text is never guessed: clipped times and unknown routes remain yellow fields to complete in Review.
+- Unclassified but readable cells become `To complete` with the raw cell OCR retained.
+- The v5.7.5 tolerant positional/full-page parsers remain as fallbacks if the Smart Cell grid cannot be reconstructed.
