@@ -140,3 +140,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.8.0: Smart Cell Scan uses a full-page structure pass followed by separate high-resolution OCR of each roster calendar day.
 
 - v5.9.0: visual-only professional UI redesign based on the approved light/navy concept. Mobile/iPad layouts use an app-like bottom tab bar while preserving all PilotLog functionality and data structures.
+
+- v5.10.0: Expiry workflow expanded with uppercase records, Medical Class 1/2, Aircraft Endorsed + crew-based Endorsed By + hidden photo attachment, per-record Lock, one consolidated Add menu, and LPC English with EASA FCL.055 validity defaults. Payroll UI simplified with a line-style month selector and zebra breakdown grid including hours/counts.

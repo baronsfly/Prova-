@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-5.9.0.css">
+<link rel="stylesheet" href="pilotlog-5.10.0.css">
 </head>
 <body>
 <header>
@@ -26,7 +26,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v5.9.0</span>
+    <span class="version-badge">v5.10.0</span>
   </div>
 </header>
 <main>
@@ -174,20 +174,13 @@
 
 <section id="payrollView" class="hidden">
   <div class="section-title">Payroll</div>
-  <div class="card">
+  <div class="card payroll-control-card">
     <div class="form-grid payroll-head">
-      <div><label>Payroll month</label><input id="payrollMonth" type="month"></div>
-      <div><label>Call from Day OFF</label><input id="payDayOffCount" type="number" min="0" step="1" value="0" readonly></div>
+      <div class="full payroll-month-field"><label>Payroll month</label><input id="payrollMonth" type="month"></div>
       <div><label>Arrears / adjustments (DHM)</label><input id="payArrears" type="number" step="0.01" value="0"></div>
       <div class="payroll-action"><button class="primary" type="button" id="recalcPayroll">Recalculate</button></div>
     </div>
     <div class="hint">Flight credits use the 30-minute rounding rule. Flights scheduled to depart Morocco between 18:00 and 04:59 local receive +50% paid credit. Simulator credit is read from Settings. DHD credit stays individually editable.</div>
-  </div>
-  <div class="grid stats-grid spaced">
-    <div class="card metric"><b id="payCredits">0:00</b><span>Monthly Credit</span></div>
-    <div class="card metric"><b id="payLayover">0:00</b><span>Paid Layover</span></div>
-    <div class="card metric"><b id="payTrainingSectors">0</b><span>Training Sectors</span></div>
-    <div class="card metric"><b id="paySimCount">0</b><span>Simulator Duties</span></div>
   </div>
   <div class="section-title">Payroll result</div>
   <div class="card payroll-total-card">
@@ -195,61 +188,112 @@
     <div class="payroll-eur"><span>Indicative EUR</span><b id="payTotalEur">—</b></div>
     <div class="hint" id="payFxStatus">FX rate not loaded.</div>
   </div>
-  <div class="section-title">Breakdown</div><div class="card" id="payBreakdown"></div>
+  <div class="section-title">Breakdown</div><div class="card payroll-breakdown-card" id="payBreakdown"></div>
   <div class="section-title">Call from Day OFF details</div>
   <div class="card" id="payDayOffDetails"><div class="empty">No Day OFF calls in this payroll month.</div></div>
 </section>
 
 <section id="expiryView" class="hidden">
-  <div class="section-title">Expiry</div>
+  <div class="section-title">EXPIRY</div>
 
   <div class="expiry-section">
-    <div class="expiry-heading"><h3>Licences</h3><button class="primary" type="button" data-add-expiry="license">＋ Add licence</button></div>
+    <div class="expiry-heading"><h3>LICENCES</h3></div>
     <div class="card" id="expiryLicences"></div>
   </div>
 
   <div class="expiry-section">
-    <div class="expiry-heading"><h3>Medical</h3><button class="primary" type="button" data-add-expiry="medical">＋ Add medical</button></div>
+    <div class="expiry-heading"><h3>MEDICAL</h3></div>
     <div class="card" id="expiryMedicals"></div>
   </div>
 
   <div class="expiry-section">
-    <div class="expiry-heading"><h3>Instructor Ratings</h3><button class="primary" type="button" data-add-expiry="instructor">＋ Add rating</button></div>
+    <div class="expiry-heading"><h3>INSTRUCTOR RATINGS</h3></div>
     <div class="card" id="expiryInstructorRatings"></div>
   </div>
 
   <div class="expiry-section">
-    <div class="expiry-heading"><h3>Recurrent Courses</h3><button class="primary" type="button" data-add-expiry="course">＋ Add course</button></div>
-    <div class="hint">Common examples are CRM, SMS, GRT, DGR, AVSEC, SEP, First Aid, UPRT and EBT/CBTA. The course name remains fully editable.</div>
+    <div class="expiry-heading"><h3>RECURRENT COURSES</h3></div>
+    <div class="hint">CRM • SMS • GRT • DGR • AVSEC • SEP • FIRST AID • UPRT • EBT/CBTA</div>
     <div class="card" id="expiryCourses"></div>
   </div>
 
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>AIRCRAFT ENDORSED</h3></div>
+    <div class="card" id="expiryAircraft"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>LPC ENGLISH</h3></div>
+    <div class="card" id="expiryEnglish"></div>
+  </div>
+
+  <div class="expiry-add-wrap">
+    <button class="primary expiry-single-add" type="button" id="expiryAddBtn">＋ ADD</button>
+  </div>
+
+  <div id="expiryAddMenu" class="expiry-sheet-backdrop hidden" aria-hidden="true">
+    <div class="expiry-sheet" role="dialog" aria-modal="true" aria-label="ADD EXPIRY ITEM">
+      <div class="expiry-sheet-title">ADD EXPIRY ITEM</div>
+      <button type="button" data-add-expiry="license">LICENCE</button>
+      <button type="button" data-add-expiry="medical">MEDICAL</button>
+      <button type="button" data-add-expiry="instructor">INSTRUCTOR RATING</button>
+      <button type="button" data-add-expiry="course">RECURRENT COURSE</button>
+      <button type="button" data-add-expiry="aircraft">AIRCRAFT ENDORSED</button>
+      <button type="button" data-add-expiry="english">LPC ENGLISH</button>
+      <button class="secondary" type="button" id="expiryAddCancel">CANCEL</button>
+    </div>
+  </div>
+
   <div id="expiryEditorWrap" class="hidden">
-    <div class="section-title" id="expiryEditorTitle">Add expiry</div>
+    <div class="section-title" id="expiryEditorTitle">ADD EXPIRY</div>
     <div class="card">
       <form id="expiryForm">
         <input type="hidden" id="expiryEditId">
         <input type="hidden" id="expiryCategory" value="license">
         <div class="form-grid">
-          <div data-expiry-field><label id="expiryNameLabel">Licence / type</label><input id="expiryName" list="expiryNameSuggestions" placeholder="ATPL"></div>
-          <div data-expiry-field><label>Authority</label><input id="expiryAuthority" list="expiryAuthoritySuggestions" placeholder="EASA / GCAA / other"></div>
-          <div data-expiry-field><label id="expiryNumberLabel">Licence / certificate number</label><input id="expiryNumber"></div>
-          <div data-expiry-field><label>Last check</label><input id="expiryLastCheck" type="date"></div>
-          <div data-expiry-field><label>Course date</label><input id="expiryCourseDate" type="date"></div>
-          <div data-expiry-field><label>Expiry date</label><input id="expiryExpiry" type="date" required></div>
-          <div data-expiry-field><label id="expiryIssuerLabel">Issued by</label><input id="expiryIssuer"></div>
-          <div data-expiry-field class="full"><label>Remarks</label><input id="expiryRemarks"></div>
+          <div data-expiry-field><label id="expiryNameLabel">LICENCE / TYPE</label><input id="expiryName" data-upper list="expiryNameSuggestions" placeholder="ATPL"></div>
+          <div data-expiry-field><label>AUTHORITY</label><input id="expiryAuthority" data-upper list="expiryAuthoritySuggestions" placeholder="EASA / GCAA / OTHER"></div>
+          <div data-expiry-field><label id="expiryNumberLabel">LICENCE / CERTIFICATE NUMBER</label><input id="expiryNumber" data-upper></div>
+          <div data-expiry-field><label id="expiryLastCheckLabel">LAST CHECK</label><input id="expiryLastCheck" type="date"></div>
+          <div data-expiry-field><label id="expiryCourseDateLabel">COURSE DATE</label><input id="expiryCourseDate" type="date"></div>
+          <div data-expiry-field><label>MEDICAL CLASS</label><select id="expiryMedicalClass"><option value="">SELECT</option><option value="CLASS 1">CLASS 1</option><option value="CLASS 2">CLASS 2</option></select></div>
+          <div data-expiry-field><label>ENGLISH LEVEL</label><select id="expiryEnglishLevel"><option value="">SELECT</option><option value="4">LEVEL 4</option><option value="5">LEVEL 5</option><option value="6">LEVEL 6</option></select></div>
+          <div data-expiry-field><label>AIRCRAFT ENDORSED</label><input id="expiryAircraftType" data-upper list="aircraftTypeSuggestions" placeholder="A320"></div>
+          <div data-expiry-field><label>ENDORSED BY</label><input id="expiryEndorsedBy" data-upper list="crewNameSuggestions" autocomplete="off" placeholder="NAME"></div>
+          <div data-expiry-field><label>EXPIRY DATE</label><input id="expiryExpiry" type="date" required><div class="small" id="expiryExpiryHint"></div></div>
+          <div data-expiry-field><label id="expiryIssuerLabel">ISSUED BY</label><input id="expiryIssuer" data-upper></div>
+          <div data-expiry-field class="full expiry-photo-field">
+            <label>PHOTO / DOCUMENT</label>
+            <input id="expiryPhotoInput" type="file" accept="image/*" class="hidden">
+            <div class="expiry-photo-actions">
+              <label class="expiry-photo-link" for="expiryPhotoInput">ADD / CHANGE PHOTO</label>
+              <button class="link-button hidden" id="expiryFormPhotoViewBtn" type="button">VIEW</button>
+              <button class="link-button danger-link hidden" id="expiryFormPhotoRemoveBtn" type="button">REMOVE</button>
+            </div>
+            <div class="small">ON IPHONE / IPAD THE PICKER CAN USE CAMERA, PHOTO LIBRARY OR FILES. THE IMAGE IS HIDDEN UNTIL YOU PRESS VIEW.</div>
+          </div>
+          <div data-expiry-field class="full"><label>REMARKS</label><input id="expiryRemarks" data-upper></div>
         </div>
         <datalist id="expiryAuthoritySuggestions"><option value="EASA"><option value="GCAA"></datalist>
         <datalist id="expiryNameSuggestions">
           <option value="ATPL"><option value="CPL"><option value="TRI"><option value="SFI"><option value="CRMI"><option value="TRE">
-          <option value="CRM"><option value="SMS"><option value="GRT"><option value="DGR"><option value="AVSEC"><option value="SEP"><option value="First Aid"><option value="UPRT"><option value="EBT/CBTA">
+          <option value="CRM"><option value="SMS"><option value="GRT"><option value="DGR"><option value="AVSEC"><option value="SEP"><option value="FIRST AID"><option value="UPRT"><option value="EBT/CBTA">
         </datalist>
         <div class="actions">
-          <button class="primary" type="submit">Save</button>
-          <button class="secondary" id="expiryCancelBtn" type="button">Cancel</button>
+          <button class="primary" type="submit">SAVE</button>
+          <button class="secondary" id="expiryCancelBtn" type="button">CANCEL</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="expiryPhotoViewer" class="expiry-photo-viewer hidden" aria-hidden="true">
+    <div class="expiry-photo-dialog" role="dialog" aria-modal="true" aria-label="EXPIRY PHOTO">
+      <div class="expiry-photo-dialog-head">
+        <b>EXPIRY PHOTO</b>
+        <button class="secondary" id="expiryPhotoCloseBtn" type="button">CLOSE</button>
+      </div>
+      <img id="expiryPhotoViewerImg" alt="EXPIRY ATTACHMENT">
     </div>
   </div>
 </section>
@@ -440,5 +484,5 @@
   <button data-view="dashboardView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.5 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-5.9.0.js" defer></script>
+<script src="pilotlog-5.10.0.js" defer></script>
 </body></html>
