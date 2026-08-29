@@ -116,3 +116,7 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.3.2: Entries automatically opens at today/the today boundary; scroll up for future entries and down for past entries.
 
 - v5.4.0: fixes return-flight credit display; PIC hours only for Role=PIC; automatic same-duty roster carry-forward with alternating PF; user name/role profile and personalized header; Left/Right seat tracking and totals. Native wake alarms are not yet implemented in the PWA.
+
+- v5.4.1: cross-device deletions are now synchronized with tombstones. Deleted flights/roster/duties/trips do not reappear from older cloud copies.
+
+- v5.5.0: Auto Sync plus one rotating weekly IndexedDB backup. Storage remains bounded because the weekly snapshot always overwrites the previous one.

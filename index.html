@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-5.4.0.css">
+<link rel="stylesheet" href="pilotlog-5.5.0.css">
 </head>
 <body>
-<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.4.0</span></div></header>
+<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.5.0</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -276,7 +276,7 @@
     <div class="hint" id="calendarImportStatus">No calendar imported yet.</div>
     <div class="section-title inner">Data maintenance</div>
     <div class="actions"><button class="danger" id="clearRoster" type="button">Clear roster</button><button class="danger" id="deleteAll" type="button">Delete all entries</button></div>
-    <div class="hint">Clear roster removes the local imported/planned roster only. Delete all entries removes the local saved log entries only. Other settings/trips are not deleted; a later Cloud Sync may restore records that still exist in the cloud.</div>
+    <div class="hint">Clear roster removes the imported/planned roster. Delete all entries removes the saved log entries. If Cloud Sync is enabled, the deletion is remembered on this device and propagated to your other devices at the next Sync; deleted records should not return.</div>
   </div>
 
   <div class="section-title">Payroll Settings / Rates</div>
@@ -317,6 +317,28 @@
     <div class="actions"><button class="primary" type="submit">Save Payroll Settings</button><button class="secondary" type="button" id="resetPaySettings">Restore defaults</button></div>
   </form></div>
 
+  <div class="section-title">Auto Sync & Weekly Backup</div>
+  <div class="card">
+    <div class="form-grid">
+      <div>
+        <label>Auto Sync</label>
+        <select id="autoSyncEnabled">
+          <option value="yes">Enabled</option>
+          <option value="no">Disabled</option>
+        </select>
+      </div>
+      <div>
+        <label>Last weekly backup</label>
+        <input id="weeklyBackupStatus" readonly value="No backup yet">
+      </div>
+    </div>
+    <div class="hint">PilotLog keeps one local weekly backup only. Every 7 days, before the next eligible cloud sync, the new snapshot replaces the previous one. Passwords and cloud session tokens are never included.</div>
+    <div class="actions">
+      <button class="secondary" id="backupNowBtn" type="button">Backup now</button>
+      <button class="secondary" id="restoreWeeklyBackupBtn" type="button">Restore weekly backup</button>
+    </div>
+  </div>
+
   <div class="section-title">Supabase Cloud Sync</div>
   <div class="card">
     <div class="sync-status" id="cloudStatus">Cloud status loading…</div>
@@ -331,5 +353,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="pilotlog-5.4.0.js" defer></script>
+<script src="pilotlog-5.5.0.js" defer></script>
 </body></html>

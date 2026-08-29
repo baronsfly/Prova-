@@ -267,3 +267,22 @@
 - Added Seat Position (Left / Right) to Flight entries, drafts, edits, return-flight copies and CSV exports.
 - Totals now includes Flight Time — Left Seat and Flight Time — Right Seat.
 - Added an explanatory note for Clear roster / Delete all entries. No alarm feature is included yet; native AlarmKit integration is intentionally deferred until PilotLog is packaged as a native iOS/iPadOS app.
+
+## v5.4.1
+- Fixed deleted records returning after Cloud Sync on another device.
+- Added timestamped cloud deletion tombstones for Flights, Roster, Duties and Trips.
+- Individual deletion now wins over older copies on other devices and is propagated at the next sync.
+- Clear Roster and Delete All Entries use collection-level tombstones, suppressing all older cloud records in that collection, including records not currently present on the deleting device.
+- Offline deletions are retained locally and synchronized later.
+- Conflict resolution is last-operation-wins by timestamp; genuinely newer records created/edited after a deletion are allowed.
+
+## v5.5.0
+- Added Auto Sync for signed-in users, enabled by default and switchable in Settings.
+- Auto Sync is debounced after entry saves/locks/edits, deletions, imports, roster/trip/settings/payroll changes, sign-in, connectivity return and app foregrounding. It also checks periodically while PilotLog is open.
+- Added exactly one rotating weekly local backup stored in IndexedDB.
+- Every 7 days, before the next eligible Cloud Sync, PilotLog writes a fresh snapshot to the same `weekly` slot, overwriting the previous backup.
+- The first eligible sync creates the first backup.
+- Backup contains Entries, Roster, Duties, Trips, Payroll settings/month data, FX, App Settings and cloud deletion tombstones.
+- Passwords and Supabase session/access/refresh tokens are excluded.
+- Settings displays the backup date/version and provides Backup now and Restore weekly backup.
+- Restore replaces local working data and intentionally does not immediately auto-sync, allowing the restored state to be reviewed first.
