@@ -255,3 +255,15 @@
 - If today has entries, the anchor is placed immediately before today's first entry.
 - If today has no entries, the anchor sits at the boundary between future and past.
 - No data migration or database changes.
+
+## v5.4.0
+- Fixed the Add/Edit Credit Hours display for a return sector receiving the Morocco night +50% premium. The edit form now identifies the saved sector by ID/flight number, so its displayed credit matches Entries and Payroll.
+- PIC time is now credited only when Entry Role = PIC. Instructor and Examiner roles no longer automatically populate PIC hours.
+- Roster workflow now carries stable data from the previous saved sector in the same roster duty into the next sector: Aircraft ID, Aircraft Type, Role, PIC/SIC/SO/Instructor names, Instruction, IFR and Seat Position. PF automatically alternates Yes ↔ No.
+- Roster matching now normalizes 3O/MAC flight-number formats to reduce duplicate/new-entry mismatches.
+- Added user profile settings: Your name and Your role (Captain, First Officer, Senior Cabin Crew, Cabin Crew).
+- Captain profile defaults new Flight entries to Role PIC and places the user's name in PIC Name. First Officer defaults to Role SIC and places the user's name in SIC Name. Crew-name fields remain editable.
+- Header is personalized as `PilotLog of <Role> <Name>` and subtitle is `PilotLog — your personal LogBook`.
+- Added Seat Position (Left / Right) to Flight entries, drafts, edits, return-flight copies and CSV exports.
+- Totals now includes Flight Time — Left Seat and Flight Time — Right Seat.
+- Added an explanatory note for Clear roster / Delete all entries. No alarm feature is included yet; native AlarmKit integration is intentionally deferred until PilotLog is packaged as a native iOS/iPadOS app.

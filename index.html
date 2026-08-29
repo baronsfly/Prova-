@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-5.3.2.css">
+<link rel="stylesheet" href="pilotlog-5.4.0.css">
 </head>
 <body>
-<header><div class="header-row"><div><h1>PilotLog</h1><p>Airline logbook • roster • FTL • trips • payroll</p></div><span class="version-badge">v5.3.2</span></div></header>
+<header><div class="header-row"><div><h1 id="appTitle">PilotLog</h1><p id="appTagline">PilotLog — your personal LogBook</p></div><span class="version-badge">v5.4.0</span></div></header>
 <main>
 <section id="dashboardView">
   <div class="section-title">Today Duty</div>
@@ -50,6 +50,7 @@
         <div data-entry-field="block"><label>Block</label><input id="blockDisplay" readonly></div>
         <div data-entry-field="credit"><label>Credit Hours</label><input id="creditDisplay"></div>
         <div data-entry-field="role"><label>Role</label><select id="role"><option>PIC</option><option>SIC</option><option>Instructor</option><option>Examiner</option></select></div>
+        <div data-entry-field="seatPosition"><label>Seat position</label><select id="seatPosition"><option value="">—</option><option value="Left">Left</option><option value="Right">Right</option></select></div>
         <div data-entry-field="picName"><label>PIC Name</label><input id="picName" placeholder="CAPTAIN NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
         <div data-entry-field="sicName"><label>SIC Name</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
         <div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
@@ -120,6 +121,8 @@
     <div class="stat-row"><span>A320 SIC</span><b id="tA320Sic">0:00</b></div>
     <div class="stat-row"><span>A320 Instruction Flight Time</span><b id="tA320FlightInstruction">0:00</b></div>
     <div class="stat-row"><span>A320 Instruction Simulator Time</span><b id="tA320SimInstruction">0:00</b></div>
+    <div class="stat-row"><span>Flight Time — Left Seat</span><b id="tLeftSeat">0:00</b></div>
+    <div class="stat-row"><span>Flight Time — Right Seat</span><b id="tRightSeat">0:00</b></div>
   </div>
   <div class="section-title">Periods / logbook hours</div><div class="card" id="periodTotals"></div>
   <div class="section-title">Approaches</div><div class="card" id="approachTotals"></div>
@@ -179,6 +182,8 @@
     <div><label>Home Base</label><input id="setHomeBase" maxlength="4" placeholder="CMN" data-upper></div>
     <div><label>Flight Number Prefix</label><input id="setFlightPrefix" maxlength="6" placeholder="MAC" data-upper></div>
     <div><label>Aircraft ID Prefix</label><input id="setAircraftPrefix" maxlength="10" placeholder="CN-NM" data-upper></div>
+    <div><label>Your name</label><input id="setProfileName" placeholder="Andrea Barone" autocomplete="name"></div>
+    <div><label>Your role</label><select id="setProfileRole"><option>Captain</option><option>First Officer</option><option>Senior Cabin Crew</option><option>Cabin Crew</option></select></div>
   </div><div class="actions"><button class="primary" type="submit">Save Settings</button><button class="secondary" type="button" id="refreshAirportsBtn">Refresh airport database</button></div>
   <div class="hint" id="airportDbStatus">Airport database: checking…</div></form></div>
 
@@ -271,6 +276,7 @@
     <div class="hint" id="calendarImportStatus">No calendar imported yet.</div>
     <div class="section-title inner">Data maintenance</div>
     <div class="actions"><button class="danger" id="clearRoster" type="button">Clear roster</button><button class="danger" id="deleteAll" type="button">Delete all entries</button></div>
+    <div class="hint">Clear roster removes the local imported/planned roster only. Delete all entries removes the local saved log entries only. Other settings/trips are not deleted; a later Cloud Sync may restore records that still exist in the cloud.</div>
   </div>
 
   <div class="section-title">Payroll Settings / Rates</div>
@@ -325,5 +331,5 @@
 </main>
 
 <nav class="nav"><button data-view="dashboardView" class="active">Dashboard</button><button data-view="addView">Add</button><button data-view="flightsView">Entries</button><button data-view="rosterView">Roster</button><button data-view="totalsView">Totals</button><button data-view="tripsView">Trips</button><button data-view="payrollView">Payroll</button><button data-view="settingsView">Settings</button></nav>
-<script src="pilotlog-5.3.2.js" defer></script>
+<script src="pilotlog-5.4.0.js" defer></script>
 </body></html>

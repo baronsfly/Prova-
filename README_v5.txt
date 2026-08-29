@@ -114,3 +114,5 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 - v5.3.1: FTL/duty engine rebuilt and stale Service Worker cache issue fixed. The runtime now uses versioned filenames so a newly deployed build cannot silently execute an older cached app.js.
 
 - v5.3.2: Entries automatically opens at today/the today boundary; scroll up for future entries and down for past entries.
+
+- v5.4.0: fixes return-flight credit display; PIC hours only for Role=PIC; automatic same-duty roster carry-forward with alternating PF; user name/role profile and personalized header; Left/Right seat tracking and totals. Native wake alarms are not yet implemented in the PWA.
