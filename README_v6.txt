@@ -1,12 +1,14 @@
-PilotLog v6.0.1
+PilotLog v6.0.2
 ================
 
-Files to upload to the root of the GitHub Pages repository:
+Files to upload to the root of the GitHub Pages repository (production package):
 - index.html
-- app.js
-- styles.css
-- sw.js
+- pilotlog-6.0.2.js
+- pilotlog-6.0.2.css
+- sw-6.0.2.js
 - manifest.webmanifest
+
+The production ZIP intentionally excludes development source/build files and duplicate unversioned runtime copies. This keeps deployment smaller and avoids stale-file confusion. The source archive is kept separately for future development.
 
 Main changes in v5:
 - last cloud-login email remains stored locally after Sign out;
@@ -153,3 +155,9 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 
 
 - v6.0.0: based on v5.11.0. Added AeroLINE Connect in Roster with official-site login shortcut, selected-month direct sync test, local-only crew identifiers and retained JSON import fallback. Complete LogTen migration/archive from v5.11.0 remains included.
+
+- v6.0.1: stability/lean release. Production package contains only the files needed by GitHub Pages plus README/CHANGELOG; development source is separated. Removed the full-logbook snapshot taken on every render. Recovery snapshots are now bounded to three copies in IndexedDB and are created only around safety-critical operations. Existing legacy localStorage snapshots are migrated to IndexedDB and then removed, reducing Safari storage-pressure risk. Critical logbook writes can discard only the obsolete legacy backup cache and retry if localStorage quota is exhausted. Service Worker now uses cache-first loading for versioned static assets and network-first navigation, retaining offline fallback while reducing repeated asset fetches. No operational storage keys, cloud schema, LogTen archive format, roster logic, payroll logic or AeroLINE importer format were changed.
+
+v6.0.2 storage note
+-------------------
+The main flight/logbook dataset is now IndexedDB-backed. This avoids the small localStorage quota that can block a complete LogTen migration. Existing flight data from earlier PilotLog versions migrate automatically on first launch. Small settings remain in localStorage; the original complete LogTen SQLite archive remains in its separate IndexedDB archive.

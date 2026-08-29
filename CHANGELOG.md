@@ -446,9 +446,22 @@
 - Existing PilotLog Auto Sync and manual Sync now are unchanged.
 
 ## v6.0.1
-- Stability/consolidation release based on the complete v6.0.0 codebase derived from v5.11.0.
-- Release package slimmed to runtime assets only; duplicate generated files, modular build sources and build scripts are excluded from the deployable ZIP.
-- Versioned CSS, JavaScript and service-worker assets prevent mixed old/new files after an update.
-- Service worker uses cache-first only for immutable versioned app assets and network-first for navigation, reducing unnecessary cache rewrites while retaining offline startup.
-- Existing logbook, LogTen migration/archive, cloud sync, manual Sync now, roster, AeroLINE Connect, FTL, trips, payroll, exports and local data formats are unchanged.
-- Existing DOM-reference and JavaScript syntax integrity checks retained.
+- Stability/lean release; no operational data-schema migration.
+- Production deployment ZIP now contains only the files required by GitHub Pages plus README/CHANGELOG; source/build material is distributed separately.
+- Removed the full-flight-database snapshot previously attempted on every render.
+- Rolling recovery snapshots are now capped at three and stored in IndexedDB instead of duplicating the logbook repeatedly in localStorage.
+- Legacy `pilotlog_flights_backup_v1` snapshots are migrated to IndexedDB when possible and then removed.
+- Critical `save()` writes recover from localStorage quota pressure by deleting only the obsolete legacy snapshot cache and retrying the requested write.
+- Service Worker uses cache-first for immutable versioned JS/CSS/manifest assets and network-first for navigation, with offline fallback.
+- Existing PilotLog storage keys, Supabase schema, complete LogTen archive, AeroLINE JSON importer, Auto Sync and manual Sync now behavior remain unchanged.
+
+## v6.0.2
+- Storage stability fix for large complete LogTen migrations. The normalized PilotLog logbook is now stored in IndexedDB instead of the browser's small localStorage quota.
+- Existing `pilotlog_flights_v1` localStorage data are migrated automatically to IndexedDB on first launch and removed only after the IndexedDB write succeeds.
+- The app keeps its existing synchronous in-memory data model, so roster, payroll, totals, FTL, cloud sync and LogTen logic continue using the same flight records and IDs.
+- Complete LogTen migration now waits for a durable IndexedDB write before reporting success; the original byte-for-byte LogTen SQLite archive remains stored separately in IndexedDB.
+- Recovery snapshots now read from the canonical IndexedDB-backed logbook rather than assuming a localStorage copy exists.
+- Weekly backup restore writes the flight database durably to IndexedDB before completing.
+- Routine logbook writes are coalesced before IndexedDB persistence to avoid repeatedly rewriting the full history while typing; pending data are flushed when the app is hidden or closed.
+- PilotLog requests persistent browser storage when supported to reduce eviction risk.
+- Versioned assets and Service Worker cache updated to v6.0.2.
