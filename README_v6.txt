@@ -1,7 +1,14 @@
-PilotLog v6.0.3
+PilotLog v6.0.4
 =================
 
 CONSOLIDATION RELEASE
+
+SYNC ENGINE v2 (v6.0.4)
+- remove-wins deletions: a deleted entry cannot be revived by a stale device;
+- persistent source tombstones for user-deleted AeroLINE/LogTen-backed entries;
+- deterministic IDs for newly imported AeroLINE rows;
+- duplicate cleanup writes tombstones instead of hard-deleting replicated cloud rows;
+- record revision is considered before wall-clock timestamp for active-record conflicts.
 - Visual reference: v5.11.0
 - Large LogTen archive: IndexedDB-backed
 - AeroLINE Connect retained for future native app
@@ -11,9 +18,9 @@ CONSOLIDATION RELEASE
 
 Files to upload to the root of the GitHub Pages repository (production package):
 - index.html
-- pilotlog-6.0.3.js
-- pilotlog-6.0.3.css
-- sw-6.0.3.js
+- pilotlog-6.0.4.js
+- pilotlog-6.0.4.css
+- sw-6.0.4.js
 - manifest.webmanifest
 
 The production ZIP intentionally excludes development source/build files and duplicate unversioned runtime copies. This keeps deployment smaller and avoids stale-file confusion. The source archive is kept separately for future development.

@@ -1,4 +1,15 @@
-# PilotLog changelog
+# PilotLog Changelog
+
+## v6.0.4 — Sync Engine v2 / remove-wins deletion
+- Deletions are now durable remove-wins tombstones: an old or later-edited replica cannot silently resurrect a deleted entry.
+- User deletions of AeroLINE/LogTen-backed entries also store their external source identity, preventing the same imported record from being recreated under a different local ID.
+- AeroLINE imports use deterministic IDs for newly imported roster sectors, activities and OFF duties while preserving IDs of existing matched records.
+- AeroLINE and complete LogTen imports respect persistent deletion tombstones.
+- Semantic duplicate cleanup now tombstones discarded IDs instead of hard-deleting cloud rows, preventing stale offline devices from re-uploading them.
+- Record revisions (_syncRev) are monotonic on stamped edits/import updates and are used before timestamps when resolving active-record conflicts.
+- Manual Sync now and Auto Sync are unchanged.
+- UI/layout remain unchanged from v6.0.3.
+
 
 ## v6.0.3 — Body & under-the-hood consolidation
 - Restored the complete v5.11.0 visual stylesheet and navigation feel. No redesign.
@@ -9,7 +20,6 @@
 - Legacy recovery-snapshot migration no longer blocks startup.
 - Manual Sync now and Auto Sync remain unchanged.
 
-# PilotLog Changelog
 
 ## v5.0.0
 - Major v5 baseline: persistent cloud-login email, uppercase operational fields, daily duty grouping, sector count, EASA FTL checks, editable DHD credit, independent Simulator Time/Credit, Trips, Roster, airport DB, automatic night time and delete confirmation.
