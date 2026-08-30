@@ -1,3 +1,15 @@
+# PilotLog v8.1.0 — Roster completion workflow
+
+- Kept the v8.0.0 AeroLINE importer and Roster structure unchanged.
+- Roster flight tap now opens the full existing Add Flight editor with all consolidated fields/rules.
+- Added explicit **Save to Logbook**. A roster sector is marked completed only after a real Logbook save/lock.
+- Completed roster sectors remain in Roster and are highlighted green; deleting the linked Logbook flight returns the sector to planned state.
+- Added stable Roster ↔ Logbook link metadata while retaining semantic matching for older entries.
+- Logbook UI now lists only Flights and Simulator entries. DHD/DHP/STBY/Ground remain operational data for Roster, Trips and Payroll.
+- Today/Next Duties now uses Roster as the primary source for roster months and LogTen/Logbook only as fallback for months without a roster.
+- Payroll now uses Roster as primary source for roster months; if no roster exists, imported LogTen Pro records are preferred as the historical fallback. Sources are not automatically mixed in a roster month.
+- Trip duty/layover calculations can use planned roster flight sectors without creating fake Logbook flights.
+
 # PilotLog Changelog
 
 ## v8.0.0 — AeroLINE roster intelligence

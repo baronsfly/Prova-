@@ -1,9 +1,9 @@
-PilotLog v8.0.0
+PilotLog v8.1.0
 ================
 
 PURPOSE
 -------
-PilotLog v8.0.0 consolidates the AeroLINE monthly JSON workflow while preserving the existing v7.0.1 look & feel, LogTen migration/archive workflow, manual Sync now control and native-ready AeroLINE Connect components.
+PilotLog v8.1.0 builds on the v8.0.0 AeroLINE monthly JSON workflow while preserving the v7.0.1 look & feel, LogTen migration/archive workflow, manual Sync now control and native-ready AeroLINE Connect components.
 
 AEROLINE JSON IMPORT
 --------------------
@@ -63,9 +63,18 @@ BACKUP / COMPATIBILITY
 FILES
 -----
 - index.html
-- pilotlog-8.0.0.js
-- pilotlog-8.0.0.css
-- sw-8.0.0.js
+- pilotlog-8.1.0.js
+- pilotlog-8.1.0.css
+- sw-8.1.0.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
+
+
+v8.1.0 Roster → Logbook workflow
+- Roster remains the planning/payroll source.
+- Tap a roster flight to open the complete Add Flight editor with AeroLINE data prefilled.
+- Save to Logbook creates/updates the real flight; only then the roster sector turns green.
+- Logbook list displays flights and simulator entries only; non-flight roster activities remain available to Roster/Payroll/Trips.
+- Dashboard Today/Next Duties reads Roster first; LogTen/Logbook is used only when that month has no roster.
+- Payroll reads Roster first; months without a roster use imported LogTen Pro data when available.
