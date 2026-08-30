@@ -1,9 +1,20 @@
-PilotLog v6.0.4
+PilotLog v6.0.5
 =================
 
 CONSOLIDATION RELEASE
 
-SYNC ENGINE v2 (v6.0.4)
+
+CLOUD SYNC TRANSPORT HARDENING (v6.0.5)
+---------------------------------------
+- Supabase requests no longer fail after a fixed 10-second timeout.
+- Cloud downloads use 45-second requests with safe retry for timeout/network/429/5xx errors.
+- Cloud rows are downloaded in deterministic pages of 500 so datasets above the PostgREST default row cap are not silently truncated.
+- Cloud upserts are uploaded in chunks of 100 with a 60-second timeout and safe retries.
+- Timeout and network errors are reported separately; a timeout no longer incorrectly says the internet connection is necessarily down.
+- Sync progress shows download/upload state and upload chunk progress.
+- Sync Engine v2 remove-wins tombstones remain unchanged.
+
+SYNC ENGINE v2 (v6.0.5)
 - remove-wins deletions: a deleted entry cannot be revived by a stale device;
 - persistent source tombstones for user-deleted AeroLINE/LogTen-backed entries;
 - deterministic IDs for newly imported AeroLINE rows;
@@ -18,9 +29,9 @@ SYNC ENGINE v2 (v6.0.4)
 
 Files to upload to the root of the GitHub Pages repository (production package):
 - index.html
-- pilotlog-6.0.4.js
-- pilotlog-6.0.4.css
-- sw-6.0.4.js
+- pilotlog-6.0.5.js
+- pilotlog-6.0.5.css
+- sw-6.0.5.js
 - manifest.webmanifest
 
 The production ZIP intentionally excludes development source/build files and duplicate unversioned runtime copies. This keeps deployment smaller and avoids stale-file confusion. The source archive is kept separately for future development.

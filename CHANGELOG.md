@@ -1,5 +1,14 @@
 # PilotLog Changelog
 
+## v6.0.5 — Cloud Sync transport hardening
+- Replaced the fixed 10-second Supabase timeout with operation-appropriate limits.
+- Added retry with short backoff only for transient failures (timeout, network failure, HTTP 429 and HTTP 5xx).
+- Added deterministic paginated cloud download (500 rows/page) to prevent silent truncation on large datasets.
+- Added chunked cloud upload (100 records/request) with 60-second request timeout.
+- Added clearer distinction between Supabase timeout and network reachability errors.
+- Added visible upload progress during manual and automatic sync.
+- Preserved v6.0.4 Sync Engine v2 remove-wins deletion semantics and all existing UI/features.
+
 ## v6.0.4 — Sync Engine v2 / remove-wins deletion
 - Deletions are now durable remove-wins tombstones: an old or later-edited replica cannot silently resurrect a deleted entry.
 - User deletions of AeroLINE/LogTen-backed entries also store their external source identity, preventing the same imported record from being recreated under a different local ID.
