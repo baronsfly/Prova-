@@ -1,4 +1,4 @@
-PilotLog v6.0.5
+PilotLog v6.0.7
 =================
 
 CONSOLIDATION RELEASE
@@ -187,3 +187,19 @@ It is a warning/monitoring aid, not a replacement for the operator's approved FT
 v6.0.2 storage note
 -------------------
 The main flight/logbook dataset is now IndexedDB-backed. This avoids the small localStorage quota that can block a complete LogTen migration. Existing flight data from earlier PilotLog versions migrate automatically on first launch. Small settings remain in localStorage; the original complete LogTen SQLite archive remains in its separate IndexedDB archive.
+
+
+PilotLog v6.0.7
+- Adds a read-only Source field in the log entry detail/editor only; it is not shown in the Logbook list.
+- Adds Roster ↔ Logbook Data Integrity Check for AeroLINE flight sectors.
+- Extra manual/simulator/other-company Logbook entries are permitted and are not flagged merely because they are absent from AeroLINE.
+- Preserves source identity when creating a Logbook entry from an AeroLINE roster sector.
+
+
+V6.0.7 CLEAN-START / IDENTITY ENGINE
+- New cloud protocol namespace v3 isolates the clean database from stale rows written by older PilotLog builds.
+- Source-backed entries use deterministic 128-bit canonical IDs; manual entries use crypto.randomUUID when available.
+- AeroLINE and LogTen identity remain stable across re-imports.
+- Deep Reset button can hard-delete the signed-in user PilotLog rows from Supabase and then erase all PilotLog localStorage, sessionStorage, IndexedDB databases, recovery backup, LogTen archive and PilotLog caches on the current device.
+- Deep Reset only wipes local storage after the cloud wipe succeeds.
+- After a clean start, reinstall/reload v6.0.7 on every device before syncing. Older sync protocol rows are ignored by v6.0.7.

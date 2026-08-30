@@ -1,3 +1,21 @@
+# PilotLog v6.0.7
+
+- Added canonical source-backed identity engine: deterministic 128-bit IDs for AeroLINE/LogTen records and cryptographic UUIDs for manual records.
+- Added Sync Protocol v3 namespace so a clean database cannot ingest stale rows written by v6.0.6 or older clients.
+- Added Deep Reset • Cloud + This Device with double confirmation. It hard-deletes the signed-in user cloud rows first, then clears PilotLog localStorage/sessionStorage, IndexedDB databases, LogTen archive, weekly recovery backup and PilotLog caches.
+- Added clean-start guard: v6.0.7 will not run Cloud Sync until a v6.0.7 reset has explicitly initialized the new sync generation.
+- Added Reset This Device Only for additional devices after the master/cloud reset.
+- Deep Reset fails safe: local data are not wiped if cloud deletion fails.
+- Kept visual CSS unchanged from v6.0.6.
+
+# PilotLog v6.0.6
+
+- Added read-only Source in entry detail/editor only (not in Logbook list).
+- Added AeroLINE Roster ↔ Logbook integrity check using date + flight number + route.
+- Logbook-only manual/simulator/other-company activities are not treated as discrepancies.
+- New entries created from an AeroLINE roster sector retain `source: aeroline`.
+- No visual changes to the Logbook list.
+
 # PilotLog Changelog
 
 ## v6.0.5 — Cloud Sync transport hardening
@@ -495,3 +513,15 @@
 - Routine logbook writes are coalesced before IndexedDB persistence to avoid repeatedly rewriting the full history while typing; pending data are flushed when the app is hidden or closed.
 - PilotLog requests persistent browser storage when supported to reduce eviction risk.
 - Versioned assets and Service Worker cache updated to v6.0.2.
+
+## 7.0.0 — Central Database architecture
+- Replaced peer/full-state multi-device synchronization with a single authoritative Supabase database model.
+- The cloud database is now the source of truth; device data is a local cache/offline working copy only.
+- Introduced a new isolated v7 local-storage and IndexedDB namespace. PilotLog 7 never loads legacy v5/v6 local datasets.
+- Introduced new cloud namespace `db7`; normal v7 reads never query legacy cloud records.
+- Added destructive clean-start action **Erase Old Database • Start Clean**. It deletes every PilotLog row belonging to the signed-in Supabase user, then deeply formats both legacy and v7 local PilotLog stores/caches on the current device.
+- Added database generation/revision guard. A device may publish changes only if it is based on the current central database revision. If another device has already changed the server, upload is stopped instead of overwriting/resurrecting data.
+- Clean devices with no pending local changes download and replace their cache from the central database; they do not upload stale cached copies.
+- Deletes are represented by absence in the authoritative snapshot. No replicated tombstone history is required by v7 central-database operation.
+- Manual **Sync now** remains available. Auto Sync remains independently configurable.
+- Kept PilotLog v5.11 visual baseline; no UI restyling.

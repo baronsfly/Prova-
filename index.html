@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-6.0.5.css">
+<link rel="stylesheet" href="pilotlog-7.0.0.css">
 </head>
 <body>
 <header>
@@ -26,7 +26,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v6.0.5</span>
+    <span class="version-badge">v7.0.0</span>
   </div>
 </header>
 <main>
@@ -48,6 +48,7 @@
       <div class="form-grid">
         <div><label>Duty type</label><select id="dutyTypeFlight"><option>Flight</option><option>Simulator</option><option>Ground Course</option><option>STBY</option><option>DHD</option></select></div>
         <div><label>Date (Zulu)</label><input id="date" type="date" required></div>
+        <div><label>Source</label><input id="entrySourceDisplay" readonly value="Manual"></div>
         <div data-entry-field="flightNo"><label>Flight number</label><div class="prefix-input"><span id="flightPrefixLabel">MAC</span><input id="flightNo" placeholder="457" autocomplete="off"></div></div>
         <div data-entry-field="reg"><label>Aircraft ID</label><div class="prefix-input"><span id="aircraftPrefixLabel">CN-NM</span><input id="reg" maxlength="10" placeholder="Q" autocomplete="off"></div></div>
         <div data-entry-field="type"><label>Aircraft type</label><input id="type" placeholder="A320" data-upper list="aircraftTypeSuggestions" autocomplete="off"><datalist id="aircraftTypeSuggestions"></datalist></div><div data-entry-field="courseType" class="hidden"><label>Course type</label><input id="courseType" placeholder="GRT MOD 3 / CRM / SEP..." data-upper></div>
@@ -512,15 +513,25 @@
     </div>
   </div>
 
-  <div class="section-title">Supabase Cloud Sync</div>
+  <div class="section-title">Data Integrity Check</div>
+  <div class="card">
+    <div class="hint">Checks AeroLINE roster flight sectors against the Logbook. Manual, simulator and other-company entries are allowed and are not treated as errors just because they are absent from the roster.</div>
+    <div class="actions"><button class="secondary" id="runIntegrityCheckBtn" type="button">Run Roster ↔ Logbook Check</button></div>
+    <div class="sync-status" id="integrityStatus">Not checked yet.</div>
+    <div id="integrityResults" class="hint spaced"></div>
+  </div>
+
+  <div class="section-title">PilotLog Central Database</div>
   <div class="card">
     <div class="sync-status" id="cloudStatus">Cloud status loading…</div>
     <div class="form-grid">
       <div class="full"><label>Email</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="your@email.com"></div>
-      <div class="full"><label>Password</label><input id="cloudPassword" type="password" autocomplete="current-password" minlength="6" placeholder="Supabase account password"></div>
+      <div class="full"><label>Password</label><input id="cloudPassword" type="password" autocomplete="current-password" minlength="6" placeholder="PilotLog database password"></div>
     </div>
     <div class="actions"><button class="primary" id="cloudSignInBtn" type="button">Sign in</button><button class="secondary" id="cloudSignUpBtn" type="button">Create account</button><button class="secondary" id="cloudSignOutBtn" type="button">Sign out</button><button class="primary" id="syncCloudBtn" type="button">Sync now</button></div>
-    <div class="hint">The last used email is kept on this device even after Sign out. Password is never retained by PilotLog.</div>
+    <div class="hint">Supabase/PostgreSQL is the authoritative PilotLog database. This device is a cache/offline working copy. The last used email may be kept locally; the password is never retained.</div>
+    <div class="actions"><button class="danger" id="deepResetBtn" type="button">Erase Old Database • Start Clean</button><button class="secondary" id="deepLocalResetBtn" type="button">Reset Local Cache Only</button></div>
+    <div class="hint">Deep Reset is the clean-start tool: it permanently erases your PilotLog rows from Supabase and all PilotLog local databases on this device. v7.0.0 blocks Cloud Sync until this clean-start reset is completed. Use Reset Local Cache Only on additional devices after the cloud has been reset.</div>
   </div>
 </section>
 </main>
@@ -534,5 +545,5 @@
   <button data-view="dashboardView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.5 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-6.0.5.js" defer></script>
+<script src="pilotlog-7.0.0.js" defer></script>
 </body></html>
