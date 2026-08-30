@@ -1,5 +1,25 @@
 # PilotLog Changelog
 
+## v8.0.0 — AeroLINE roster intelligence
+- Rebuilt AeroLINE JSON import around the complete monthly roster instead of flight-only display logic.
+- Crew identity is checked against the PilotLog Settings name, accepting reversed first/last-name order; mismatches require explicit confirmation.
+- Normal AeroLINE sectors now retain crew, fleet, registration when supplied, stable AeroLINE IDs and crew schedule block IDs.
+- AeroLINE colleague is prefilled as SIC and remains editable.
+- LTG / Line Training sectors are highlighted in Roster and prefilled as Flight Instruction with the PilotLog crew member as Instructor.
+- Explicit ALC / Annual Line Check sectors are highlighted and prefill the PilotLog crew member in Instructor.
+- RT activities import as Simulator training; first joining pilot is PIC, second joining pilot is SIC, and the PilotLog crew member is Instructor when present in trainerName.
+- Full training activity names are retained in Remarks and Roster information for RT, GRT, GTS, MTG and other supported training.
+- trainerType is retained as AeroLINE metadata but is not used for role/pay logic.
+- DHD and DHP are separate positioning types: DHD has zero credit; DHP has editable credit and DHP credit is deducted from layover-pay time.
+- Positioning outside Morocco can be recorded in Trips with company cash amount, received currency and EUR conversion.
+- HSBY/STBY and AeroLINE OFF records keep their published times/status in Roster.
+- Clear Roster now removes every roster-derived item (sectors, OFF, DHD/DHP, standby and training) while preserving locked Logbook entries; preserved locked entries are hidden from Roster until re-imported.
+- Deleting a Roster item now removes it completely instead of creating an OFF/Blank Day replacement; Blank Day rows are no longer generated.
+- AeroLINE validation import keeps CRM (first occurrence only), DGR, E-GRT, ESE, ELP, FCCA/TNR, GRT, LVC, MED, OPC, PLC, PPC, RHS, SMS, SEP, SEC and SAF; CMC, A320/IR, JSIM, TRN and WP are ignored.
+- A new AeroLINE expiry is imported automatically when PilotLog has no value. If a stored expiry differs, PilotLog asks in English before updating. Blank/null AeroLINE expiry values never erase a stored PilotLog date.
+- Full PilotLog backup now includes Expiry data.
+- Existing PilotLog v7 storage namespace is retained intentionally so upgrading to v8 does not discard current local data.
+
 ## 7.0.1 — Complete LogTen licences + Trips import
 - Complete LogTen migration now imports certificates/validities into Expiry.
 - Imports original LogTen Trips using stable LogTen unique IDs.
