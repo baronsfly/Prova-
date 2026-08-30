@@ -1,3 +1,11 @@
+# PilotLog Changelog
+
+## 7.0.1 — Complete LogTen licences + Trips import
+- Complete LogTen migration now imports certificates/validities into Expiry.
+- Imports original LogTen Trips using stable LogTen unique IDs.
+- Re-import updates matching LogTen expiry/trip records instead of duplicating them.
+- Original LogTen SQLite archive behavior is unchanged.
+
 # PilotLog v6.0.7
 
 - Added canonical source-backed identity engine: deterministic 128-bit IDs for AeroLINE/LogTen records and cryptographic UUIDs for manual records.
