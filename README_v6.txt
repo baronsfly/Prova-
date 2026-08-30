@@ -1,11 +1,19 @@
-PilotLog v6.0.2
-================
+PilotLog v6.0.3
+=================
+
+CONSOLIDATION RELEASE
+- Visual reference: v5.11.0
+- Large LogTen archive: IndexedDB-backed
+- AeroLINE Connect retained for future native app
+- Manual AeroLINE JSON import retained
+- Heavy Logbook/Roster rendering is lazy for smoother navigation
+- Manual Sync now retained alongside Auto Sync
 
 Files to upload to the root of the GitHub Pages repository (production package):
 - index.html
-- pilotlog-6.0.2.js
-- pilotlog-6.0.2.css
-- sw-6.0.2.js
+- pilotlog-6.0.3.js
+- pilotlog-6.0.3.css
+- sw-6.0.3.js
 - manifest.webmanifest
 
 The production ZIP intentionally excludes development source/build files and duplicate unversioned runtime copies. This keeps deployment smaller and avoids stale-file confusion. The source archive is kept separately for future development.

@@ -1,3 +1,14 @@
+# PilotLog changelog
+
+## v6.0.3 — Body & under-the-hood consolidation
+- Restored the complete v5.11.0 visual stylesheet and navigation feel. No redesign.
+- Kept all AeroLINE Connect controls for the future native-app path, plus manual JSON import fallback.
+- Kept the v6 IndexedDB flight store so the complete LogTen archive no longer depends on localStorage quota.
+- Improved responsiveness with lazy Logbook and Roster DOM rendering: large views are built only when opened.
+- Avoided repeating the expensive semantic duplicate scan on every version upgrade.
+- Legacy recovery-snapshot migration no longer blocks startup.
+- Manual Sync now and Auto Sync remain unchanged.
+
 # PilotLog Changelog
 
 ## v5.0.0
