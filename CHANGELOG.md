@@ -1,3 +1,11 @@
+# PilotLog v8.4.2 — Payroll Credit H unification
+
+- Fixed the remaining Payroll-specific Credit H path. Payroll no longer maintains a separate Flight credit formula.
+- For completed/linked Roster sectors, Payroll uses the preserved Logbook Schedule OUT / Schedule IN instead of allowing later Roster times to replace the original schedule used for Credit H.
+- Future/uncompleted sectors continue to use Roster scheduled times, preserving Roster as the primary planning/payroll source.
+- Flight Credit H is calculated by one shared engine everywhere: Scheduled Block only, 30-minute upward rounding, then the existing Morocco +50% rule. Actual OUT/IN never enters Credit H.
+- No historical Credit H totals are imported or forced.
+
 # PilotLog v8.4.1 — Credit Hours source hardening
 
 - Fixed the remaining Credit Hours source defect: `schedBlock` stored/imported in an entry can no longer override Schedule OUT → Schedule IN.

@@ -1,7 +1,8 @@
 
-V8.4.1 CREDIT HOURS HARD FIX
+V8.4.2 PAYROLL CREDIT HOURS FIX
 ----------------------------
-- Flight Credit Hours now read Scheduled Block ONLY from Schedule OUT -> Schedule IN.
+- Flight Credit Hours read Scheduled Block ONLY from Schedule OUT -> Schedule IN.
+- Payroll now uses the same Credit H engine as Logbook; completed Roster sectors use the linked Logbook scheduled times.
 - A stored/imported `schedBlock` value can no longer override the scheduled times.
 - If a Flight has no Schedule OUT or Schedule IN, PilotLog returns 0 derivable flight credit instead of falling back to a stale saved duration.
 - Complete LogTen imports normalize `schedBlock` from the two scheduled times on import.
@@ -12,7 +13,7 @@ PilotLog v8.4.1
 
 PURPOSE
 -------
-PilotLog v8.4.1 is the v8.3.1 baseline with one isolated correction to imported LogTen Credit Hours. The v8.2 cloud-sync engine and all other Payroll formulas/workflows are unchanged.
+PilotLog v8.4.2 is the v8.3.1 baseline with one isolated correction to imported LogTen Credit Hours. The v8.2 cloud-sync engine and all other Payroll formulas/workflows are unchanged.
 
 UPGRADE SAFETY
 --------------
