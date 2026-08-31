@@ -1,3 +1,17 @@
+# PilotLog v8.2.0 — Local-first verified cloud rebuild
+
+- Large imports are now local-only first. Complete LogTen, LogTen Tab, AeroLINE JSON/direct import, Calendar and Roster CSV do not automatically publish to cloud.
+- Fresh/reset devices default Auto Sync to disabled; bulk imports also disable Auto Sync until the user deliberately re-enables it.
+- Added local verification after complete LogTen migration: every stable LogTen unique ID from the migration package must exist in the local database before the import is reported successful.
+- Large complete LogTen archives skip the expensive O(n²) semantic duplicate scan when stable LogTen identities are present, preventing the browser stall seen with 7k+ rows.
+- Introduced cloud protocol **db8** with verified generations. The active central database is never deleted before a replacement upload is complete.
+- Cloud publish now uploads a new staging generation, verifies all expected chunks, activates it atomically via active metadata, and only then attempts cleanup of the previous generation.
+- Cloud download reconstructs only the active generation and verifies section counts and digests before replacing local data.
+- Additional devices determine central-database availability from cloud metadata rather than a device-local initialization flag.
+- Future simulator sessions are excluded from Logbook, simulator totals and experience exports until their scheduled simulator end time has passed; they remain available in Roster/planning.
+- Added possible Day Off Paid assistance: a “Thanks” memo on a flight day creates a confirmation signal; if the date was previously an OFF, the signal is strengthened to “OFF replaced by flight + Thanks memo”. PilotLog never ticks the Day Off box silently and asks the user when saving/locking the linked Logbook flight.
+- Manual **Sync now** remains the explicit safety control.
+
 # PilotLog v8.1.0 — Roster completion workflow
 
 - Kept the v8.0.0 AeroLINE importer and Roster structure unchanged.

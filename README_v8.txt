@@ -1,80 +1,69 @@
-PilotLog v8.1.0
+PilotLog v8.2.0
 ================
 
 PURPOSE
 -------
-PilotLog v8.1.0 builds on the v8.0.0 AeroLINE monthly JSON workflow while preserving the v7.0.1 look & feel, LogTen migration/archive workflow, manual Sync now control and native-ready AeroLINE Connect components.
+PilotLog v8.2.0 is a reliability release for rebuilding a large LogTen archive and then publishing it safely to the PilotLog central database.
 
-AEROLINE JSON IMPORT
---------------------
-1. Open Roster.
-2. Choose the roster month if needed.
-3. Use Import AeroLINE JSON and select the monthly AeroLINE JSON file.
-4. PilotLog checks crewName against the name stored in Settings. Reversed first/last-name order is accepted. If it does not match, PilotLog asks you to confirm the roster owner before importing.
-5. Re-importing the month updates matching AeroLINE records instead of intentionally duplicating them.
+LOCAL-FIRST REBUILD
+-------------------
+Large imports do not start Cloud Sync.
 
-ROSTER / LOGBOOK MAPPING
-------------------------
-- Normal sectors: flight number, From/To, scheduled times, A320/fleet type, registration when supplied, AeroLINE flight ID and crew schedule block ID are retained.
-- The other operating crew member is prefilled as SIC and remains editable.
-- LTG / Line Training: highlighted in Roster and prefilled as Flight Instruction; the PilotLog crew member is placed in Instructor.
-- Explicit ALC / Annual Line Check: highlighted in Roster and the PilotLog crew member is placed in Instructor. PilotLog does not guess ALC from vague descriptions.
-- RT / Recurrent Training: imported as Simulator. First joining pilot -> PIC; second joining pilot -> SIC. If the PilotLog crew member appears in trainerName, that name is placed in Instructor. When multiple trainer names are present, PilotLog only auto-fills the PilotLog crew member and leaves special cases for manual editing.
-- GRT / GTS / MTG and other training: the complete AeroLINE activity/module name is preserved in Remarks and shown in Roster information.
-- trainerType is stored as metadata only and is not used to calculate roles or pay.
+Recommended clean rebuild:
+1. Sign in to PilotLog Cloud.
+2. Use “Erase Old Database • Start Clean” once if the previous central database must be discarded.
+3. Import the complete LogTen migration package.
+4. PilotLog stores and verifies the normalized LogTen records locally first. The original SQLite database remains archived locally and is never sent to cloud.
+5. Import the AeroLINE JSON files, also locally only.
+6. Review Logbook, Roster, Expiry and Trips.
+7. Press “Sync now” only when the local database is correct.
 
-POSITIONING / STANDBY
+Fresh/reset devices start with Auto Sync disabled. Any bulk import (complete LogTen, LogTen Tab, AeroLINE JSON/direct import, Calendar or Roster CSV) also disables Auto Sync and leaves the data local until Sync now is pressed.
+
+VERIFIED CLOUD GENERATIONS
+--------------------------
+v8.2 uses cloud protocol db8.
+
+A cloud publish no longer deletes the active central database first. PilotLog:
+1. builds a complete local snapshot,
+2. uploads it into a new staging generation,
+3. verifies that every expected cloud chunk exists,
+4. activates the new generation only after verification,
+5. then removes the previous generation when possible.
+
+If an upload is interrupted, the previous verified central generation remains active. A second device downloads only the active verified generation and checks section counts/digests before replacing its local copy.
+
+The first Sync now after a clean local rebuild asks for confirmation before creating the new central database.
+
+LARGE LOGTEN ARCHIVES
 ---------------------
-- DHD and DHP are separate duty types.
-- DHD always has 0:00 credit.
-- DHP credit is editable and its credit minutes are deducted from paid layover time under the existing Trip calculation rules.
-- DHD/DHP times from AeroLINE are imported when available. Routes can be completed manually when AeroLINE does not provide them.
-- A positioning movement outside Morocco can carry a company cash-payment record in Trips: amount received, received currency and EUR conversion.
-- HSBY/STBY imports with its AeroLINE start/end times.
-- OFF remains visible as an AeroLINE Day OFF while it exists in the imported roster.
+The complete LogTen migration is written to IndexedDB and verified locally before success is reported. Stable LogTen unique IDs are checked after the import. The expensive semantic duplicate pass is skipped for large complete LogTen archives that already carry stable source IDs, avoiding the O(n²) browser stall seen during large rebuilds.
 
-CLEAR / DELETE BEHAVIOUR
-------------------------
-- Clear Roster removes all roster-derived sectors, OFF, DHD, DHP, standby and training activities.
-- Locked/confirmed Logbook entries are preserved. If they originated from AeroLINE, Clear Roster hides them from the Roster rather than deleting the real Logbook record.
-- Delete in Roster is a real delete. PilotLog does not create a replacement OFF or Blank Day.
-- Blank Day placeholder rows are no longer generated.
+The reference migration package used during this release contains 7,916 LogTen rows (30/03/1998–26/08/2026), 19 licences/validities and 164 trips.
 
-AEROLINE EXPIRY RULES
----------------------
-Imported/kept:
-CRM (first occurrence only), DGR, E-GRT, ESE, ELP, FCCA/TNR, GRT, LVC, MED, OPC, PLC, PPC, RHS, SMS, SEP, SEC, SAF.
+ROSTER / LOGBOOK
+----------------
+- Roster remains the planning/payroll source.
+- Logbook remains the completed operational record.
+- Future AeroLINE simulator sessions stay in Roster/planning and do not appear in Logbook or simulator totals/experience exports until their scheduled simulator end time has passed.
+- Completed flights remain linked to their Roster sectors.
 
-Ignored:
-CMC, A320/IR, JSIM, TRN, WP.
+DAY OFF PAID ASSIST
+-------------------
+AeroLINE “Thanks” memos are retained as a possible Day Off Paid signal on flight days. If PilotLog also remembers an earlier OFF for that date, the signal is strengthened to “OFF replaced by flight + Thanks memo”.
 
-Update behaviour:
-- No PilotLog expiry + valid AeroLINE date -> import directly.
-- Same date -> no prompt.
-- Different stored date -> English confirmation prompt before changing it.
-- Blank/null AeroLINE date -> never erase the PilotLog value.
+PilotLog does not silently mark Day Off Paid. When the linked roster flight is saved/locked into Logbook and “Called to work from a scheduled day off” is still unticked, PilotLog shows a confirmation popup. The user remains the final authority.
 
-BACKUP / COMPATIBILITY
-----------------------
-- Full backup JSON includes Expiry data.
-- The existing PilotLog v7 local storage namespace is intentionally preserved so users upgrading to v8 retain their existing local data.
-- LogTen complete migration/archive remains available.
+ADDITIONAL DEVICES
+------------------
+A newly reset additional device no longer relies on a device-local “database initialized” flag to decide whether the central database exists. After sign-in, Sync now checks the active db8 cloud metadata directly and downloads the verified central generation when available.
 
 FILES
 -----
 - index.html
-- pilotlog-8.1.0.js
-- pilotlog-8.1.0.css
-- sw-8.1.0.js
+- pilotlog-8.2.0.js
+- pilotlog-8.2.0.css
+- sw-8.2.0.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
-
-
-v8.1.0 Roster → Logbook workflow
-- Roster remains the planning/payroll source.
-- Tap a roster flight to open the complete Add Flight editor with AeroLINE data prefilled.
-- Save to Logbook creates/updates the real flight; only then the roster sector turns green.
-- Logbook list displays flights and simulator entries only; non-flight roster activities remain available to Roster/Payroll/Trips.
-- Dashboard Today/Next Duties reads Roster first; LogTen/Logbook is used only when that month has no roster.
-- Payroll reads Roster first; months without a roster use imported LogTen Pro data when available.
