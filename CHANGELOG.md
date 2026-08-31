@@ -1,9 +1,12 @@
-# PilotLog v8.5.1 — FX integrity hotfix
+# PilotLog v8.6 — Central snapshot integrity compatibility
 
-- Fixed central snapshot download being blocked when the non-authoritative EUR/MAD FX cache alone fails its digest check.
-- On an FX-only digest mismatch, PilotLog now discards that cache and lets the verified operational snapshot continue; EUR/MAD is rebuilt locally when Payroll needs it.
-- All operational and user-data sections keep the existing blocking integrity checks.
-- No changes to db8 protocol, IDs, revision control, ledger/tombstones, merge behavior, Auto Sync/Sync now workflow, calculations, roster, logbook, payroll rules or UI.
+- Fixed false central-database integrity failures caused by PostgreSQL/Supabase `jsonb` reordering object keys after upload.
+- Central section digests now use canonical recursive JSON key ordering (`canonical-json-v1`).
+- Legacy db8 generations created before v8.6 are accepted only after strict generation/chunk/count structural verification when their old order-sensitive digest cannot survive `jsonb` normalization.
+- Newly uploaded generations are fetched back and content-verified before the active generation is switched.
+- No changes to merge policy, record identity, deletion ledger/tombstones, revision semantics, Sync now, Auto Sync, payroll, roster, logbook, trips, expiry, or business rules.
+
+---
 
 # PilotLog v8.5.0 — Eight-point Roster / central-rule consolidation
 

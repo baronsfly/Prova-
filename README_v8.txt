@@ -1,13 +1,5 @@
-PILOTLOG v8.5.1 — FX INTEGRITY HOTFIX
+PILOTLOG v8.6 — ROSTER ACTIVITY + CENTRAL RULE ENGINE
 =========================================================
-
-
-HOTFIX v8.5.1
--------------
-- Fixes the central snapshot download stopping on the non-authoritative FX cache section.
-- If only the FX cache digest is inconsistent, PilotLog discards that cache and rebuilds EUR/MAD locally instead of blocking verified Logbook/Roster data.
-- Integrity failures in flights, roster, duties, trips, expiry, sync ledger, payroll settings/month data and app settings remain blocking exactly as before.
-- No sync protocol, record IDs, ledger/tombstone rules, merge rules, cloud revision logic or business calculations were changed.
 
 BASE
 ----
@@ -36,14 +28,21 @@ CENTRAL CALCULATION RULES
 
 SYNC SAFETY
 -----------
-The existing verified-generation db8 publish/download protocol is retained. When another device has advanced the central revision while this device also has local changes, v8.5.1 retains the v8.5.0 record-revision merge and plus the permanent ledger before publishing the next verified generation. Collection-wide maintenance events do not cancel specific delete tombstones.
+The existing verified-generation db8 publish/download protocol is retained. When another device has advanced the central revision while this device also has local changes, v8.6 merges record revisions plus the permanent ledger before publishing the next verified generation. Collection-wide maintenance events do not cancel specific delete tombstones.
 
 FILES
 -----
 - index.html
-- pilotlog-8.5.1.js
+- pilotlog-8.6.js
 - pilotlog-8.3.0.css
-- sw-8.5.1.js
+- sw-8.6.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
+
+
+v8.6 CENTRAL SNAPSHOT INTEGRITY FIX
+- Snapshot content digests now use recursive canonical JSON key ordering, so Supabase/PostgreSQL jsonb key reordering cannot create false integrity failures (for example fx or trips).
+- Existing pre-v8.6 db8 generations remain readable through a one-time legacy compatibility path only after strict generation, chunk-index, chunk-count and section-count validation.
+- New generations are read back from Supabase and content-verified before activation.
+- Merge rules, record IDs, sync ledger/tombstones, revisions, Sync now and Auto Sync behavior are otherwise unchanged.
