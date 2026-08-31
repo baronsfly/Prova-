@@ -748,3 +748,10 @@ button:active,.filebtn:active{transform:translateY(1px)}
 .draft-shelf-row>div{display:flex;gap:6px;flex-shrink:0}
 .draft-shelf-row button{padding:6px 9px;font-size:.76rem}
 @media(max-width:640px){.draft-shelf-row{align-items:flex-start;flex-direction:column}.draft-shelf-row>div{width:100%}.draft-shelf-row button{flex:1}}
+
+
+/* v8.4.0 — Logbook search / bulk lock / import progress */
+.logbook-toolbar{gap:10px;align-items:center}.logbook-toolbar-actions{display:flex;gap:8px;flex-wrap:wrap}
+.logbook-search-card label{display:block;font-weight:700;margin-bottom:7px}.logbook-search-row{display:flex;gap:8px;align-items:center}.logbook-search-row input{flex:1;min-width:0}.logbook-search-stats{margin-top:10px;line-height:1.5}
+.import-progress-modal{position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.42);display:flex;align-items:center;justify-content:center;padding:22px}.import-progress-modal.hidden{display:none}.import-progress-card{width:min(520px,100%);background:#fff;border-radius:18px;padding:22px;box-shadow:0 24px 70px rgba(15,23,42,.28)}.import-progress-track{height:14px;background:#e7edf5;border-radius:999px;overflow:hidden;margin:14px 0 8px}.import-progress-bar{height:100%;width:0;background:#1f6feb;border-radius:999px;transition:width .18s ease}.import-progress-percent{font-size:24px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:640px){.logbook-search-row{align-items:stretch}.logbook-search-row input{width:100%}.logbook-toolbar{align-items:stretch}.logbook-toolbar-actions{flex:1}.logbook-toolbar-actions button{width:100%}}

@@ -26,7 +26,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v8.3.1</span>
+    <span class="version-badge">v8.4.0</span>
   </div>
 </header>
 <main>
@@ -115,12 +115,16 @@
 </section>
 
 <section id="flightsView" class="hidden">
-  <div class="view-toolbar">
-    <div>
-        </div>
+  <div class="view-toolbar logbook-toolbar">
+    <div class="logbook-toolbar-actions"><button class="secondary" id="lockAllEntriesBtn" type="button">🔒 Lock all entries</button></div>
     <button class="primary view-add-btn" id="logbookAddBtn" type="button">＋ Add entry</button>
   </div>
   <div class="card"><div class="hint">Logbook shows completed flights and simulator entries. Roster-only duties remain in Roster/Payroll/Trips.</div></div>
+  <div class="card spaced logbook-search-card">
+    <label for="logbookSearch">Search Logbook</label>
+    <div class="logbook-search-row"><input id="logbookSearch" type="search" placeholder="Flight no., airport/city, route, crew…" autocomplete="off"><button class="secondary" id="clearLogbookSearch" type="button">Clear</button></div>
+    <div class="hint logbook-search-stats" id="logbookSearchStats">Search statistics will appear here.</div>
+  </div>
   <div class="card spaced" id="allFlights"></div>
 </section>
 
@@ -454,7 +458,7 @@
       <button class="secondary" id="exportLogTenArchive" type="button">Export archived LogTen database</button>
       <button class="secondary" id="exportCsv">Export Operational CSV</button><button class="secondary" id="exportLogTen">Export for LogTen Pro</button>
     </div>
-    <div class="hint" id="logTenImportStatus">Complete migration imports the usable logbook fields and keeps the original LogTen SQLite database byte-for-byte in local archive storage. The archive is not uploaded to Cloud Sync.</div>
+    <div class="hint" id="logTenImportStatus">Complete migration imports the usable logbook fields and keeps the original LogTen SQLite database byte-for-byte in local archive storage. Flight Credit H is always calculated from Scheduled Block Hours; imported LogTen Custom Time does not override it. The archive is not uploaded to Cloud Sync.</div>
     <div class="hint" id="logTenArchiveStatus">No complete LogTen database archived yet.</div>
     <div class="section-title inner">Duty / Roster</div>
     <div class="actions"><label class="filebtn primary" for="calendarFile">Import Calendar (.ics)</label><input id="calendarFile" type="file" accept=".ics,text/calendar" class="hidden"><label class="filebtn secondary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden"><button class="secondary" id="exportRoster">Export roster CSV</button></div>
@@ -545,6 +549,15 @@
     <div class="hint">Deep Reset permanently erases your PilotLog rows from Supabase and all PilotLog local databases on this device. After a clean start, import LogTen/AeroLINE locally first, verify the result, then press Sync now. Additional devices can simply sign in and download the verified central snapshot.</div>
   </div>
 </section>
+
+<div id="importProgressModal" class="import-progress-modal hidden" role="dialog" aria-modal="true" aria-labelledby="importProgressTitle">
+  <div class="import-progress-card">
+    <div class="section-title inner" id="importProgressTitle">Importing data…</div>
+    <div class="import-progress-track"><div id="importProgressBar" class="import-progress-bar"></div></div>
+    <div class="import-progress-percent" id="importProgressPercent">0%</div>
+    <div class="hint" id="importProgressDetail">Preparing…</div>
+  </div>
+</div>
 </main>
 
 <nav class="nav" aria-label="Primary navigation">
@@ -556,5 +569,5 @@
   <button data-view="dashboardView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.5 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-8.3.1.js" defer></script>
+<script src="pilotlog-8.4.0.js" defer></script>
 </body></html>

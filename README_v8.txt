@@ -1,9 +1,9 @@
-PilotLog v8.3.1
+PilotLog v8.4.0
 ================
 
 PURPOSE
 -------
-PilotLog v8.3.1 is the v8.3.0 consolidated baseline with one isolated correction to imported LogTen Credit Hours. The v8.2 cloud-sync engine and all other Payroll formulas/workflows are unchanged.
+PilotLog v8.4.0 is the v8.3.0 consolidated baseline with one isolated correction to imported LogTen Credit Hours. The v8.2 cloud-sync engine and all other Payroll formulas/workflows are unchanged.
 
 UPGRADE SAFETY
 --------------
@@ -11,7 +11,8 @@ UPGRADE SAFETY
 - Updating the app on the same site/origin does not intentionally reset Logbook, Roster, Trips, Expiry, settings or payroll data.
 - Do not use browser “Clear site data” while local-only work has not been independently backed up.
 - The v8.2 cloud-sync functions are retained unchanged.
-- Credit Hours correction: imported LogTen Custom Time 9 is authoritative when present; other Payroll rules are unchanged.
+- Flight Credit Hours are ALWAYS based on Scheduled Block Hours (Schedule OUT to Schedule IN), never Actual Block. Imported LogTen Custom Time 9 no longer overrides the formula.
+- 30-minute upward rounding and the existing Morocco scheduled-departure +50% premium remain in place.
 
 MANUAL FLIGHT / DRAFTS
 ----------------------
@@ -52,7 +53,7 @@ Settings > Logbook/Experience now includes Restore Full Backup JSON.
 
 Recommended clean-device test:
 1. On the working device, use Export Full Backup JSON and keep the downloaded .json file.
-2. Open PilotLog v8.3.1 on the clean/new device.
+2. Open PilotLog v8.4.0 on the clean/new device.
 3. Choose Restore Full Backup JSON.
 4. PilotLog validates the file and shows the record counts before replacing local data.
 5. Review Logbook, Roster, Totals, Trips and Expiry on the new device.
@@ -67,9 +68,20 @@ Typing in Add Flight now writes only the lightweight local draft. It no longer w
 FILES
 -----
 - index.html
-- pilotlog-8.3.1.js
+- pilotlog-8.4.0.js
 - pilotlog-8.3.0.css
-- sw-8.3.1.js
+- sw-8.4.0.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
+
+
+V8.4.0 AGREED CHANGES
+---------------------
+- Logbook global search: flight number, airport/code/city, route, aircraft and crew names.
+- Dynamic search statistics: matching entries, sectors, Block, Credit and simulator count.
+- One-command “Lock all entries” with explicit confirmation and count; only lock state changes.
+- Locked Ground Course activities can be edited directly from Roster; they remain locked after save.
+- Complete LogTen import shows an on-screen progress modal with percentage and processed row count.
+- Flight Credit H is formula-driven from Scheduled Block Hours only. Actual OUT/IN never determines Credit H.
+- Credit-Hours-only LogTen patch packages are rejected because imported Custom Time no longer drives Credit H.

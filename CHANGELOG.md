@@ -1,3 +1,14 @@
+# PilotLog v8.4.0 — Scheduled Credit H / agreed workflow updates
+
+- Flight Credit Hours are now explicitly formula-driven from **Scheduled Block Hours (Schedule OUT → Schedule IN) only**. Actual OUT/IN Block never determines Credit H.
+- Removed the v8.3.1 LogTen Custom Time 9 entry/month override. Credit-Hours-only LogTen patch packages are no longer applied.
+- Existing 30-minute upward rounding and Morocco scheduled-departure +50% premium are retained.
+- Added Logbook global search by flight number, airport/code/city, route, aircraft and crew names, with dynamic matching statistics.
+- Added “Lock all entries” with explicit confirmation and affected-entry count; it changes only lock state.
+- Locked Ground Course activities can be edited directly from Roster and remain locked after save.
+- Added visible progress modal with percentage and processed-row count during complete LogTen migration.
+- Started from v8.3.1 and preserved its local draft, simulator, backup, AeroLINE role and sync behavior.
+
 # PilotLog v8.3.1 — Credit Hours correction only
 
 - LogTen Custom Time 9 is authoritative for imported historical Credit Hours when supplied by the complete migration package.
