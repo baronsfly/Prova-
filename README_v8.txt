@@ -1,4 +1,4 @@
-PILOTLOG v8.6 — ROSTER ACTIVITY + CENTRAL RULE ENGINE
+PILOTLOG v8.7 — ROSTER ACTIVITY + CENTRAL RULE ENGINE
 =========================================================
 
 BASE
@@ -33,13 +33,21 @@ The existing verified-generation db8 publish/download protocol is retained. When
 FILES
 -----
 - index.html
-- pilotlog-8.6.js
+- pilotlog-8.7.js
 - pilotlog-8.3.0.css
-- sw-8.6.js
+- sw-8.7.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
 
+
+v8.7 ROSTER ACTIVITY DIRECT EDIT FIX
+---------------------------------------
+- Simulator, Ground Course, DHD, DHP and STBY opened from Roster remain editable directly from Roster even when their stored record is locked.
+- Delete activity works directly from Roster and no longer asks for a Logbook unlock.
+- Saving a Roster activity preserves the pre-existing locked flag.
+- The Roster activity action bar uses Save changes and removes flight-only Return Flight / Clear actions.
+- No sync engine, central database, ledger/tombstone, merge/revision, payroll or calculation rules were changed for this release.
 
 v8.6 CENTRAL SNAPSHOT INTEGRITY FIX
 - Snapshot content digests now use recursive canonical JSON key ordering, so Supabase/PostgreSQL jsonb key reordering cannot create false integrity failures (for example fx or trips).

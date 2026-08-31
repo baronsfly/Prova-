@@ -1,3 +1,13 @@
+# PilotLog v8.7 — Roster activity direct editing
+
+- Fixed Roster activity handling for Simulator, Ground Course, DHD, DHP and STBY.
+- Locked Roster activities can now be edited and deleted directly from Roster; no Logbook unlock is required.
+- Saving a locked Roster activity preserves its existing locked state instead of changing the Logbook lock workflow.
+- Roster activity editor now shows **Save changes** and hides flight-only **Return Flight** / **Clear** actions.
+- No cloud sync, ledger, tombstone, merge, revision or calculation logic changed in this release.
+
+---
+
 # PilotLog v8.6 — Central snapshot integrity compatibility
 
 - Fixed false central-database integrity failures caused by PostgreSQL/Supabase `jsonb` reordering object keys after upload.
