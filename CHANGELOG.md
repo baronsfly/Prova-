@@ -1,3 +1,10 @@
+# PilotLog v8.5.1 — FX integrity hotfix
+
+- Fixed central snapshot download being blocked when the non-authoritative EUR/MAD FX cache alone fails its digest check.
+- On an FX-only digest mismatch, PilotLog now discards that cache and lets the verified operational snapshot continue; EUR/MAD is rebuilt locally when Payroll needs it.
+- All operational and user-data sections keep the existing blocking integrity checks.
+- No changes to db8 protocol, IDs, revision control, ledger/tombstones, merge behavior, Auto Sync/Sync now workflow, calculations, roster, logbook, payroll rules or UI.
+
 # PilotLog v8.5.0 — Eight-point Roster / central-rule consolidation
 
 - Started directly from v8.4.3; no unrelated redesign or storage/protocol migration was introduced.

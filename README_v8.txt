@@ -1,5 +1,13 @@
-PILOTLOG v8.5.0 — ROSTER ACTIVITY + CENTRAL RULE ENGINE
+PILOTLOG v8.5.1 — FX INTEGRITY HOTFIX
 =========================================================
+
+
+HOTFIX v8.5.1
+-------------
+- Fixes the central snapshot download stopping on the non-authoritative FX cache section.
+- If only the FX cache digest is inconsistent, PilotLog discards that cache and rebuilds EUR/MAD locally instead of blocking verified Logbook/Roster data.
+- Integrity failures in flights, roster, duties, trips, expiry, sync ledger, payroll settings/month data and app settings remain blocking exactly as before.
+- No sync protocol, record IDs, ledger/tombstone rules, merge rules, cloud revision logic or business calculations were changed.
 
 BASE
 ----
@@ -28,14 +36,14 @@ CENTRAL CALCULATION RULES
 
 SYNC SAFETY
 -----------
-The existing verified-generation db8 publish/download protocol is retained. When another device has advanced the central revision while this device also has local changes, v8.5.0 merges record revisions plus the permanent ledger before publishing the next verified generation. Collection-wide maintenance events do not cancel specific delete tombstones.
+The existing verified-generation db8 publish/download protocol is retained. When another device has advanced the central revision while this device also has local changes, v8.5.1 retains the v8.5.0 record-revision merge and plus the permanent ledger before publishing the next verified generation. Collection-wide maintenance events do not cancel specific delete tombstones.
 
 FILES
 -----
 - index.html
-- pilotlog-8.5.0.js
+- pilotlog-8.5.1.js
 - pilotlog-8.3.0.css
-- sw-8.5.0.js
+- sw-8.5.1.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
