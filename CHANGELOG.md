@@ -1,3 +1,12 @@
+# PilotLog v8.4.1 — Credit Hours source hardening
+
+- Fixed the remaining Credit Hours source defect: `schedBlock` stored/imported in an entry can no longer override Schedule OUT → Schedule IN.
+- Flight Credit Hours are now derived only from Schedule OUT and Schedule IN. If either scheduled time is missing, no flight credit is derived from a stale duration field.
+- Complete LogTen migration normalizes each Flight `schedBlock` from its scheduled times.
+- Actual OUT/IN is never used for Flight Credit Hours.
+- All v8.4.0 agreed workflow changes remain unchanged.
+- Corrected README baseline wording: v8.4.x is built from v8.3.1.
+
 # PilotLog v8.4.0 — Scheduled Credit H / agreed workflow updates
 
 - Flight Credit Hours are now explicitly formula-driven from **Scheduled Block Hours (Schedule OUT → Schedule IN) only**. Actual OUT/IN Block never determines Credit H.

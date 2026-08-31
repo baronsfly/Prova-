@@ -1,9 +1,18 @@
-PilotLog v8.4.0
+
+V8.4.1 CREDIT HOURS HARD FIX
+----------------------------
+- Flight Credit Hours now read Scheduled Block ONLY from Schedule OUT -> Schedule IN.
+- A stored/imported `schedBlock` value can no longer override the scheduled times.
+- If a Flight has no Schedule OUT or Schedule IN, PilotLog returns 0 derivable flight credit instead of falling back to a stale saved duration.
+- Complete LogTen imports normalize `schedBlock` from the two scheduled times on import.
+- Actual OUT/IN remains operational Logbook data only and is never used for Flight Credit Hours.
+
+PilotLog v8.4.1
 ================
 
 PURPOSE
 -------
-PilotLog v8.4.0 is the v8.3.0 consolidated baseline with one isolated correction to imported LogTen Credit Hours. The v8.2 cloud-sync engine and all other Payroll formulas/workflows are unchanged.
+PilotLog v8.4.1 is the v8.3.1 baseline with one isolated correction to imported LogTen Credit Hours. The v8.2 cloud-sync engine and all other Payroll formulas/workflows are unchanged.
 
 UPGRADE SAFETY
 --------------
@@ -53,7 +62,7 @@ Settings > Logbook/Experience now includes Restore Full Backup JSON.
 
 Recommended clean-device test:
 1. On the working device, use Export Full Backup JSON and keep the downloaded .json file.
-2. Open PilotLog v8.4.0 on the clean/new device.
+2. Open PilotLog v8.4.1 on the clean/new device.
 3. Choose Restore Full Backup JSON.
 4. PilotLog validates the file and shows the record counts before replacing local data.
 5. Review Logbook, Roster, Totals, Trips and Expiry on the new device.
@@ -68,9 +77,9 @@ Typing in Add Flight now writes only the lightweight local draft. It no longer w
 FILES
 -----
 - index.html
-- pilotlog-8.4.0.js
+- pilotlog-8.4.1.js
 - pilotlog-8.3.0.css
-- sw-8.4.0.js
+- sw-8.4.1.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
