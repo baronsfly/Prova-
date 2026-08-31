@@ -1,69 +1,75 @@
-PilotLog v8.2.0
+PilotLog v8.3.1
 ================
 
 PURPOSE
 -------
-PilotLog v8.2.0 is a reliability release for rebuilding a large LogTen archive and then publishing it safely to the PilotLog central database.
+PilotLog v8.3.1 is the v8.3.0 consolidated baseline with one isolated correction to imported LogTen Credit Hours. The v8.2 cloud-sync engine and all other Payroll formulas/workflows are unchanged.
 
-LOCAL-FIRST REBUILD
+UPGRADE SAFETY
+--------------
+- PilotLog keeps the existing stable local storage keys and IndexedDB database used by v8.2.0.
+- Updating the app on the same site/origin does not intentionally reset Logbook, Roster, Trips, Expiry, settings or payroll data.
+- Do not use browser “Clear site data” while local-only work has not been independently backed up.
+- The v8.2 cloud-sync functions are retained unchanged.
+- Credit Hours correction: imported LogTen Custom Time 9 is authoritative when present; other Payroll rules are unchanged.
+
+MANUAL FLIGHT / DRAFTS
+----------------------
+- PilotLog associates the configured profile name with the selected operational Role. Captain/PIC places the profile name in PIC Name; First Officer/SIC places it in SIC Name. Instructor/Examiner roles use the corresponding name field.
+- For Flight entries, entering Schedule OUT automatically sets On Duty to Schedule OUT minus 1 hour.
+- Unsaved manual entries are stored as lightweight local drafts instead of rewriting the complete flight database while typing.
+- Leaving Add Flight and returning restores the active draft.
+- Return Flight preserves the unsaved outbound draft and creates a separate return draft.
+- The draft shelf lets the user reopen or discard unsaved manual drafts.
+- Drafts are not part of Logbook, Totals, Payroll or Cloud Sync until Save/Lock creates a real entry.
+
+DELAY REASON
+------------
+When actual OUT is later than Schedule OUT, PilotLog calculates the delay and requests a Reason of Delay. The reason and delay minutes are stored as dedicated statistical metadata on the flight and do not alter operational time or Credit Hours calculations.
+
+SIMULATOR
+---------
+Simulator entries now use a simplified simulator-specific form:
+- Aircraft ID is presented as Sim registration.
+- From / To are replaced by Location.
+- AeroLINE training location is imported when available.
+- Simulator start and Simulator end replace flight OUT/OFF/ON/IN fields.
+- Schedule OUT is generated automatically as Simulator start minus 1:30.
+- Schedule IN is generated automatically as Simulator end plus 0:30.
+- Night, IFR, seat position, takeoffs, landings, PIC/SIC time and flight Block are not calculated for Simulator entries.
+- Simulator time remains separate from Flight Time in totals/aircraft presentation.
+
+AEROLINE TRAINER / OPERATIONAL ROLE
+-----------------------------------
+AeroLINE trainer metadata is kept separate from the operational cockpit Role.
+- With a Captain profile and exactly one other pilot, the PilotLog user is PIC and the other pilot is SIC, even when AeroLINE also identifies the user as TRI/TRE/TNE.
+- Line Training remains marked as Flight Instruction without replacing the operational PIC assignment with Instructor.
+- When AeroLINE supplies more than one other cockpit/training crew member, PilotLog does not blindly guess SIC/SO placement; those crew-role fields remain editable for review.
+
+FULL BACKUP RESTORE
 -------------------
-Large imports do not start Cloud Sync.
+Settings > Logbook/Experience now includes Restore Full Backup JSON.
 
-Recommended clean rebuild:
-1. Sign in to PilotLog Cloud.
-2. Use “Erase Old Database • Start Clean” once if the previous central database must be discarded.
-3. Import the complete LogTen migration package.
-4. PilotLog stores and verifies the normalized LogTen records locally first. The original SQLite database remains archived locally and is never sent to cloud.
-5. Import the AeroLINE JSON files, also locally only.
-6. Review Logbook, Roster, Expiry and Trips.
-7. Press “Sync now” only when the local database is correct.
+Recommended clean-device test:
+1. On the working device, use Export Full Backup JSON and keep the downloaded .json file.
+2. Open PilotLog v8.3.1 on the clean/new device.
+3. Choose Restore Full Backup JSON.
+4. PilotLog validates the file and shows the record counts before replacing local data.
+5. Review Logbook, Roster, Totals, Trips and Expiry on the new device.
+6. Auto Sync remains OFF after restore. Press Sync now only after the restored database has been verified.
 
-Fresh/reset devices start with Auto Sync disabled. Any bulk import (complete LogTen, LogTen Tab, AeroLINE JSON/direct import, Calendar or Roster CSV) also disables Auto Sync and leaves the data local until Sync now is pressed.
+The Full Backup JSON restores normalized PilotLog data. The original raw archived LogTen SQLite/database file is a separate archive and is not embedded inside this JSON.
 
-VERIFIED CLOUD GENERATIONS
---------------------------
-v8.2 uses cloud protocol db8.
-
-A cloud publish no longer deletes the active central database first. PilotLog:
-1. builds a complete local snapshot,
-2. uploads it into a new staging generation,
-3. verifies that every expected cloud chunk exists,
-4. activates the new generation only after verification,
-5. then removes the previous generation when possible.
-
-If an upload is interrupted, the previous verified central generation remains active. A second device downloads only the active verified generation and checks section counts/digests before replacing its local copy.
-
-The first Sync now after a clean local rebuild asks for confirmation before creating the new central database.
-
-LARGE LOGTEN ARCHIVES
----------------------
-The complete LogTen migration is written to IndexedDB and verified locally before success is reported. Stable LogTen unique IDs are checked after the import. The expensive semantic duplicate pass is skipped for large complete LogTen archives that already carry stable source IDs, avoiding the O(n²) browser stall seen during large rebuilds.
-
-The reference migration package used during this release contains 7,916 LogTen rows (30/03/1998–26/08/2026), 19 licences/validities and 164 trips.
-
-ROSTER / LOGBOOK
-----------------
-- Roster remains the planning/payroll source.
-- Logbook remains the completed operational record.
-- Future AeroLINE simulator sessions stay in Roster/planning and do not appear in Logbook or simulator totals/experience exports until their scheduled simulator end time has passed.
-- Completed flights remain linked to their Roster sectors.
-
-DAY OFF PAID ASSIST
--------------------
-AeroLINE “Thanks” memos are retained as a possible Day Off Paid signal on flight days. If PilotLog also remembers an earlier OFF for that date, the signal is strengthened to “OFF replaced by flight + Thanks memo”.
-
-PilotLog does not silently mark Day Off Paid. When the linked roster flight is saved/locked into Logbook and “Called to work from a scheduled day off” is still unticked, PilotLog shows a confirmation popup. The user remains the final authority.
-
-ADDITIONAL DEVICES
-------------------
-A newly reset additional device no longer relies on a device-local “database initialized” flag to decide whether the central database exists. After sign-in, Sync now checks the active db8 cloud metadata directly and downloads the verified central generation when available.
+PERFORMANCE
+-----------
+Typing in Add Flight now writes only the lightweight local draft. It no longer writes the complete flight array, reconciles every duty, refreshes all crew suggestions and schedules cloud sync for every keystroke. Full operational persistence/reconciliation occurs on Save/Lock.
 
 FILES
 -----
 - index.html
-- pilotlog-8.2.0.js
-- pilotlog-8.2.0.css
-- sw-8.2.0.js
+- pilotlog-8.3.1.js
+- pilotlog-8.3.0.css
+- sw-8.3.1.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md

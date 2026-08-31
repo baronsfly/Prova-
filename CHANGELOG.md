@@ -1,3 +1,27 @@
+# PilotLog v8.3.1 — Credit Hours correction only
+
+- LogTen Custom Time 9 is authoritative for imported historical Credit Hours when supplied by the complete migration package.
+- Historical monthly Credit H uses the original LogTen Custom Time 9 monthly total when available; all other Credit Hours / Payroll rules remain unchanged.
+- No other PilotLog logic, workflow, UI, sync, roster, duty, simulator, trip or night-credit rule was changed.
+- Added a Credit-Hours-only LogTen patch import path that updates only Custom Time 9 credit metadata on already existing LogTen IDs.
+
+# PilotLog v8.3.0 — Local entry reliability / Simulator workflow
+
+- Credit Hours and Payroll formulas are unchanged from v8.2.0.
+- Cloud sync core functions are unchanged from v8.2.0.
+- Manual Flight now associates the configured user name with the selected operational Role.
+- Flight Schedule OUT now fills On Duty automatically at Schedule OUT minus 1 hour.
+- Reworked unsaved Manual Flight handling into persistent local drafts; leaving/re-entering Add Flight restores work in progress.
+- Return Flight preserves an unsaved outbound sector and creates a separate return draft instead of destroying the first form.
+- Removed full database write/duty reconciliation/crew rescan from every Add Flight keystroke to reduce browser stalls on large LogTen archives.
+- Added Reason of Delay metadata when actual OUT is later than Schedule OUT; delay data is statistical and does not affect operational/Credit calculations.
+- Simplified Simulator form: Sim registration, Location, Simulator start/end, automatic report/end-duty schedule times, and no flight-only PIC/SIC/Block/IFR/seat/takeoff/landing/night calculations.
+- Simulator time is kept separate from Flight Time totals.
+- AeroLINE trainer metadata no longer overrides the operational cockpit Role on normal flights; two-pilot Captain-profile sectors map self to PIC and the other pilot to SIC. Ambiguous multi-crew training sectors are left for manual crew-role review rather than guessed.
+- Added Restore Full Backup JSON with validation/count confirmation. Restored data remains local with Auto Sync disabled until explicitly reviewed and synced.
+- Existing v7/v8 local storage/IndexedDB keys are retained so an app update does not intentionally discard current local work.
+- Reinstated the semantic duplicate helper functions referenced by the v8.2 renderer/import path, preventing a pre-existing runtime error during large restore/import rendering.
+
 # PilotLog v8.2.0 — Local-first verified cloud rebuild
 
 - Large imports are now local-only first. Complete LogTen, LogTen Tab, AeroLINE JSON/direct import, Calendar and Roster CSV do not automatically publish to cloud.
