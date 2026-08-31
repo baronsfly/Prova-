@@ -1,9 +1,9 @@
-PILOTLOG v8.7 — ROSTER ACTIVITY + CENTRAL RULE ENGINE
+PILOTLOG v8.8 — NON-FLIGHT CREDIT DETAIL
 =========================================================
 
 BASE
 ----
-Built directly from PilotLog v8.4.3. Existing storage keys, verified db8 cloud-generation protocol, import/export formats and the established v8.4.3 UI are preserved unless required by the eight-point update below.
+Built directly from PilotLog v8.7. Existing storage keys, verified db8 cloud-generation protocol, import/export formats and the established UI are preserved; only the Ground Course credit and Payroll NF CH changes described below were added.
 
 EIGHT-POINT UPDATE
 ------------------
@@ -21,7 +21,7 @@ CENTRAL CALCULATION RULES
 - Flight Credit Hours: Schedule OUT -> Schedule IN only; round upward to the next 30 minutes; then apply the existing Morocco +50% night premium when applicable. Actual OUT/IN never determines Flight Credit Hours.
 - DHD Credit: always 0.
 - DHP Credit: editable per activity.
-- Ground Course Credit: Settings value.
+- Ground Course Credit: editable per activity. AeroLINE GI defaults to the Ground Course Settings value; AeroLINE TNE defaults to 0:00. The value can always be overridden manually.
 - Simulator Credit: Settings value.
 - Ground Course trip duty subtraction remains fixed at 5:00.
 - Simulator actual time is independent from Flight Time.
@@ -33,12 +33,21 @@ The existing verified-generation db8 publish/download protocol is retained. When
 FILES
 -----
 - index.html
-- pilotlog-8.7.js
+- pilotlog-8.8.js
 - pilotlog-8.3.0.css
-- sw-8.7.js
+- sw-8.8.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
+
+
+v8.8 NON-FLIGHT CREDIT DETAIL
+---------------------------------------
+- Ground Course Credit Hours are now editable per individual activity.
+- AeroLINE Ground Course defaults are inferred centrally from trainerType: GI uses the Ground Course Settings value; TNE defaults to 0:00. The JSON does not provide a direct paid-credit field.
+- A manually edited Ground Course credit is preserved on later AeroLINE re-imports.
+- Payroll Breakdown now shows an informational `NF CH` row directly under `Credit H`: middle value = number of non-flight activities with credit; right value = their combined credit hours.
+- `NF CH` is a subset of `Credit H` only. It never adds hours and never changes payroll totals.
 
 
 v8.7 ROSTER ACTIVITY DIRECT EDIT FIX

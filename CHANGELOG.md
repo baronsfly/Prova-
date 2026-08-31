@@ -1,3 +1,14 @@
+# PilotLog v8.8 — Ground Course credit + NF CH info
+
+- Ground Course Credit Hours are editable per activity.
+- AeroLINE `trainerType=GI` defaults Ground Course credit to the configured Ground Course Credit Hours value; `trainerType=TNE` defaults it to `0:00`. Manual override remains available.
+- Manual Ground Course credit overrides are preserved when the same AeroLINE roster period is imported again.
+- Payroll Breakdown adds `NF CH` immediately below `Credit H`: the middle column is the count of non-flight activities with positive credit and the right column is their total credit hours.
+- `NF CH` is informational only and is already included in `Credit H`; it does not increment Credit Hours or payroll.
+- No sync protocol, storage keys, flight Credit H formula, totals, layover formula or other business rules were changed.
+
+---
+
 # PilotLog v8.7 — Roster activity direct editing
 
 - Fixed Roster activity handling for Simulator, Ground Course, DHD, DHP and STBY.
