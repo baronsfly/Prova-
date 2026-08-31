@@ -26,7 +26,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v8.4.2</span>
+    <span class="version-badge">v8.5.0</span>
   </div>
 </header>
 <main>
@@ -108,7 +108,7 @@
       <div class="full" id="remarksWrap"><label>Remarks</label><textarea id="remarks"></textarea></div>
       <div class="totals" id="calcPreview">Schedule Block 0:00 • Actual Block 0:00 • Flight 0:00 • Credit 0:00</div>
       <div class="hint" id="nightStatus">Night time is calculated automatically from airport coordinates and civil twilight when OFF/ON are available.</div>
-      <div class="actions"><button class="secondary hidden" type="button" id="entryBackBtn">← Back</button><button class="primary" type="button" id="saveEntryBtn">Save to Logbook</button><button class="primary lock-button" type="button" id="lockEntryBtn">🔒 Lock</button><button class="secondary" type="button" id="returnFlight">Return Flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
+      <div class="actions"><button class="secondary hidden" type="button" id="entryBackBtn">← Back</button><button class="primary" type="button" id="saveEntryBtn">Save to Logbook</button><button class="primary lock-button" type="button" id="lockEntryBtn">🔒 Lock</button><button class="danger hidden" type="button" id="entryRosterDeleteBtn">Delete activity</button><button class="secondary" type="button" id="returnFlight">Return Flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
       <div class="hint" id="entryLockStatus">Draft autosaves on this device. Lock the entry when all data are final.</div>
     </form>
   </div>
@@ -157,39 +157,17 @@
   </div>
   <div class="card"><div class="hint">Roster times are shown in the local time of the relevant airport. Logbook entry times remain Zulu.</div></div>
   <div class="card spaced" id="rosterList"></div>
-  <div id="rosterEditorWrap" class="hidden">
-    <div class="section-title">Edit roster activity</div>
-    <div class="card">
-      <form id="rosterEditorForm">
-        <input type="hidden" id="rosterEditSource">
-        <input type="hidden" id="rosterEditId">
-        <div class="form-grid">
-          <div><label>Activity type</label><select id="rosterEditType"><option>Flight</option><option>DHD</option><option>DHP</option><option>Simulator</option><option>STBY</option><option>Ground Course</option><option>Day OFF</option><option>Duty</option></select></div>
-          <div><label>Date</label><input id="rosterEditDate" type="date" required></div>
-          <div><label>Flight number</label><input id="rosterEditFlightNo" data-upper></div>
-          <div><label>Aircraft type</label><input id="rosterEditAircraft" data-upper></div>
-          <div><label>From</label><input id="rosterEditDep" maxlength="4" data-upper></div>
-          <div><label>To</label><input id="rosterEditArr" maxlength="4" data-upper></div>
-          <div><label>Start (Z)</label><input id="rosterEditStart" type="time"></div>
-          <div><label>End (Z)</label><input id="rosterEditEnd" type="time"></div>
-          <div><label>DHP Credit Hours</label><input id="rosterEditCredit" placeholder="0:00"></div>
-          <div class="full"><label>Course / remarks</label><input id="rosterEditRemarks" data-upper></div>
-        </div>
-        <div class="actions"><button class="primary" type="submit">Save changes</button><button class="danger" type="button" id="rosterEditorDelete">Delete activity</button><button class="secondary" type="button" id="rosterEditorCancel">Cancel</button></div>
-      </form>
-    </div>
-  </div>
 </section>
 
 <section id="dutyView" class="hidden">
-  <div class="section-title">Add duty</div>
-  <div class="card"><form id="dutyForm"><div class="form-grid">
+  <div class="section-title" id="dutyEditorTitle">Add duty</div>
+  <div class="card"><form id="dutyForm"><input type="hidden" id="dutyEditId"><div class="form-grid">
     <div><label>Date</label><input id="dutyDate" type="date" required></div>
-    <div><label>Duty type</label><select id="dutyType"><option>Flight Duty</option><option>Simulator</option><option>Standby</option><option>Ground Course</option><option>DHD</option></select></div>
+    <div><label>Duty type</label><select id="dutyType"><option>Flight Duty</option><option>Simulator</option><option>Standby</option><option>Ground Course</option><option>DHD</option><option>Day OFF</option><option>Duty</option></select></div>
     <div><label>Report (Z)</label><input id="reportTime" type="time"></div>
     <div><label>End duty (Z)</label><input id="endDuty" type="time"></div>
     <div class="full"><label>Notes</label><input id="dutyNotes"></div>
-  </div><div class="actions"><button class="primary" type="submit">Save duty</button></div></form></div>
+  </div><div class="actions"><button class="secondary hidden" type="button" id="dutyBackBtn">← Back to Roster</button><button class="primary" type="submit" id="dutySaveBtn">Save duty</button><button class="danger hidden" type="button" id="dutyDeleteRosterBtn">Delete activity</button></div></form></div>
   <div class="section-title">Duty history</div><div class="card" id="dutyList"></div>
 </section>
 
@@ -197,7 +175,9 @@
   <div class="section-title">Total Statistics</div>
   <div class="card total-statistics-column">
     <div class="stat-row"><span>Total Flight Hours</span><b id="tTotalFlight">0:00</b></div>
-    <div class="stat-row"><span>A320 Total Hours</span><b id="tA320Total">0:00</b></div>
+    <div class="stat-row"><span>Total Simulator Time</span><b id="tTotalSimulator">0:00</b></div>
+    <div class="stat-row"><span>A320 Total Flight Hours</span><b id="tA320Total">0:00</b></div>
+    <div class="stat-row"><span>A320 Simulator Time</span><b id="tA320Simulator">0:00</b></div>
     <div class="stat-row"><span>A320 PIC</span><b id="tA320Pic">0:00</b></div>
     <div class="stat-row"><span>A320 SIC</span><b id="tA320Sic">0:00</b></div>
     <div class="stat-row"><span>A320 Instruction Flight Time</span><b id="tA320FlightInstruction">0:00</b></div>
@@ -569,5 +549,5 @@
   <button data-view="dashboardView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.5 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-8.4.2.js" defer></script>
+<script src="pilotlog-8.5.0.js" defer></script>
 </body></html>

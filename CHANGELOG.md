@@ -1,3 +1,26 @@
+# PilotLog v8.5.0 — Eight-point Roster / central-rule consolidation
+
+- Started directly from v8.4.3; no unrelated redesign or storage/protocol migration was introduced.
+- Removed the generic Roster activity editor. Roster now routes each activity to the established activity workflow with type-specific fields.
+- Locked non-flight Roster activities can be edited from Roster without Logbook unlocking and retain their locked state after save; normal Logbook lock protection remains unchanged.
+- Unified Ground Training, Ground Course and GRT under the canonical Ground Course type/rule path.
+- Added dedicated DHD/DHP layouts: DHD Credit is forced to zero; DHP Credit remains editable.
+- Kept Simulator actual time separate from Simulator Credit and from all Flight/PIC/SIC/A320 Flight totals; simulator instruction remains separate.
+- Reworked Totals to consume a central Flight-vs-Simulator classification model.
+- Added a permanent sync change ledger with record/source identity, revision, device, timestamp and delete/collection tombstones. The ledger travels in verified cloud snapshots and v8.5 full/weekly backups.
+- When local and remote revisions diverge, Sync now merges records plus ledger/tombstones before publishing a new verified generation, preventing deleted source-backed records from being silently resurrected.
+- Centralized activity aliases, Credit Hours, trip charging and totals classification in one rule registry/calculation path; consuming modules use the calculated result rather than parallel rule copies.
+- Flight Credit Hours formula remains unchanged from v8.4.3: scheduled OUT→IN only, 30-minute upward rounding, existing Morocco +50% premium; actual OUT/IN never affects Credit Hours.
+
+# PilotLog v8.4.3 — Shared calculation engine / lighter modules
+
+- Centralized Credit Hours in one shared calculation engine used by Add Flight, Logbook, Payroll, Roster planning, Calendar import, AeroLINE import, LogTen import and screenshot import.
+- Removed Payroll-, entry- and import-specific Credit H wrappers/formulas; modules now render the result of the same shared calculation instead of maintaining their own copies.
+- Centralized clock-span calculations in one shared helper for scheduled block, actual block, airborne time, simulator time and duty spans, preserving the existing overnight logic.
+- Consolidated the Morocco night-premium lookup into one function that accepts an optional entry set instead of maintaining separate Logbook and Payroll variants.
+- Flight Credit H rule is unchanged: Schedule OUT → Schedule IN only, round upward to 30 minutes, then apply the existing Morocco +50% premium when applicable. Actual OUT/IN never enters Credit H.
+- Removed unused/dead Credit-Hours compatibility helpers. No storage keys, cloud-sync protocol, UI workflow or historical data were changed.
+
 # PilotLog v8.4.2 — Payroll Credit H unification
 
 - Fixed the remaining Payroll-specific Credit H path. Payroll no longer maintains a separate Flight credit formula.
