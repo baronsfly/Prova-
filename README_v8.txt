@@ -1,65 +1,61 @@
-PILOTLOG v8.8 — NON-FLIGHT CREDIT DETAIL
-=========================================================
+PILOTLOG v8.9 — TRIP CASH / GLOBAL CURRENCY / EXPIRY DEDUPE / TRAINING PAY
+============================================================================
 
 BASE
 ----
-Built directly from PilotLog v8.7. Existing storage keys, verified db8 cloud-generation protocol, import/export formats and the established UI are preserved; only the Ground Course credit and Payroll NF CH changes described below were added.
+Built directly from PilotLog v8.8. Existing storage keys, db8 cloud sync protocol, roster/logbook architecture, Credit Hours engine and established UI are preserved. This release changes only the agreed monetary, Expiry duplicate and Training Sector/manual-authority rules.
 
-EIGHT-POINT UPDATE
-------------------
-1. Roster activities now open the correct activity workflow instead of the old generic Roster editor.
-2. Locked non-flight Roster activities can be edited directly from Roster and remain locked after save; normal locked Logbook protection remains in place.
-3. Ground Training / Ground Course / GRT are normalized to one Ground Course activity type and one rule path.
-4. DHD and DHP use dedicated reduced field layouts: DHD Credit is always 0; DHP Credit remains individually editable.
-5. Simulator uses its dedicated layout with Simulator Time calculated separately from Simulator Credit; Simulator Credit is read from Settings.
-6. Totals keep Flight Time and Simulator Time separate. Simulator time cannot increase Flight, A320 Flight, PIC or SIC totals; simulator instruction remains separate.
-7. Sync now includes a permanent per-record change ledger for edit/create/lock/unlock/completion/delete events and collection tombstones. The ledger is included in verified cloud snapshots and v8.5 backups so deletions can be respected across devices and later imports.
-8. Activity classification, Credit Hours, trip charging and Flight-vs-Simulator totals now consume one central rule source. Modules render/consume the calculated results instead of maintaining parallel business-rule copies.
+WHAT CHANGED
+------------
+1. Trip Cash Received > 0 suppresses Layover Pay for that trip. Layover time is still shown, but the monetary layover allowance is zero.
+2. Settings now contains one global Currency used by Payroll and Trips. MAD/DHM remains the canonical payroll contract currency underneath.
+3. Cash Received currency is selected per trip. Quick choices are USD, TRY and EUR; the selector also exposes the wider ISO currency list.
+4. Trip cash FX is taken from the Trip Start date. The resolved source/target rate and FX date are stored in the trip and reused; it is not refreshed later for the same trip/date/currency pair.
+5. The same centralized FX source/functions are used for Trips and Payroll instead of separate conversion implementations.
+6. Payroll result and monetary breakdown use the single Currency selected in Settings. The previous separate DHM + indicative EUR result has been removed.
+7. Existing Expiry duplicates are semantically consolidated at startup when they represent the same qualification/course, including cross-source LogTen/AeroLINE records such as SMS.
+8. AeroLINE validation re-import matches an existing equivalent LogTen/manual/AeroLINE validation and updates/attaches source metadata instead of creating a second record.
+9. Training Sector allowance remains 500 DHM per sector by default, but AeroLINE training is only a prefill. A planned AeroLINE sector does not earn Training Sector pay until a Logbook entry has been saved.
+10. For a saved roster sector, the final saved Logbook value is authoritative. Saved Flight Instruction = training pay; saved No/blank = no training pay.
+11. Explicit user saves set manualOverride on operational entries/activities so later imports cannot silently replace the final saved calculation-relevant value.
 
-CENTRAL CALCULATION RULES
--------------------------
-- Flight Credit Hours: Schedule OUT -> Schedule IN only; round upward to the next 30 minutes; then apply the existing Morocco +50% night premium when applicable. Actual OUT/IN never determines Flight Credit Hours.
-- DHD Credit: always 0.
-- DHP Credit: editable per activity.
-- Ground Course Credit: editable per activity. AeroLINE GI defaults to the Ground Course Settings value; AeroLINE TNE defaults to 0:00. The value can always be overridden manually.
-- Simulator Credit: Settings value.
-- Ground Course trip duty subtraction remains fixed at 5:00.
-- Simulator actual time is independent from Flight Time.
+CURRENCY / FX RULES
+-------------------
+- Global Currency is stored in Settings. Default: MAD (displayed as DHM).
+- Payroll contract/rate inputs remain stored in MAD/DHM to preserve existing salary configuration and history.
+- Payroll output is converted to the selected Currency through the shared FX engine.
+- Trip cash can be received in a different source currency from the global Currency.
+- Trip cash conversion uses the Trip Start date (or the nearest prior available market-rate date returned by the online source).
+- Once a rate is stored for the same Trip Start date + source currency + selected target currency, reopening/editing the trip reuses the frozen stored rate.
+- Changing the global Currency creates/uses a historical conversion for the same original Trip Start date; it does not replace the previously stored currency-pair rate.
 
-SYNC SAFETY
------------
-The existing verified-generation db8 publish/download protocol is retained. When another device has advanced the central revision while this device also has local changes, v8.6 merges record revisions plus the permanent ledger before publishing the next verified generation. Collection-wide maintenance events do not cancel specific delete tombstones.
+TRAINING SECTOR PAY
+-------------------
+- Default Training Sector rate: 500 MAD/DHM per sector (editable in Payroll Settings as before).
+- AeroLINE may prefill Flight Instruction in the editor.
+- Uncompleted/planned AeroLINE training alone does not generate Training Sector pay.
+- Saving the individual flight entry with Flight Instruction generates the allowance.
+- Saving the individual flight entry with No/blank removes the allowance from Payroll.
+
+EXPIRY DEDUPLICATION
+--------------------
+- Recurrent-course identity is normalized across source wording/aliases.
+- Equivalent LogTen/AeroLINE/manual records are represented by one active Expiry item.
+- Existing same-qualification duplicates are consolidated without duplicating data on the next AeroLINE import.
+- Locked/manual records remain protected from automatic expiry replacement; source identity metadata can still be attached so future imports recognize the record.
+
+SYNC / STORAGE
+--------------
+- No cloud protocol redesign was introduced in v8.9.
+- Existing db8 sync generation, ledger/tombstones, IndexedDB flight storage, backup schema and storage keys are retained.
+- New Currency/FX and manual-authority fields travel naturally inside the existing settings/trip/entry records.
 
 FILES
 -----
 - index.html
-- pilotlog-8.8.js
+- pilotlog-8.9.js
 - pilotlog-8.3.0.css
-- sw-8.8.js
+- sw-8.9.js
 - manifest.webmanifest
 - README_v8.txt
 - CHANGELOG.md
-
-
-v8.8 NON-FLIGHT CREDIT DETAIL
----------------------------------------
-- Ground Course Credit Hours are now editable per individual activity.
-- AeroLINE Ground Course defaults are inferred centrally from trainerType: GI uses the Ground Course Settings value; TNE defaults to 0:00. The JSON does not provide a direct paid-credit field.
-- A manually edited Ground Course credit is preserved on later AeroLINE re-imports.
-- Payroll Breakdown now shows an informational `NF CH` row directly under `Credit H`: middle value = number of non-flight activities with credit; right value = their combined credit hours.
-- `NF CH` is a subset of `Credit H` only. It never adds hours and never changes payroll totals.
-
-
-v8.7 ROSTER ACTIVITY DIRECT EDIT FIX
----------------------------------------
-- Simulator, Ground Course, DHD, DHP and STBY opened from Roster remain editable directly from Roster even when their stored record is locked.
-- Delete activity works directly from Roster and no longer asks for a Logbook unlock.
-- Saving a Roster activity preserves the pre-existing locked flag.
-- The Roster activity action bar uses Save changes and removes flight-only Return Flight / Clear actions.
-- No sync engine, central database, ledger/tombstone, merge/revision, payroll or calculation rules were changed for this release.
-
-v8.6 CENTRAL SNAPSHOT INTEGRITY FIX
-- Snapshot content digests now use recursive canonical JSON key ordering, so Supabase/PostgreSQL jsonb key reordering cannot create false integrity failures (for example fx or trips).
-- Existing pre-v8.6 db8 generations remain readable through a one-time legacy compatibility path only after strict generation, chunk-index, chunk-count and section-count validation.
-- New generations are read back from Supabase and content-verified before activation.
-- Merge rules, record IDs, sync ledger/tombstones, revisions, Sync now and Auto Sync behavior are otherwise unchanged.

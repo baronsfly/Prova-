@@ -26,7 +26,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v8.8</span>
+    <span class="version-badge">v8.9</span>
   </div>
 </header>
 <main>
@@ -198,12 +198,12 @@
     <div><label>Trip Start</label><input id="tripStart" type="datetime-local" required></div>
     <div><label>Trip End</label><input id="tripEnd" type="datetime-local" required></div>
     <div><label>Paid Layover Hours</label><input id="tripLayover" readonly></div>
-    <div><label>Total Layover Allowance (DHM)</label><input id="tripAllowance" readonly></div>
+    <div><label id="tripAllowanceLabel">Total Layover Allowance (DHM)</label><input id="tripAllowance" readonly></div>
     <div><label>Positioning cash received</label><input id="tripCashAmount" type="number" min="0" step="0.01" placeholder="0.00"></div>
-    <div><label>Cash currency</label><input id="tripCashCurrency" maxlength="3" data-upper placeholder="MAD / EUR / USD"></div>
-    <div><label>Cash value in EUR</label><input id="tripCashEur" readonly placeholder="—"></div>
+    <div><label>Cash currency</label><select id="tripCashCurrency"></select></div>
+    <div><label id="tripCashConvertedLabel">Cash value in DHM</label><input id="tripCashConverted" readonly placeholder="—"></div>
     <div class="full"><label>Remarks</label><textarea id="tripRemarks"></textarea></div>
-  </div><div class="formula">Paid Layover = Trip Time − flight/ground chargeable duty − DHP Credit Hours. DHD has zero credit and is excluded from duty subtraction. Positioning outside Morocco can be recorded with the cash amount received and its EUR conversion.</div>
+  </div><div class="formula">Paid Layover = Trip Time − flight/ground chargeable duty − DHP Credit Hours. DHD has zero credit and is excluded from duty subtraction. If Cash Received is greater than zero, Layover Pay is zero. Cash FX is fixed to the Trip Start date and stored with the trip.</div>
   <div class="actions"><button class="secondary" type="button" id="calcTrip">Calculate</button><button class="primary" type="submit">Save Trip</button><button class="secondary" type="button" id="clearTrip">Clear</button></div></form></div>
   <div id="tripInspectorWrap" class="hidden">
     <div class="section-title">Trip duties / included entries</div>
@@ -216,15 +216,14 @@
   <div class="card payroll-control-card">
     <div class="form-grid payroll-head">
       <div class="full payroll-month-field"><label>Payroll month</label><input id="payrollMonth" type="month"></div>
-      <div><label>Arrears / adjustments (DHM)</label><input id="payArrears" type="number" step="0.01" value="0"></div>
+      <div><label>Arrears / adjustments (MAD source)</label><input id="payArrears" type="number" step="0.01" value="0"></div>
       <div class="payroll-action"><button class="primary" type="button" id="recalcPayroll">Recalculate</button></div>
     </div>
     <div class="hint">Flight credits use the 30-minute rounding rule. Flights scheduled to depart Morocco between 18:00 and 04:59 local receive +50% paid credit. Simulator credit is read from Settings. Ground Course credit is editable per activity; AeroLINE GI defaults to the Ground Course setting and TNE defaults to 0:00. DHD has zero credit. DHP credit stays individually editable and is deducted from paid layover hours.</div>
   </div>
   <div class="section-title">Payroll result</div>
   <div class="card payroll-total-card">
-    <div class="payroll-total"><span>Total Payroll</span><b id="payTotalDhm">0 DHM</b></div>
-    <div class="payroll-eur"><span>Indicative EUR</span><b id="payTotalEur">—</b></div>
+    <div class="payroll-total"><span id="payTotalCurrencyLabel">Total Payroll (DHM)</span><b id="payTotalMain">0 DHM</b></div>
     <div class="hint" id="payFxStatus">FX rate not loaded.</div>
   </div>
   <div class="section-title">Breakdown</div><div class="card payroll-breakdown-card" id="payBreakdown"></div>
@@ -345,6 +344,7 @@
     <div><label>Aircraft ID Prefix</label><input id="setAircraftPrefix" maxlength="10" placeholder="CN-NM" data-upper></div>
     <div><label>Your name</label><input id="setProfileName" placeholder="Andrea Barone" autocomplete="name"></div>
     <div><label>Your role</label><select id="setProfileRole"><option>Captain</option><option>First Officer</option><option>Senior Cabin Crew</option><option>Cabin Crew</option></select></div>
+    <div><label>Currency</label><select id="setCurrency"></select></div>
   </div><div class="actions"><button class="primary" type="submit">Save Settings</button><button class="secondary" type="button" id="refreshAirportsBtn">Refresh airport database</button></div>
   <div class="hint" id="airportDbStatus">Airport database: checking…</div></form></div>
 
@@ -484,6 +484,7 @@
       <div><label>Day OFF premium DHM</label><input id="setDayOffRate" type="number" step="0.01"></div>
     </div>
     <div class="actions"><button class="primary" type="submit">Save Payroll Settings</button><button class="secondary" type="button" id="resetPaySettings">Restore defaults</button></div>
+    <div class="hint">Payroll contract rates remain stored in MAD/DHM. The single Currency selected above controls the monetary display used by Payroll and Trips.</div>
   </form></div>
 
   <div class="section-title">Auto Sync & Weekly Backup</div>
@@ -549,5 +550,5 @@
   <button data-view="dashboardView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.5 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-8.8.js" defer></script>
+<script src="pilotlog-8.9.js" defer></script>
 </body></html>

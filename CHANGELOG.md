@@ -1,3 +1,20 @@
+# PilotLog v8.9 — Trip cash, global currency, Expiry dedupe, Training authority
+
+- Trip `Cash Received > 0` now forces Layover Pay to zero while preserving the informational layover duration.
+- Added one global **Currency** in Settings, shared by Payroll and Trips. Payroll contract/rate inputs remain canonically stored in MAD/DHM.
+- Trip Cash currency now uses a selector with quick USD / TRY / EUR choices plus the broader ISO currency list.
+- Replaced the separate Trip EUR converter and Payroll EUR converter paths with one shared FX engine, using jsDelivr first and the documented Cloudflare Pages endpoint as fallback.
+- Trip Cash FX is resolved from the Trip Start date and the rate/date are stored with the trip; reopening the same trip/date/currency pair reuses the frozen value.
+- Payroll now displays one selected global currency instead of separate DHM and indicative EUR totals.
+- Existing Expiry duplicates are consolidated semantically across LogTen/AeroLINE/manual sources. A validation such as SMS with the same identity is kept as one record.
+- AeroLINE validation re-import now finds equivalent cross-source records instead of matching only prior AeroLINE records.
+- Training Sector pay is no longer generated from an unsaved AeroLINE training flag. AeroLINE may prefill Flight Instruction, but only the final saved Logbook entry is authoritative.
+- Saved Flight Instruction earns the configured Training Sector allowance (500 MAD/DHM by default); saved No/blank earns zero.
+- Explicit user saves mark operational records as manual overrides so later source imports preserve the final saved calculation-relevant values.
+- No db8 cloud sync protocol, storage-key or Credit Hours formula change was introduced.
+
+---
+
 # PilotLog v8.8 — Ground Course credit + NF CH info
 
 - Ground Course Credit Hours are editable per activity.
