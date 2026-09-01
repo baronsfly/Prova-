@@ -1,19 +1,3 @@
-# PilotLog v9.0 — Single authoritative operational database
-
-- Built directly from v8.9 with no unrelated UI redesign or business-rule change.
-- Replaced separately persisted operational Flight/Roster/Duty/Trip datasets with one authoritative IndexedDB database: `pilotlog9-operational-data`.
-- Central `activities` records are keyed by one unique ID and carry a canonical `activityType` (`FLIGHT`, `SIM`, `DHD`, `DHP`, `STBY`, `GROUND`, plus duty/off types where applicable).
-- Logbook is now a filtered projection of the central activities and renders only completed Flight and Simulator records.
-- Planned Roster flights are central activity records; completing a Roster flight reuses that same activity ID instead of creating a second Logbook record.
-- Roster, Payroll, Totals and Trips consume projections/aggregations of the same authoritative operational records.
-- IndexedDB persistence is record-based and indexed; normal saves write/delete changed records rather than rewriting one monolithic operational blob.
-- Added automatic v8.x → v9 migration that semantically merges already-linked Roster/Logbook flights, preserves planned sectors, Duty records and Trip metadata, and removes obsolete local operational stores only after successful v9 persistence.
-- Full Backup and Weekly Backup now store one `operational` state and remain able to restore legacy v8 backup sections.
-- Logbook CSV export now explicitly exports only Logbook-visible Flight/Simulator records. “Delete all Logbook entries” likewise leaves Roster-only/non-Logbook operational activities intact.
-- Verified db8 cloud sync remains transport-compatible for safety: legacy cloud sections are temporary projections of the single local database and are re-consolidated when downloaded.
-
----
-
 # PilotLog v8.9 — Trip cash, global currency, Expiry dedupe, Training authority
 
 - Trip `Cash Received > 0` now forces Layover Pay to zero while preserving the informational layover duration.
