@@ -8,13 +8,17 @@
 <meta name="apple-mobile-web-app-title" content="PilotLog">
 <title>PilotLog Airline</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="pilotlog-8.3.0.css">
+<link rel="apple-touch-icon" sizes="180x180" href="nexa-apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="nexa-icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="nexa-icon-512.png">
+<link rel="stylesheet" href="pilotlog-10.1.css">
 </head>
 <body>
 <header>
   <div class="header-row">
     <div class="brand-shell">
       <div class="brand-mark" aria-hidden="true">
+        <img id="profileHeaderPhoto" class="profile-header-photo hidden" alt="">
         <svg viewBox="0 0 44 44" role="img">
           <circle cx="22" cy="22" r="18"></circle>
           <path d="M22 9v26M15.5 20.5 22 17l6.5 3.5M17.5 29 22 26l4.5 3"></path>
@@ -26,7 +30,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v8.9</span>
+    <span class="version-badge">v10.1</span>
   </div>
 </header>
 <main>
@@ -87,7 +91,7 @@
         <div data-entry-field="night"><label>Night time — auto</label><input id="night" value="00:00" readonly></div>
         <div data-entry-field="ifr"><label>IFR</label><select id="ifr"><option value="yes">Yes</option><option value="no">No</option></select></div>
         <div data-entry-field="pf"><label>PF</label><select id="pf"><option value="no">No</option><option value="yes">Yes</option></select></div>
-        <div data-entry-field="approachType"><label>Type of approach</label><select id="approachType"><option value="">—</option><option>CAT3</option><option>ILS</option><option>LOC</option><option>RNAV</option><option>RNAV AR</option><option>VOR</option><option>NDB</option><option>CRCL</option><option>VIS</option><option>GOA</option></select></div>
+        <div data-entry-field="approachType"><label>Type of approach</label><select id="approachType"><option value="">—</option><option>CAT3</option><option>ILS</option><option>LOC</option><option>RNAV</option><option>RNAV AR</option><option>VOR</option><option>VOR/DME</option><option>NDB</option><option>CRCL</option><option>VIS</option><option>GOA</option></select></div>
       </div>
 
       <div class="section-title inner" id="breakdownTitle">Logbook time breakdown</div>
@@ -129,7 +133,9 @@
 </section>
 
 <section id="rosterView" class="hidden">
-  <div class="section-title">Upcoming roster — grouped by duty</div>
+  <div class="section-title">Roster calendar</div>
+  <div class="card roster-calendar-card" id="rosterList"></div>
+  <div class="card spaced"><div class="hint">Roster times are shown in the local time of the relevant airport. Logbook entry times remain Zulu.</div></div>
   <div class="card roster-aeroline-card">
     <div class="section-title inner aeroline-title">AeroLINE Connect</div>
     <div class="hint">Sign in on the official AeroLINE website. PilotLog never stores your AeroLINE password. Direct Sync reuses the browser session when AeroLINE/browser security permits it.</div>
@@ -155,8 +161,6 @@
     <div class="sync-status aeroline-status" id="aerolineConnectStatus" data-state="idle">AeroLINE connection not tested yet.</div>
     <div class="hint" id="aerolineImportStatus">Import the AeroLINE roster JSON. Re-importing the same month updates the existing roster instead of creating duplicates.</div>
   </div>
-  <div class="card"><div class="hint">Roster times are shown in the local time of the relevant airport. Logbook entry times remain Zulu.</div></div>
-  <div class="card spaced" id="rosterList"></div>
 </section>
 
 <section id="dutyView" class="hidden">
@@ -186,7 +190,7 @@
   </div>
   <div class="section-title">Periods / logbook hours</div><div class="card" id="periodTotals"></div>
   <div class="section-title">Approaches</div><div class="card" id="approachTotals"></div>
-  <div class="section-title">A320 Aircraft Breakdown</div><div class="card" id="aircraftBreakdown"></div>
+  <div class="section-title">Aircraft Breakdown by ICAO Type</div><div class="card" id="aircraftBreakdown"></div>
 </section>
 
 <section id="tripsView" class="hidden">
@@ -223,8 +227,9 @@
   </div>
   <div class="section-title">Payroll result</div>
   <div class="card payroll-total-card">
-    <div class="payroll-total"><span id="payTotalCurrencyLabel">Total Payroll (DHM)</span><b id="payTotalMain">0 DHM</b></div>
-    <div class="hint" id="payFxStatus">FX rate not loaded.</div>
+    <div class="payroll-total payroll-source-total"><span>Total Payroll (DHM)</span><b id="payTotalSource">0 DHM</b></div>
+    <div class="payroll-eur payroll-converted-total"><span id="payTotalCurrencyLabel">Converted total (EUR)</span><b id="payTotalMain">0 EUR</b></div>
+    <div class="hint full" id="payFxStatus">FX rate not loaded.</div>
   </div>
   <div class="section-title">Breakdown</div><div class="card payroll-breakdown-card" id="payBreakdown"></div>
   <div class="section-title">Call from Day OFF details</div>
@@ -345,6 +350,16 @@
     <div><label>Your name</label><input id="setProfileName" placeholder="Andrea Barone" autocomplete="name"></div>
     <div><label>Your role</label><select id="setProfileRole"><option>Captain</option><option>First Officer</option><option>Senior Cabin Crew</option><option>Cabin Crew</option></select></div>
     <div><label>Currency</label><select id="setCurrency"></select></div>
+    <div class="full profile-photo-setting">
+      <label>Personal photo</label>
+      <div class="profile-photo-controls">
+        <div class="profile-photo-preview"><img id="profilePhotoPreview" class="hidden" alt="Personal profile photo"><span id="profilePhotoFallback">PilotLog logo</span></div>
+        <label class="filebtn secondary" for="profilePhotoInput">Add / change photo</label>
+        <input id="profilePhotoInput" type="file" accept="image/*" class="hidden">
+        <button class="secondary hidden" id="removeProfilePhoto" type="button">Remove photo</button>
+      </div>
+      <div class="hint">If no personal photo is loaded, the PilotLog logo remains in the header.</div>
+    </div>
   </div><div class="actions"><button class="primary" type="submit">Save Settings</button><button class="secondary" type="button" id="refreshAirportsBtn">Refresh airport database</button></div>
   <div class="hint" id="airportDbStatus">Airport database: checking…</div></form></div>
 
@@ -515,6 +530,7 @@
     <div class="actions"><button class="secondary" id="runIntegrityCheckBtn" type="button">Run Roster ↔ Logbook Check</button></div>
     <div class="sync-status" id="integrityStatus">Not checked yet.</div>
     <div id="integrityResults" class="hint spaced"></div>
+    <div id="reconciliationReview" class="hint spaced"></div>
   </div>
 
   <div class="section-title">PilotLog Central Database</div>
@@ -542,13 +558,13 @@
 </main>
 
 <nav class="nav" aria-label="Primary navigation">
-  <button data-view="rosterView"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7 3.5v4M17 3.5v4M3.5 9.5h17M8 13h3M13 13h3M8 16.5h3"/></svg><span>Roster</span></button>
+  <button data-view="rosterView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7 3.5v4M17 3.5v4M3.5 9.5h17M8 13h3M13 13h3M8 16.5h3"/></svg><span>Roster</span></button>
   <button data-view="flightsView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h5.5a3.5 3.5 0 0 1 3.5 3.5v12H8a3 3 0 0 0-3 3z"/><path d="M19 4.5h-5.5A3.5 3.5 0 0 0 10 8v12h6a3 3 0 0 1 3 3z"/></svg><span>Logbook</span></button>
   <button data-view="payrollView"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6" width="17" height="13" rx="2"/><path d="M3.5 10h17M15 14h2.5"/></svg><span>Payroll</span></button>
   <button data-view="expiryView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19 6v5.2c0 4.5-2.9 7.7-7 9.3-4.1-1.6-7-4.8-7-9.3V6z"/><path d="m9.3 12.1 1.8 1.8 3.8-4"/></svg><span>Expiry</span></button>
   <button data-view="tripsView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15.5 20 8.5M8.5 13.5 6 8l2-1 4 4M15 10.5l2.5 5.5-2 1-4-4"/><path d="M3 20.5h18"/></svg><span>Trips</span></button>
-  <button data-view="dashboardView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.5 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
+  <button data-view="dashboardView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.5 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-8.9.js" defer></script>
+<script src="pilotlog-10.1.js" defer></script>
 </body></html>

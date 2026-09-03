@@ -1,3 +1,138 @@
+# PilotLog v10.1 — Core v1 activity identity
+
+- Removed separate Roster and Logbook visibility/membership state from activity records.
+- Roster and Logbook now read the same Core activity record through functional filters only.
+- Planned roster flight completion updates that record to COMPLETED without creating or linking a second flight.
+- Roster CSV, calendar, screenshot and AeroLINE imports now write through the single Core activity commit path.
+- Legacy Roster, Logbook and Duty stores are read only once for migration and are never runtime authorities.
+- Fixed the v10.1 startup/Roster freeze on large archives by replacing full archive pair-by-pair scans with indexed Core identity lookups.
+
+# PilotLog v9.10.1 — Complete LogTen import identity fix
+
+- Fixed complete LogTen migration verification where distinct LogTen rows could be merged against an existing activity by operational similarity.
+- Every LogTen row with a stable `logtenUniqueId` is now preserved by that exact identity.
+- No backup or migration package is modified.
+- Simulator OUT / IN behavior from v9.10 is unchanged.
+
+# PilotLog v9.10 — Simulator OUT / IN
+
+- Simulator editor uses the same OUT and IN fields as flights.
+- Removed the Simulator Start / Simulator End relabeling.
+- Duty times remain separate from simulator OUT / IN.
+- Complete LogTen migration maps existing simulator session times to OUT / IN without modifying the backup file.
+- Simulator duration is read from OUT → IN. No Duty-to-Simulator time formula is used.
+
+# PilotLog v9.9 — Roster home, profile photo, currency and experience totals
+
+- Opens on Roster after every reload and keeps the graphical calendar first.
+- Removes the duplicated large month heading; the native rotating month control remains.
+- Adds an optional personal header photo with automatic PilotLog-logo fallback.
+- Restores the Payroll Result split: authoritative MAD/DHM total plus a conversion total.
+- Builds the aircraft breakdown from every aircraft actually flown and groups stored variants under ICAO type designators.
+- Totals shows only time categories actually present for each aircraft type, with Simulator kept separate from Flight Time.
+- Totals now consumes preserved LogTen approach records including quantity and previously omitted types such as VOR/DME.
+- Manual saved values remain authoritative during re-import; approach supplementation cannot replace a manual selection or deletion.
+
+# PilotLog v9.8 — Simulator Credit Hours manual override
+
+- Fixed the Simulator editor so Credit Hours are no longer read-only.
+- Simulator Credit Hours still default from Settings for entries without a manual override.
+- Once the user saves a Simulator entry, the final Credit Hours value entered by the user is authoritative, including `0:00` for Trainee sessions.
+- Totals, Payroll, Logbook statistics and all downstream Credit Hours consumers use the saved manual Simulator credit value.
+- No flight Credit Hours formula, Simulator Time formula, roster logic, payroll rate, database key, import format, sync protocol or visual layout was changed.
+
+# PilotLog v9.7 — Simulator entries in Logbook and Totals
+
+## v9.7
+
+- Shows every saved simulator entry in Logbook, including rostered future simulators.
+- Includes simulator time in Totals, kept separate from flight time.
+- Retains all v9.6 central database, Roster, Logbook loading and flight-reconciliation changes.
+
+## v9.6
+
+## v9.6
+
+- Keeps the one operational database and central calculation engine as the only source for Roster, Logbook, Trips and Payroll.
+- Roster shows the calendar first, uses the Payroll-style month/year selector and moves AeroLINE Sync/options after the agenda.
+- Logbook entries open by touching the complete row; older rows load automatically before the end of the list.
+- Reconciles a unique LogTen/AeroLINE flight centrally from date, route and scheduled UTC times (15-minute controlled tolerance); ambiguous cases remain separate and appear under Settings → Data Integrity Check → “Da controllare”.
+- Leaves UTC editing, Roster swipe behavior and haptic feedback unchanged for the later phase.
+
+- Replaced the release-only month gesture with an interactive swipe: the calendar follows the finger during horizontal movement.
+- Added adjacent previous/current/next month panels so the incoming month is visible during the gesture.
+- Added a 240 ms ease-out snap, distance/velocity completion and snap-back for incomplete swipes.
+- Preserved vertical page scrolling and suppressed accidental day taps generated at the end of a swipe.
+- No database, calculation engine, business rule or non-Roster page was changed.
+
+---
+
+# PilotLog v9.4 — Roster calendar cache correction
+
+- Corrected the broken Roster calendar layout seen on Safari/iPhone.
+- Root cause: the v9.3 calendar CSS was published under the obsolete `pilotlog-8.3.0.css` filename, allowing an older cached stylesheet to be combined with the new calendar markup.
+- Renamed the stylesheet to `pilotlog-9.4.css`, the script to `pilotlog-9.4.js`, and advanced the offline cache to v9.4 so the approved layout is fetched as a new asset.
+- No application data, database schema, calculation engine, business rule or non-Roster page was changed.
+
+---
+
+# PilotLog v9.3 — Approved Roster calendar / unified projections
+
+- Add Flight swipe right now saves the complete draft and always returns to Logbook.
+- Preserved partial Add Flight data while navigating to any other page; drafts remain inside the single authoritative database state.
+- Replaced the Roster list with the approved second graphical calendar: year selector, all-month strip, previous/next controls, horizontal month swipe, selectable/deselectable days and selected-day agenda.
+- Made each complete Roster activity row clickable and removed separate Open/Edit controls from that agenda.
+- Trips cards, View Duties and Payroll now consume the same live Trip projection from `PilotLogEngine`; obsolete stored Trip layover values no longer drive those pages.
+- Completed Roster flights retain the final saved Flight Entry values in operational projections; planned Roster times apply only to activities not yet completed.
+- Verified the agreed RBA 08/26 case from the supplied backup: 22:00 Trip, 8:02 Duty and 13:58 Layover everywhere.
+- Restored the native Payroll month/year dropdown without redesigning Payroll.
+- No changes to the database schema, stored entry fields, established Credit Hours, Payroll, Trip, Totals, Expiry, import, export or sync rules.
+
+---
+
+# PilotLog v9.2 — UI responsiveness / Logbook performance
+
+- Removed a second large-backup bottleneck in Logbook rendering.
+- Credit Hours for displayed Logbook rows now reuse a per-day context instead of re-reading and copying the full operational database for every row.
+- Logbook statistics use one date index per render rather than repeatedly scanning the multi-year archive.
+- Trips list rendering is lazy and no longer creates hidden DOM during app startup.
+- Faster direct lookup when returning to a specific Logbook entry.
+- Logbook DOM is bounded to 400 entries initially; older entries remain available in 400-entry batches while search/statistics continue to use the full database.
+- No visual redesign and no changes to stored data, database schema, Payroll, Credit Hours rules, Roster, Trips calculations, Expiry, or sync behavior.
+
+---
+
+# PilotLog v9.1 — Large-backup restore performance fix
+
+- Fixed the freeze/unresponsive state triggered after restoring a large v8.9 Full Backup into v9.0.
+- Root cause: Trips rendering rebuilt the complete multi-year operational dataset once for every saved trip.
+- Operational trip entries are now grouped once per render and reused.
+- Saved-trip entry resolution now uses one indexed lookup and precomputed activity time windows.
+- Verified with the supplied 8.9 MB backup: 7,928 Logbook entries, 48 Roster sectors, 17 duties, 168 Trips and 36 Expiry records migrate to 7,960 unique activities.
+- Verified that the optimized operational Trip projection returns the same 7,940 records in the same order as v9.0 logic.
+- Verified that all 168 displayed Trip names are identical to the v9.0 logic.
+- No UI, Payroll, Credit Hours, Totals, Roster, Logbook, Expiry or calculation rule changes.
+
+---
+
+# PilotLog v9.0 — Single authoritative database and calculation engine
+
+- Rebuilt the internal data layer directly from v8.9 without changing the established UI or CSS.
+- Replaced the separate authoritative `flights`, `roster` and `duties` stores with one activity collection in one operational IndexedDB database.
+- Added stable activity state/visibility flags so Roster and Logbook are filtered views of the same record.
+- Completing a Roster flight now updates that same record and ID instead of creating a second linked Logbook entity.
+- Removed the synthetic Roster-flight entity builder previously used by Payroll and Trips.
+- Centralized entry metrics, Credit Hours, duty sessions, operational month selection, Trips, Payroll, Totals, Logbook statistics and Dashboard projections behind `PilotLogEngine`.
+- Moved Trips, Expiry, settings, Payroll configuration, FX, drafts and sync ledger into the same authoritative database state.
+- Full Backup v9.0 now exports one `database` object. Restore remains compatible with v8.9 sectioned backups and migrates them atomically.
+- Cloud sync accepts legacy sectioned snapshots, migrates them to the unified model and publishes the unified database through verified chunks.
+- Preserved v8.9 calculations: the provided backup was compared across 270 populated months with zero Payroll differences and zero Totals differences.
+- Preserved the supplied data: 7,924 entries, 48 Roster sectors, 17 duties, 168 Trips and 36 Expiry records consolidate to 7,960 unique activities with no duplicate IDs.
+- `pilotlog-8.3.0.css` remains byte-for-byte identical to v8.9; HTML structure and controls are unchanged.
+- Added a non-UI `sw-8.9.js` upgrade bridge so an already cached v8.9 installation can replace its old offline cache with v9.0.
+
+---
+
 # PilotLog v8.9 — Trip cash, global currency, Expiry dedupe, Training authority
 
 - Trip `Cash Received > 0` now forces Layover Pay to zero while preserving the informational layover duration.
