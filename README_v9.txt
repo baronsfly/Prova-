@@ -1,4 +1,4 @@
-PILOTLOG v10.1 — CORE v1
+PILOTLOG v10.2 — CORE v1
 ================================================
 
 V9.9 UPDATE
@@ -23,7 +23,7 @@ ARCHITECTURE
 5. Trips, Expiry, settings, payroll configuration, FX data, drafts and the sync ledger are stored in the same authoritative database state.
 6. Device/session credentials and safety backups remain separate from operational data and are not alternative authoritative sources.
 
-V10.1 PERFORMANCE CORRECTION
+V10.2 PERFORMANCE CORRECTION
 ----------------------------
 - Core migration, flight reconciliation, Roster cleanup and the Data Integrity check use indexed identity buckets.
 - Opening PilotLog or the Roster no longer compares every archived flight with every other flight.
@@ -67,9 +67,9 @@ VISUAL PRESERVATION
 FILES
 -----
 - index.html
-- pilotlog-10.1.js
-- pilotlog-10.1.css
-- sw-10.1.js
+- pilotlog-10.2.js
+- pilotlog-10.2.css
+- sw-10.2.js
 - manifest.webmanifest
 - README_v9.txt
 - CHANGELOG.md
