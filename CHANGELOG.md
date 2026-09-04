@@ -1,4 +1,4 @@
-# PilotLog v10.3 — Core v1 activity identity
+# PilotLog v10.2 — Core v1 activity identity
 
 - Removed separate Roster and Logbook visibility/membership state from activity records.
 - Roster and Logbook now read the same Core activity record through functional filters only.
@@ -6,7 +6,7 @@
 - Roster CSV, calendar, screenshot and AeroLINE imports now write through the single Core activity commit path.
 - Legacy Roster, Logbook and Duty stores are read only once for migration and are never runtime authorities.
 - Fixed the v10.1 startup/Roster freeze on large archives by replacing full archive pair-by-pair scans with indexed Core identity lookups.
-- Published with new v10.3 asset names and offline-cache identity so browsers cannot reuse the defective v10.1 files.
+- Published with new v10.2 asset names and offline-cache identity so browsers cannot reuse the defective v10.1 files.
 
 # PilotLog v9.10.1 — Complete LogTen import identity fix
 
@@ -766,7 +766,7 @@
 - Trip cards are renamed automatically using only the destination of the first DHD followed by the reference month and year (for example: NAP AUGUST 2026).
 - Version strings and service worker cache updated to v5.10.1.
 
-## v5.10.3
+## v5.10.2
 - Roster now performs persistent semantic duplicate cleanup. Duplicate planned sectors and duplicate non-flight roster activities are merged, keeping the more complete record and preserving cloud tombstones so removed copies do not return after sync.
 - Duplicate activity cleanup is conservative: two fully timed activities with different times remain separate; an untimed/partial copy of the same DHD, Simulator, STBY or Ground Course is merged into the more complete record.
 - Added Edit controls for individual roster sectors, non-flight roster activities and duty-only rows.
@@ -775,7 +775,7 @@
 - Opening Logbook from the main navigation still uses the existing next-upcoming-duty anchor logic.
 - When an entry is opened from Roster, Back returns to Roster.
 
-## v5.10.3
+## v5.10.4
 - Added native AeroLINE JSON import directly in the Roster screen.
 - Reads the structured AeroLINE `mainCrewScheduleInfoList` rather than OCR.
 - Imports flight sectors into Roster using `flightLegId` / `crewScheduleBlockId` metadata and updates the same sector on re-import instead of duplicating it.
@@ -802,7 +802,7 @@
 - Built from the complete v5.11.0 baseline, retaining the complete LogTen migration/archive workflow.
 - Added AeroLINE Connect controls in Roster: month selector, official AeroLINE login shortcut and direct Sync AeroLINE test.
 - AeroLINE crew ID/profile ID can be learned from a normal AeroLINE JSON import and are stored only on the device; AeroLINE passwords, cookies and Auth-Token values are not stored by PilotLog.
-- Direct sync requests the structured `TrackingService/getCrewSchedule` endpoint for the selected month and feeds the response through the existing v5.10.3 AeroLINE roster importer.
+- Direct sync requests the structured `TrackingService/getCrewSchedule` endpoint for the selected month and feeds the response through the existing v5.10.4 AeroLINE roster importer.
 - Existing Import AeroLINE JSON remains available as the reliable fallback while browser cross-origin/session behavior is validated on each device.
 - Existing PilotLog Auto Sync and manual Sync now are unchanged.
 
