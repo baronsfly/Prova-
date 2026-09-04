@@ -1,4 +1,4 @@
-# PilotLog v10.2 — Core v1 activity identity
+# PilotLog v10.3 — Core v1 activity identity
 
 - Removed separate Roster and Logbook visibility/membership state from activity records.
 - Roster and Logbook now read the same Core activity record through functional filters only.
@@ -6,7 +6,7 @@
 - Roster CSV, calendar, screenshot and AeroLINE imports now write through the single Core activity commit path.
 - Legacy Roster, Logbook and Duty stores are read only once for migration and are never runtime authorities.
 - Fixed the v10.1 startup/Roster freeze on large archives by replacing full archive pair-by-pair scans with indexed Core identity lookups.
-- Published with new v10.2 asset names and offline-cache identity so browsers cannot reuse the defective v10.1 files.
+- Published with new v10.3 asset names and offline-cache identity so browsers cannot reuse the defective v10.1 files.
 
 # PilotLog v9.10.1 — Complete LogTen import identity fix
 
@@ -766,7 +766,7 @@
 - Trip cards are renamed automatically using only the destination of the first DHD followed by the reference month and year (for example: NAP AUGUST 2026).
 - Version strings and service worker cache updated to v5.10.1.
 
-## v5.10.2
+## v5.10.3
 - Roster now performs persistent semantic duplicate cleanup. Duplicate planned sectors and duplicate non-flight roster activities are merged, keeping the more complete record and preserving cloud tombstones so removed copies do not return after sync.
 - Duplicate activity cleanup is conservative: two fully timed activities with different times remain separate; an untimed/partial copy of the same DHD, Simulator, STBY or Ground Course is merged into the more complete record.
 - Added Edit controls for individual roster sectors, non-flight roster activities and duty-only rows.
