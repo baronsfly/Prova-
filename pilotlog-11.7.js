@@ -214,8 +214,12 @@ function normalizeCoreActivityRecords(rows){
     if(index===undefined)for(const alias of aliases){if(alias&&byId.has(alias)){index=byId.get(alias);break}}
     if(index===undefined)index=uniqueIndex(bySource,syncSourceKey(row));
     if(index===undefined&&row.aerolineFlightLegId)index=uniqueIndex(byLeg,String(row.aerolineFlightLegId));
-    if(index===undefined&&rawCanonicalType(row.dutyType)==='Flight')index=uniqueIndex(bySemantic,semanticKey(row));
-    if(index===undefined&&rawCanonicalType(row.dutyType)==='Flight')index=uniqueIndex(bySchedule,scheduleKey(row),candidate=>scheduledFlightIdentityMatch(candidate,row));
+    const compatibleLogTenIdentity=candidate=>{
+      const a=String(candidate?.logtenUniqueId||'').trim(),b=String(row?.logtenUniqueId||'').trim();
+      return !(a&&b&&a!==b);
+    };
+    if(index===undefined&&rawCanonicalType(row.dutyType)==='Flight')index=uniqueIndex(bySemantic,semanticKey(row),compatibleLogTenIdentity);
+    if(index===undefined&&rawCanonicalType(row.dutyType)==='Flight')index=uniqueIndex(bySchedule,scheduleKey(row),candidate=>compatibleLogTenIdentity(candidate)&&scheduledFlightIdentityMatch(candidate,row));
     if(index!==undefined){out[index]=mergeCoreActivities(out[index],row);indexRow(out[index],index,[row.id,...aliases])}
     else{index=out.length;out.push(row);indexRow(row,index,aliases)}
   }
