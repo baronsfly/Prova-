@@ -1,11 +1,11 @@
-PILOTLOG v11.0
+PILOTLOG v11.2
 ===============
 
-This build keeps the supplied v10.9 files unchanged and uses separate v11.0 assets.
+This build keeps the supplied v10.9 files unchanged and uses separate v11.2 assets.
 
 AUTHORITATIVE TIME FIELDS
 -------------------------
-- scheduleTotal: Schedule IN - Schedule OUT (displayed as Schedule Total, read-only).
+- schedBlock: Schedule IN - Schedule OUT (displayed as Schedule Block, read-only).
 - block: IN - OUT for Flight, editable.
 - totalFlightTime: Block for Flight only.
 - multiPilot: Block for a multicrew aircraft Flight; never Simulator.
@@ -28,7 +28,7 @@ AUTHORITATIVE TIME FIELDS
 SIMULATOR CARD
 --------------
 Duty Type, Source, Date, Location, SIM Registration, SIM Type, Schedule OUT,
-Schedule IN, Schedule Total, On Duty, Off Duty, Total Duty, PIC Name, SIC Name,
+Schedule IN, Schedule Block, On Duty, Off Duty, Total Duty, PIC Name, SIC Name,
 Instructor Name, Examiner Name, Credit Hours, Simulator Time, SFI/SFE, the single
 INSTRUCTOR/EXAMINER checkbox, Called From Day Off and Remarks.
 
@@ -52,3 +52,10 @@ No field substitutes for another when the required value is absent. In
 particular there is no Simulator Time -> Block, Block -> Flight Time, or
 type-specific Duty fallback. The updated LogTen SQL backup will be handled only
 after the user supplies it; this build does not modify the user's SQL file.
+
+v11.2 corrections requested after v11.0 review:
+- separate Simulator Instructor and Examiner selections;
+- source-authoritative LogTen SFI/SFE preservation;
+- native iOS time pickers for editable duration fields;
+- one Air Time field (`airTime`), no stored legacy `flight` duplicate;
+- removed legacy `instructionType`, stored `trainingSector`, and `instructorFlightTime` fields.

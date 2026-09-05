@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="nexa-apple-touch-icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="nexa-icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="nexa-icon-512.png">
-<link rel="stylesheet" href="pilotlog-11.0.css">
+<link rel="stylesheet" href="pilotlog-11.2.css">
 </head>
 <body>
 <header>
@@ -30,7 +30,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v11.0</span>
+    <span class="version-badge">v11.2</span>
   </div>
 </header>
 <main>
@@ -45,7 +45,7 @@
 </section>
 
 <section id="addView" class="hidden">
-  <div class="section-title" id="entryTitle">Add log entry</div>
+  <div class="section-title" id="entryTitle">Add Duty / Activity</div>
   <div class="card">
     <div id="entryDraftShelf" class="draft-shelf hidden"></div>
     <form id="flightForm">
@@ -55,22 +55,22 @@
       <input type="hidden" id="simLocation">
       <input type="hidden" id="role">
       <input type="hidden" id="seatPosition">
-      <input type="hidden" id="instructionType">
-      <input type="hidden" id="ifr">
+            <input type="hidden" id="ifr">
       <input type="hidden" id="pf">
       <div class="form-grid">
-        <div><label>Duty type</label><select id="dutyTypeFlight"><option>Flight</option><option>Simulator</option><option>Ground Course</option><option>STBY</option><option>DHD</option><option>DHP</option></select></div>
+        <div><label>Duty type</label><select id="dutyTypeFlight"><option>Flight</option><option>Simulator</option><option>Ground Course</option><option>STBY</option><option>DHD</option><option>DHP</option><option>Day OFF</option><option>Flight Duty</option><option>Duty</option></select></div>
         <div><label>Date (Zulu)</label><input id="date" type="date" required></div>
         <div><label>Source</label><input id="entrySourceDisplay" readonly value="Manual"></div>
         <div data-entry-field="flightNo"><label>Flight number</label><div class="prefix-input"><span id="flightPrefixLabel">MAC</span><input id="flightNo" placeholder="457" autocomplete="off"></div></div>
         <div data-entry-field="reg"><label id="regLabel">Aircraft ID</label><div class="prefix-input"><span id="aircraftPrefixLabel">CN-NM</span><input id="reg" maxlength="10" placeholder="Q" autocomplete="off"></div></div>
         <div data-entry-field="type"><label id="typeLabel">Aircraft type</label><input id="type" placeholder="A320" data-upper list="aircraftTypeSuggestions" autocomplete="off"><datalist id="aircraftTypeSuggestions"></datalist></div>
         <div data-entry-field="courseType" class="hidden"><label>Course type</label><input id="courseType" placeholder="GRT MOD 3 / CRM / SEP..." data-upper></div>
+        <div data-entry-field="trainerType" class="hidden"><label>Trainer Type</label><select id="trainerTypeInput"><option value="">—</option><option value="GI">GI</option><option value="TNE">TNE</option></select></div>
         <div data-entry-field="dep"><label id="depLabel">From — IATA/ICAO</label><input id="dep" maxlength="20" placeholder="CMN" data-upper><div class="airport-info" id="depInfo"></div></div>
         <div data-entry-field="arr"><label>To — IATA/ICAO</label><input id="arr" maxlength="4" placeholder="BGY" data-upper><div class="airport-info" id="arrInfo"></div></div>
         <div data-entry-field="schedOut"><label id="schedOutLabel">Schedule OUT (Z)</label><input id="schedOut" type="time"></div>
         <div data-entry-field="schedIn"><label id="schedInLabel">Schedule IN (Z)</label><input id="schedIn" type="time"></div>
-        <div data-entry-field="schedBlock"><label>Schedule Total</label><input id="schedBlockDisplay" readonly></div>
+        <div data-entry-field="schedBlock"><label>Schedule Block</label><input id="schedBlockDisplay" readonly></div>
         <div data-entry-field="onDuty"><label id="onDutyLabel">On Duty (Z)</label><input id="onDuty" type="time"></div>
         <div data-entry-field="offDuty"><label id="offDutyLabel">Off Duty (Z)</label><input id="offDuty" type="time"></div>
         <div data-entry-field="out"><label>OUT (Z)</label><input id="out" type="time"></div>
@@ -78,7 +78,7 @@
         <div data-entry-field="on"><label>ON / Landing (Z)</label><input id="on" type="time"></div>
         <div data-entry-field="in"><label>IN (Z)</label><input id="in" type="time"></div>
         <div data-entry-field="delayReason" class="hidden"><label id="delayReasonLabel">Delay reason</label><input id="delayReason" placeholder="ATC / WEATHER / TECH / GROUND..." data-upper autocomplete="off"></div>
-        <div data-entry-field="block"><label>Block</label><input id="blockDisplay" inputmode="numeric" placeholder="H:MM"></div>
+        <div data-entry-field="block"><label>Block</label><input id="blockDisplay" type="time" step="60"></div>
         <div data-entry-field="picName"><label>PIC Name</label><input id="picName" placeholder="CAPTAIN NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
         <div data-entry-field="sicName"><label>SIC Name</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
         <div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
@@ -98,23 +98,23 @@
 
       <div class="section-title inner" id="breakdownTitle">Time groups</div>
       <div class="form-grid breakdown-grid" id="breakdownGrid">
-        <div data-time-group="totalFlightTime"><label>Total Flight Time</label><input id="totalFlightTimeDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="multiPilot"><label>Multi-pilot</label><input id="multiPilotDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="pic"><label>PIC</label><input id="picDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="picUS"><label>PIC U/S</label><input id="picUSDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="sic"><label>SIC</label><input id="sicDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="ifrTime"><label>IFR</label><input id="ifrTimeDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="airTime"><label>Air Time</label><input id="airTimeDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="night"><label>Night</label><input id="night" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="picNight"><label>PIC Night</label><input id="picNightDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="simulatorTime"><label>Simulator Time</label><input id="simulatorTimeDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="sfiSfe"><label>SFI/SFE</label><input id="sfiSfeDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="dualGiven"><label>Dual Given</label><input id="dualGivenDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="dualReceived"><label>Dual Received</label><input id="dualReceivedDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="groundInstruction"><label>Ground Instruction</label><input id="groundInstructionDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="stbyTime"><label>STBY</label><input id="stbyTimeDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="credit"><label>Credit Hours</label><input id="creditDisplay" inputmode="numeric" placeholder="H:MM"></div>
-        <div data-time-group="totalDuty"><label>Total Duty</label><input id="totalDutyDisplay" inputmode="numeric" placeholder="H:MM"></div>
+        <div data-time-group="totalFlightTime"><label>Total Flight Time</label><input id="totalFlightTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="multiPilot"><label>Multi-pilot</label><input id="multiPilotDisplay" type="time" step="60"></div>
+        <div data-time-group="pic"><label>PIC</label><input id="picDisplay" type="time" step="60"></div>
+        <div data-time-group="picUS"><label>PIC U/S</label><input id="picUSDisplay" type="time" step="60"></div>
+        <div data-time-group="sic"><label>SIC</label><input id="sicDisplay" type="time" step="60"></div>
+        <div data-time-group="ifrTime"><label>IFR</label><input id="ifrTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="airTime"><label>Air Time</label><input id="airTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="night"><label>Night</label><input id="night" type="time" step="60"></div>
+        <div data-time-group="picNight"><label>PIC Night</label><input id="picNightDisplay" type="time" step="60"></div>
+        <div data-time-group="simulatorTime"><label>Simulator Time</label><input id="simulatorTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="sfiSfe"><label>SFI/SFE</label><input id="sfiSfeDisplay" type="time" step="60"></div>
+        <div data-time-group="dualGiven"><label>Dual Given</label><input id="dualGivenDisplay" type="time" step="60"></div>
+        <div data-time-group="dualReceived"><label>Dual Received</label><input id="dualReceivedDisplay" type="time" step="60"></div>
+        <div data-time-group="groundInstruction"><label>Ground Instruction</label><input id="groundInstructionDisplay" type="time" step="60"></div>
+        <div data-time-group="stbyTime"><label>STBY</label><input id="stbyTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="credit"><label>Credit Hours</label><input id="creditDisplay" type="time" step="60"></div>
+        <div data-time-group="totalDuty"><label>Total Duty</label><input id="totalDutyDisplay" type="time" step="60"></div>
         <div data-flight-counter><label>Day take-offs</label><input id="dayTakeoffs" type="number" min="0" step="1" value="0"></div>
         <div data-flight-counter><label>Night take-offs</label><input id="nightTakeoffs" type="number" min="0" step="1" value="0"></div>
         <div data-flight-counter><label>Day landings</label><input id="dayLandings" type="number" min="0" step="1" value="0"></div>
@@ -127,7 +127,8 @@
         <label class="check-option" data-entry-check="pf"><input id="pfCheck" type="checkbox"> PF</label>
         <label class="check-option" data-entry-check="instruction"><input id="instructionCheck" type="checkbox"> INSTRUCTION</label>
         <label class="check-option" data-entry-check="examiner"><input id="examinerCheck" type="checkbox"> EXAMINER</label>
-        <label class="check-option" data-entry-check="simInstructorExaminer"><input id="instructorExaminerCheck" type="checkbox"> INSTRUCTOR/EXAMINER</label>
+        <label class="check-option" data-entry-check="simInstructor"><input id="simInstructorCheck" type="checkbox"> INSTRUCTOR</label>
+        <label class="check-option" data-entry-check="simExaminer"><input id="simExaminerCheck" type="checkbox"> EXAMINER</label>
         <label class="check-option"><input id="callFromDayOff" type="checkbox"> CALL FROM DAY OFF</label>
         <label class="check-option" data-entry-check="rhs"><input id="rhsCheck" type="checkbox"> RHS</label>
       </div>
@@ -135,7 +136,7 @@
       <div class="full" id="remarksWrap"><label>Remarks</label><textarea id="remarks"></textarea></div>
       <div class="totals" id="calcPreview">Schedule Block 0:00 • Actual Block 0:00 • Flight 0:00 • Credit 0:00</div>
       <div class="hint" id="nightStatus">Night time uses airport coordinates, solar ephemerides and the OUT–IN interval.</div>
-      <div class="actions"><button class="secondary hidden" type="button" id="entryBackBtn">← Back</button><button class="primary" type="button" id="saveEntryBtn">Save to Logbook</button><button class="primary lock-button" type="button" id="lockEntryBtn">🔒 Lock</button><button class="danger hidden" type="button" id="entryRosterDeleteBtn">Delete activity</button><button class="secondary" type="button" id="returnFlight">Return Flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
+      <div class="actions"><button class="secondary hidden" type="button" id="entryBackBtn">← Back</button><button class="primary" type="button" id="saveEntryBtn">Save activity</button><button class="primary lock-button" type="button" id="lockEntryBtn">🔒 Lock</button><button class="danger hidden" type="button" id="entryRosterDeleteBtn">Delete activity</button><button class="secondary" type="button" id="returnFlight">Return Flight</button><button class="secondary" type="button" id="clearForm">Clear</button></div>
       <div class="hint" id="entryLockStatus">Draft autosaves on this device. Lock the entry when all data are final.</div>
     </form>
   </div>
@@ -186,17 +187,7 @@
   </div>
 </section>
 
-<section id="dutyView" class="hidden">
-  <div class="section-title" id="dutyEditorTitle">Add duty</div>
-  <div class="card"><form id="dutyForm"><input type="hidden" id="dutyEditId"><div class="form-grid">
-    <div><label>Date</label><input id="dutyDate" type="date" required></div>
-    <div><label>Duty type</label><select id="dutyType"><option>Flight Duty</option><option>Simulator</option><option>Standby</option><option>Ground Course</option><option>DHD</option><option>Day OFF</option><option>Duty</option></select></div>
-    <div><label>Report (Z)</label><input id="reportTime" type="time"></div>
-    <div><label>End duty (Z)</label><input id="endDuty" type="time"></div>
-    <div class="full"><label>Notes</label><input id="dutyNotes"></div>
-  </div><div class="actions"><button class="secondary hidden" type="button" id="dutyBackBtn">← Back to Roster</button><button class="primary" type="submit" id="dutySaveBtn">Save duty</button><button class="danger hidden" type="button" id="dutyDeleteRosterBtn">Delete activity</button></div></form></div>
-  <div class="section-title">Duty history</div><div class="card" id="dutyList"></div>
-</section>
+
 
 <section id="totalsView" class="hidden">
   <div class="section-title">Total Statistics</div>
@@ -236,7 +227,7 @@
       <div><label>Arrears / adjustments (MAD source)</label><input id="payArrears" type="number" step="0.01" value="0"></div>
       <div class="payroll-action"><button class="primary" type="button" id="recalcPayroll">Recalculate</button></div>
     </div>
-    <div class="hint">Flight credits keep the established scheduled-flight rules and remain manually editable. A receiving Simulator activity has no invented credit: an explicit imported/manual value is preserved; selecting INSTRUCTOR/EXAMINER proposes 5:00, remains editable and activates the Simulator allowance. Ground Course credit remains editable. DHD and DHP default to 0:00 and remain editable; positive values contribute to Credit totals.</div>
+    <div class="hint">Flight credits keep the established scheduled-flight rules and remain manually editable. A receiving Simulator activity has no invented credit: an explicit imported/manual value is preserved; selecting INSTRUCTOR or EXAMINER proposes 5:00, remains editable and activates the Simulator allowance. Ground Course credit remains editable. DHD and DHP default to 0:00 and remain editable; positive values contribute to Credit totals.</div>
   </div>
   <div class="section-title">Payroll result</div>
   <div class="card payroll-total-card">
@@ -590,5 +581,5 @@
   <button data-view="dashboardView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.9 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-11.0.js" defer></script>
+<script src="pilotlog-11.2.js" defer></script>
 </body></html>
