@@ -1,3 +1,23 @@
+## v11.0 — Approved time fields and activity cards
+
+- Keeps the original v10.9 assets unchanged and runs from separate v11.0 JavaScript, CSS and service-worker files.
+- Adds the Time Group Settings table with Show on Total, Show on Card and retroactive Auto Sync; every option starts OFF and manual values, including 0:00, have priority.
+- Flight uses Schedule Total = Schedule IN − Schedule OUT, Block = IN − OUT, Air Time = ON − OFF, and Total Flight Time = Block. Night uses only OUT → IN with airport solar ephemerides.
+- Multi-pilot applies only to multicrew aircraft flights and never to Simulator activities.
+- PIC, PIC U/S, SIC, IFR, Dual Given and Dual Received follow their approved Block rules only when applicable or selected. INSTRUCTION replaces the old instruction-type labels.
+- Simulator Time is preserved as its own field and normally equals Schedule IN − Schedule OUT. SFI/SFE equals the final Simulator Time only when the single INSTRUCTOR/EXAMINER checkbox is selected.
+- A receiving Simulator activity receives no invented credit. Explicit imported/manual credit is preserved; INSTRUCTOR/EXAMINER proposes editable 5:00 credit and the Simulator payroll allowance.
+- LogTen instructor names are copied to Instructor Name without selecting the user-role checkbox and without inferring Examiner from remarks.
+- DHD and DHP share From, To, Start, End, Schedule Total, the single Total Duty field and editable Credit defaulting to 0:00. No DHD Time or duty-type-specific Total Duty fields are created.
+- Roster displays monthly TOT SCHEDULE, TOT DUTY and TOT CREDIT on one line, independently of the selected day. Multisector duty is counted once and manual Total Duty has priority.
+- Removed prohibited Simulator/Block/Flight/Duty substitution rules; totals sum the final field values.
+
+## v10.9
+- Recovery bridge reruns independently of the old 10.3 repair flag.
+- Re-merges saved legacy 10.0 Entries into the authoritative Core as COMPLETED without overwriting stronger current/manual values.
+- Restores legacy Trips into Core values when missing.
+- Repairs completed DHD/DHP/Simulator/Ground/STBY rows and Training Sector / Instructor Flight Time.
+
 # PilotLog v10.2 — Core v1 activity identity
 
 - Removed separate Roster and Logbook visibility/membership state from activity records.
