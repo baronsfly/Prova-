@@ -1,4 +1,4 @@
-## v11.6
+## v11.7
 - Simulator-specific AeroLINE reporting fallback: Start - 1:30; Off Duty remains End + 0:30.
 - If AeroLINE trainerName contains the logged-in/user profile among multiple trainers, only that matched self name is stored in Instructor Name and Simulator Instructor is selected.
 - No other duty, flight, LogTen, credit, or calculation rules changed.

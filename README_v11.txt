@@ -87,7 +87,7 @@ v11.5 DATA AUTHORITY / LOGTEN STATUS
 - Totals and approaches do not infer completion from elapsed time or from source=LogTen; they follow Core activity status.
 
 
-PilotLog v11.6 — AeroLINE Simulator reporting / trainer rule
+PilotLog v11.7 — AeroLINE Simulator reporting / trainer rule
 - Simulator On Duty fallback only when AeroLINE has no explicit reporting time: Simulator Start - 1:30.
 - Simulator Off Duty fallback remains Simulator End + 0:30, unchanged from the existing release rule.
 - When AeroLINE trainerName contains the user among multiple trainers, store only the user name in Instructor Name and select Simulator Instructor. Other trainer names are not copied into the same Instructor field.
