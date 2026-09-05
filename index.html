@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="nexa-apple-touch-icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="nexa-icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="nexa-icon-512.png">
-<link rel="stylesheet" href="pilotlog-11.2.css">
+<link rel="stylesheet" href="pilotlog-11.6.css">
 </head>
 <body>
 <header>
@@ -30,7 +30,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v11.2</span>
+    <span class="version-badge">v11.6</span>
   </div>
 </header>
 <main>
@@ -227,7 +227,7 @@
       <div><label>Arrears / adjustments (MAD source)</label><input id="payArrears" type="number" step="0.01" value="0"></div>
       <div class="payroll-action"><button class="primary" type="button" id="recalcPayroll">Recalculate</button></div>
     </div>
-    <div class="hint">Flight credits keep the established scheduled-flight rules and remain manually editable. A receiving Simulator activity has no invented credit: an explicit imported/manual value is preserved; selecting INSTRUCTOR or EXAMINER proposes 5:00, remains editable and activates the Simulator allowance. Ground Course credit remains editable. DHD and DHP default to 0:00 and remain editable; positive values contribute to Credit totals.</div>
+    <div class="hint">Flight credits keep the established scheduled-flight rules and remain manually editable. A receiving Simulator activity has no invented credit: an explicit imported/manual value is preserved; selecting INSTRUCTOR or EXAMINER proposes 5:00, remains editable and activates the Simulator allowance. Ground Course GI proposes exactly 5:00 Credit Hours; TNE proposes 0:00; both remain manually editable, and no generic Ground Course fallback is applied. DHD and DHP default to 0:00 and remain editable; positive values contribute to Credit totals.</div>
   </div>
   <div class="section-title">Payroll result</div>
   <div class="card payroll-total-card">
@@ -510,7 +510,6 @@
       <div><label>Training per sector DHM</label><input id="setTrainingRate" type="number" step="0.01"></div>
       <div><label>Layover DHM/h</label><input id="setLayoverRate" type="number" step="0.01"></div>
       <div><label>Simulator allowance DHM</label><input id="setSimAllowance" type="number" step="0.01"></div>
-      <div><label>Ground Course credit hours</label><input id="setGroundCredit" type="number" step="0.5"></div>
       <div><label>Day OFF premium DHM</label><input id="setDayOffRate" type="number" step="0.01"></div>
     </div>
     <div class="actions"><button class="primary" type="submit">Save Payroll Settings</button><button class="secondary" type="button" id="resetPaySettings">Restore defaults</button></div>
@@ -581,5 +580,5 @@
   <button data-view="dashboardView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.9 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-11.2.js" defer></script>
+<script src="pilotlog-11.6.js" defer></script>
 </body></html>

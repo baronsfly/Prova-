@@ -1,7 +1,7 @@
-PILOTLOG v11.2
+PILOTLOG v11.5
 ===============
 
-This build keeps the supplied v10.9 files unchanged and uses separate v11.2 assets.
+This build keeps the supplied v10.9 files unchanged and uses separate v11.5 assets.
 
 AUTHORITATIVE TIME FIELDS
 -------------------------
@@ -17,23 +17,23 @@ AUTHORITATIVE TIME FIELDS
 - night: OUT - IN using airport positions and solar ephemerides.
 - picNight: final Night when the user role is PIC.
 - simulatorTime: final Simulator Time; normally Schedule IN - Schedule OUT, but an imported or manually entered value is preserved unless the user selects Auto Sync.
-- sfiSfe: final Simulator Time only with the combined INSTRUCTOR/EXAMINER checkbox.
-- dualGiven: Block for Flight only with INSTRUCTION selected.
+- sfiSfe: final Simulator Time only when the user selects INSTRUCTOR or EXAMINER for their own role.
+- dualGiven: Block whenever Flight INSTRUCTION is selected; a manual saved override remains authoritative.
 - dualReceived: Block when its Auto Sync option is selected.
 - groundInstruction: Block for Ground Course.
-- stbyTime: Block for STBY.
-- credit: established Flight rules; explicit manual value always wins. Receiving Simulator credit is blank unless imported or manually entered. The combined INSTRUCTOR/EXAMINER role proposes editable 5:00.
+- stbyTime: activity duration from Start/End (On Duty/Off Duty) for STBY.
+- credit: established Flight rules; explicit manual value always wins. Receiving Simulator credit is blank unless imported or manually entered. Simulator INSTRUCTOR or EXAMINER proposes editable 5:00.
 - totalDuty: the single Total Duty field. Flight/Simulator/Ground/STBY use Off Duty - On Duty. DHD/DHP use End - Start.
 
 SIMULATOR CARD
 --------------
 Duty Type, Source, Date, Location, SIM Registration, SIM Type, Schedule OUT,
 Schedule IN, Schedule Block, On Duty, Off Duty, Total Duty, PIC Name, SIC Name,
-Instructor Name, Examiner Name, Credit Hours, Simulator Time, SFI/SFE, the single
-INSTRUCTOR/EXAMINER checkbox, Called From Day Off and Remarks.
+Instructor Name, Examiner Name, Credit Hours, Simulator Time, SFI/SFE, separate
+INSTRUCTOR and EXAMINER checkboxes, Called From Day Off and Remarks.
 
 LogTen instructor names are copied to Instructor Name. Importing a name never
-selects INSTRUCTOR/EXAMINER and never infers Examiner from remarks.
+selects INSTRUCTOR or EXAMINER and never infers Examiner from remarks.
 
 TIME GROUP SETTINGS
 -------------------
@@ -53,9 +53,41 @@ particular there is no Simulator Time -> Block, Block -> Flight Time, or
 type-specific Duty fallback. The updated LogTen SQL backup will be handled only
 after the user supplies it; this build does not modify the user's SQL file.
 
-v11.2 corrections requested after v11.0 review:
+v11.4 compliance corrections after v11.2 audit:
 - separate Simulator Instructor and Examiner selections;
 - source-authoritative LogTen SFI/SFE preservation;
 - native iOS time pickers for editable duration fields;
 - one Air Time field (`airTime`), no stored legacy `flight` duplicate;
 - removed legacy `instructionType`, stored `trainingSector`, and `instructorFlightTime` fields.
+
+
+v11.4 final compliance notes:
+- Multi Pilot automatic calculation reads Aircraft Type only; legacy multiCrew is discarded and is not a calculation source.
+- Ground Course GI proposes exactly 5:00 Credit Hours; TNE proposes 0:00; no generic Ground Course credit fallback is used.
+- INSTRUCTION on a Flight sets Dual Given = Block independently of the Auto Sync toggle unless Dual Given has a manual saved override.
+
+
+DATA AUTHORITY v11.4
+- Authority is field-by-field, never whole-record.
+- Manual takeover of one field protects only that field.
+- Source data may update other non-manual fields.
+- Calculated fallback never becomes manual merely because the activity is saved.
+- On Duty: manual > source > Schedule OUT - 1:00.
+- Off Duty: manual > source > Schedule IN + 0:30.
+
+
+v11.5 DATA AUTHORITY / LOGTEN STATUS
+- LogTen closed records remain locked and COMPLETED.
+- LogTen unclosed records remain OPEN; their imported values are still trusted source values.
+- Imported LogTen fields are preserved as imported and are not replaced by AeroLINE or calculated fallbacks.
+- Manual authority is field-by-field. A manual field overrides source/calculated values without turning every field in the record into manual data.
+- 0 and 0:00 are real values, never treated as blank.
+- SIC auto value requires the activity role to be explicitly SIC.
+- Ground Instruction has no Block fallback: use a source value when available, otherwise leave it open for manual entry.
+- Totals and approaches do not infer completion from elapsed time or from source=LogTen; they follow Core activity status.
+
+
+PilotLog v11.6 — AeroLINE Simulator reporting / trainer rule
+- Simulator On Duty fallback only when AeroLINE has no explicit reporting time: Simulator Start - 1:30.
+- Simulator Off Duty fallback remains Simulator End + 0:30, unchanged from the existing release rule.
+- When AeroLINE trainerName contains the user among multiple trainers, store only the user name in Instructor Name and select Simulator Instructor. Other trainer names are not copied into the same Instructor field.

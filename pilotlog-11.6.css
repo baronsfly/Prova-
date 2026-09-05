@@ -1,0 +1,861 @@
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;color:#111827;background:#f3f4f6}*{box-sizing:border-box}body{margin:0;padding-bottom:0;padding-left:84px}header{background:#0f172a;color:#fff;margin-left:-84px;padding:calc(18px + env(safe-area-inset-top)) 18px 18px calc(84px + 18px)}.header-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}h1{margin:0;font-size:26px}header p{margin:5px 0 0;color:#cbd5e1;font-size:13px}.version-badge{background:#2563eb;padding:6px 9px;border-radius:999px;font-weight:700;font-size:12px}main{max-width:1050px;margin:auto;padding:16px}.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.card{background:#fff;border-radius:14px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.07)}.metric{text-align:center}.metric b{font-size:24px;display:block}.metric span,.small,.hint,.airport-info{font-size:12px;color:#6b7280}.section-title{font-weight:800;margin:18px 2px 8px}.section-title.inner{font-size:13px;margin-top:14px}.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.full{grid-column:1/-1}label{display:block;font-size:12px;font-weight:700;margin-bottom:5px;color:#374151}input,select,textarea{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:11px;background:#fff;font-size:16px}input[readonly]{background:#f3f4f6;font-weight:700}textarea{min-height:72px;resize:vertical}[data-upper]{text-transform:uppercase}.airport-info{margin-top:4px;min-height:16px}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actions.top{margin-top:0}button,.filebtn{border:0;border-radius:10px;padding:10px 13px;font-weight:700;font-size:13px;cursor:pointer}.primary{background:#2563eb;color:#fff}.secondary{background:#e5e7eb;color:#111827}.danger{background:#fee2e2;color:#991b1b}.totals,.formula{margin-top:12px;background:#eff6ff;border-radius:10px;padding:10px;font-weight:700;font-size:13px}.flight,.rowitem{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 0;border-bottom:1px solid #e5e7eb}.flight:last-child,.rowitem:last-child{border-bottom:0}.route{font-weight:800}.meta{text-align:right;font-size:13px;min-width:110px}.pill{display:inline-block;padding:3px 6px;margin:3px 3px 0 0;background:#e5e7eb;border-radius:999px;font-size:10px}.pill.green{background:#dcfce7;color:#166534}.pill.red{background:#fee2e2;color:#991b1b}.pill.amber{background:#fef3c7;color:#92400e}.empty{text-align:center;color:#9ca3af;padding:16px}.spaced{margin-top:12px}.hint{line-height:1.45;margin-bottom:8px}.list-actions{display:flex;gap:5px;justify-content:flex-end;margin-top:5px}.list-actions button{padding:6px 8px;font-size:11px}.stat-row{display:grid;grid-template-columns:1fr auto;gap:12px;padding:9px 0;border-bottom:1px solid #eee}.stat-row:last-child{border-bottom:0}.stat-row b{text-align:right}.warning{color:#b45309}.danger-text{color:#b91c1c}.success{color:#166534}.ftl-ok{background:#ecfdf5;border-radius:10px;padding:9px}.ftl-warn{background:#fff7ed;border-radius:10px;padding:9px}.ftl-bad{background:#fff1f2;border-radius:10px;padding:9px}.prefix-input{display:flex;align-items:stretch;width:100%;border:1px solid #d1d5db;border-radius:10px;background:#fff;overflow:hidden}.prefix-input span{display:flex;align-items:center;padding:0 10px;background:#f3f4f6;border-right:1px solid #d1d5db;font-weight:800;color:#374151;white-space:nowrap}.prefix-input input{border:0;border-radius:0;min-width:0}.payroll-action{display:flex;align-items:flex-end}.payroll-action button{width:100%;min-height:44px}.payroll-total-card{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:end}.payroll-total,.payroll-eur{display:flex;flex-direction:column;gap:4px}.payroll-total b{font-size:28px}.payroll-eur b{font-size:22px}.money{font-variant-numeric:tabular-nums}.fx-lock{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#dcfce7;color:#166534;font-size:10px;font-weight:800}.fx-live{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#fef3c7;color:#92400e;font-size:10px;font-weight:800}.sync-status{padding:12px 14px;border:1px solid #dbe1ea;border-radius:12px;margin-bottom:12px;font-weight:700}.sync-status[data-state="ok"]{background:#ecfdf5}.sync-status[data-state="busy"]{background:#eff6ff}.sync-status[data-state="error"]{background:#fff1f2}button:disabled,input:disabled,select:disabled,textarea:disabled{opacity:.62;cursor:not-allowed}#entryLockStatus.success{background:#ecfdf5;color:#166534;padding:9px;border-radius:10px;margin-top:10px;font-weight:700}.nav{position:fixed;top:0;bottom:0;left:0;width:84px;display:flex;flex-direction:column;overflow-y:auto;background:#fff;border-right:1px solid #e5e7eb;padding:calc(10px + env(safe-area-inset-top)) 6px 10px;z-index:30}.nav button{flex:0 0 auto;width:100%;min-height:48px;background:#fff;color:#6b7280;border-radius:10px;padding:9px 4px;font-size:10px;line-height:1.15;margin-bottom:3px}.nav button.active{color:#2563eb;background:#eff6ff}.nav button:first-child{margin-top:58px}
+@media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr)}.stats-grid{grid-template-columns:repeat(3,1fr)}.form-grid{grid-template-columns:repeat(4,1fr)}.breakdown-grid{grid-template-columns:repeat(4,1fr)}.full{grid-column:1/-1}}
+@media(max-width:520px){body{padding-left:74px}header{margin-left:-74px;padding-left:calc(74px + 14px)}.nav{width:74px;padding-left:4px;padding-right:4px}.nav button{font-size:9px;min-height:45px}main{padding:12px}.form-grid{grid-template-columns:1fr}.full{grid-column:1}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.payroll-total-card{grid-template-columns:1fr}.payroll-total b{font-size:25px}}
+
+.month-separator{display:flex;align-items:center;gap:12px;margin:24px 0 10px;font-weight:800;font-size:1.08rem;color:var(--text,#172033)}
+.month-separator::after{content:"";height:1px;background:rgba(100,116,139,.25);flex:1}
+.month-separator span{white-space:nowrap}
+
+.duty-week-row{display:grid;grid-template-columns:105px 1fr auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid rgba(100,116,139,.18)}
+.duty-week-row:last-child{border-bottom:0}
+.duty-week-date{display:flex;flex-direction:column;gap:2px}
+.duty-week-date span{font-size:.86rem;color:var(--muted,#6b7280)}
+.duty-week-main{min-width:0}
+.duty-week-time{text-align:right;white-space:nowrap}
+@media(max-width:700px){
+  .duty-week-row{grid-template-columns:82px 1fr;align-items:start}
+  .duty-week-time{grid-column:2;text-align:left}
+}
+
+.dashboard-ftl{max-width:260px;text-align:left}
+.dashboard-ftl b{font-size:28px}
+.today-duty-row{padding-top:4px;padding-bottom:4px}
+.total-statistics-column{max-width:720px}
+.total-statistics-column .stat-row{font-size:14px}
+.total-statistics-column .stat-row b{font-size:16px}
+.logbook-export-grid{margin-top:10px}
+@media(max-width:520px){.dashboard-ftl{max-width:none}}
+
+.screenshot-import-controls{align-items:end}
+.screenshot-filebtn{display:inline-block;text-align:center;max-width:240px}
+.screenshot-preview-wrap{margin-top:12px;border:1px solid #e5e7eb;border-radius:12px;padding:8px;background:#f9fafb;text-align:center}
+.screenshot-preview-wrap img{max-width:100%;max-height:360px;border-radius:8px}
+.screenshot-ocr-text{min-height:150px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
+.screenshot-review-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.screenshot-review-table{border-collapse:collapse;min-width:1180px;width:100%;font-size:11px}
+.screenshot-review-table th,.screenshot-review-table td{border:1px solid #e5e7eb;padding:5px;vertical-align:middle}
+.screenshot-review-table th{background:#f3f4f6;text-align:left;white-space:nowrap}
+.screenshot-review-table input,.screenshot-review-table select{font-size:12px;padding:7px;border-radius:7px;min-width:88px}
+.screenshot-review-table input[type="checkbox"]{min-width:auto;width:18px;height:18px}
+
+.roster-month-separator{display:flex;align-items:center;gap:12px;margin:26px 0 10px;font-weight:800;font-size:1.05rem;color:var(--text,#172033)}
+.roster-month-separator:first-child{margin-top:4px}
+.roster-month-separator::after{content:"";height:1px;background:rgba(100,116,139,.25);flex:1}
+.roster-month-separator span{white-space:nowrap}
+
+.hint.warning{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:10px;padding:10px 12px;font-weight:600}
+
+.autocomplete-host{position:relative}
+.smart-autocomplete{position:absolute;z-index:50;left:0;right:0;top:100%;margin-top:4px;background:#fff;border:1px solid #d1d5db;border-radius:10px;box-shadow:0 10px 28px rgba(15,23,42,.16);max-height:240px;overflow:auto}
+.smart-autocomplete button{display:block;width:100%;border:0;background:#fff;text-align:left;padding:10px 12px;font:inherit;color:inherit}
+.smart-autocomplete button+button{border-top:1px solid #eef2f7}
+.smart-autocomplete button:active{background:#eef4ff}
+.lock-button{min-width:110px}
+
+.header-row>div{min-width:0}
+#appTitle{line-height:1.08;overflow-wrap:anywhere}
+@media(max-width:520px){#appTitle{font-size:21px}}
+
+/* v5.6 navigation refinement */
+.nav{
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{display:none}
+.nav button{
+  transition:background-color .18s ease,transform .18s ease,box-shadow .18s ease,opacity .18s ease;
+}
+.nav button:active{transform:scale(.97)}
+.nav button.active{box-shadow:0 4px 14px rgba(0,0,0,.06)}
+main>section:not(.hidden){animation:pilotlogViewIn .16s ease-out}
+@keyframes pilotlogViewIn{
+  from{opacity:.72;transform:translateY(3px)}
+  to{opacity:1;transform:none}
+}
+.view-toolbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:14px;
+}
+.view-toolbar h2{margin:0 0 4px}
+.view-toolbar .hint{margin:0}
+.view-add-btn{white-space:nowrap}
+#dashboardView + #totalsView:not(.hidden){margin-top:4px}
+@media(max-width:640px){
+  .view-toolbar{align-items:stretch;flex-direction:column}
+  .view-add-btn{width:100%}
+}
+
+/* v5.7 Day OFF / Expiry / Roster */
+.entry-check-field .check-option{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:0 4px;
+  font-weight:600;
+}
+.entry-check-field input[type="checkbox"]{width:20px;height:20px;flex:0 0 auto}
+
+.pay-dayoff-row{
+  display:grid;
+  grid-template-columns:minmax(180px,1fr) minmax(220px,1.4fr);
+  gap:18px;
+  padding:14px 0;
+  border-bottom:1px solid rgba(120,120,128,.18);
+}
+.pay-dayoff-row:last-child{border-bottom:0}
+.pay-dayoff-remark-wrap label{display:block;margin-bottom:5px}
+.pay-dayoff-remark{width:100%}
+
+.expiry-section{margin-bottom:22px}
+.expiry-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px;
+}
+.expiry-heading h3{margin:0}
+.expiry-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:18px;
+  align-items:center;
+  padding:14px 12px;
+  margin:0 -2px;
+  border-left:5px solid transparent;
+  border-bottom:1px solid rgba(120,120,128,.16);
+  border-radius:8px;
+}
+.expiry-row:last-child{border-bottom:0}
+.expiry-valid{border-left-color:#2e9b57;background:rgba(46,155,87,.07)}
+.expiry-warning{border-left-color:#d8a51c;background:rgba(216,165,28,.10)}
+.expiry-expired{border-left-color:#c5372f;background:rgba(197,55,47,.09)}
+.expiry-unknown{border-left-color:#8a8a8e}
+.expiry-meta{text-align:right}
+.expiry-meta>span{display:block;font-size:.82rem;margin-top:3px}
+.expiry-valid .expiry-meta>span{color:#247a45}
+.expiry-warning .expiry-meta>span{color:#9a7310}
+.expiry-expired .expiry-meta>span{color:#aa2d27}
+.roster-today-anchor{height:1px;scroll-margin-top:12px}
+.roster-month-empty{padding:14px 10px}
+
+@media(max-width:640px){
+  .pay-dayoff-row,.expiry-row{grid-template-columns:1fr}
+  .expiry-meta{text-align:left}
+  .expiry-heading{align-items:stretch;flex-direction:column}
+}
+
+.entries-today-anchor{height:1px;scroll-margin-top:18px}
+#flightsView .view-toolbar{margin-bottom:8px}
+
+.entries-next-duty-anchor,.roster-today-anchor{height:1px;scroll-margin-top:18px}
+.roster-day-off{background:rgba(46,155,87,.055)}
+.roster-day-off .meta{font-weight:700}
+.roster-blank-day{opacity:.74}
+.roster-blank-day b{font-weight:600}
+
+/* v5.7.3 EASA FTL traffic-light limits */
+.ftl-limit-row{
+  margin:0 -8px;
+  padding:12px 8px;
+  border-radius:9px;
+  transition:background-color .18s ease;
+}
+.ftl-limit-row.ftl-green{background:rgba(46,155,87,.08)}
+.ftl-limit-row.ftl-yellow{background:rgba(216,165,28,.12)}
+.ftl-limit-row.ftl-red{background:rgba(197,55,47,.11)}
+
+/* v5.7.5 tolerant Screenshot Review */
+.screenshot-review-summary{margin:10px 0 12px;padding:10px 12px;border-radius:10px;font-weight:700}
+.screenshot-review-summary.has-incomplete{background:rgba(216,165,28,.13);color:#85640d}
+.screenshot-review-summary.all-ready{background:rgba(46,155,87,.10);color:#247a45}
+.screenshot-review-table tr.shot-needs-review{background:rgba(216,165,28,.045)}
+.screenshot-review-table td.shot-missing{background:rgba(216,165,28,.16)}
+.screenshot-review-table td.shot-missing input,
+.screenshot-review-table td.shot-missing select{outline:2px solid rgba(216,165,28,.55);outline-offset:-2px}
+.shot-row-status{font-size:.72rem;line-height:1.25;margin-top:4px;color:#7a5d0b;max-width:300px}
+.screenshot-review-table tr.shot-ready .shot-row-status{color:#247a45}
+
+/* v5.8 Smart Cell Scan */
+.shot-row-status{white-space:normal}
+
+
+/* =====================================================================
+   v5.9.0 — Professional Light UI
+   Visual-only redesign inspired by a restrained airline operations tool.
+   No data, sync, import, payroll, FTL, or calculation logic is changed.
+   ===================================================================== */
+:root{
+  --pl-navy:#0b2f57;
+  --pl-navy-2:#123f70;
+  --pl-blue:#1d5f9e;
+  --pl-blue-soft:#eaf2fb;
+  --pl-ink:#12233b;
+  --pl-muted:#6a7a8f;
+  --pl-line:#dce5ef;
+  --pl-line-strong:#cbd7e4;
+  --pl-surface:#ffffff;
+  --pl-canvas:#f4f7fb;
+  --pl-field:#fbfcfe;
+  --pl-success:#247a45;
+  --pl-warning:#9a7310;
+  --pl-danger:#aa2d27;
+  color-scheme:light;
+}
+html{background:var(--pl-canvas)}
+body{
+  background:
+    radial-gradient(circle at 84% -10%,rgba(29,95,158,.07),transparent 28rem),
+    var(--pl-canvas);
+  color:var(--pl-ink);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+header{
+  background:rgba(255,255,255,.96);
+  color:var(--pl-ink);
+  border-bottom:1px solid var(--pl-line);
+  box-shadow:0 1px 0 rgba(11,47,87,.02);
+  padding-top:calc(14px + env(safe-area-inset-top));
+  padding-bottom:14px;
+}
+.header-row{align-items:center;max-width:1180px;margin:0 auto}
+.brand-shell{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{
+  width:44px;height:44px;flex:0 0 44px;
+  display:grid;place-items:center;
+  border:1px solid #b9c9da;
+  border-radius:50%;
+  background:linear-gradient(180deg,#fff,#f6f9fc);
+  box-shadow:0 2px 9px rgba(11,47,87,.08);
+}
+.brand-mark svg{width:34px;height:34px;fill:none;stroke:var(--pl-navy);stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
+.profile-header-photo{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.brand-copy{min-width:0}
+#appTitle{
+  color:var(--pl-navy);
+  font-weight:760;
+  letter-spacing:-.035em;
+  font-size:27px;
+}
+#appTagline{
+  color:#74849a;
+  font-size:12px;
+  letter-spacing:.025em;
+  margin-top:3px;
+}
+.version-badge{
+  color:var(--pl-navy);
+  background:#eef4fa;
+  border:1px solid #d9e5f0;
+  border-radius:8px;
+  padding:5px 8px;
+  font-size:10px;
+  letter-spacing:.04em;
+  box-shadow:none;
+}
+main{max-width:1180px;padding:22px 22px 34px}
+.card{
+  background:rgba(255,255,255,.985);
+  border:1px solid var(--pl-line);
+  border-radius:16px;
+  box-shadow:0 7px 24px rgba(29,52,77,.055);
+  padding:16px;
+}
+.section-title{
+  color:#415a77;
+  font-size:11px;
+  line-height:1.2;
+  text-transform:uppercase;
+  letter-spacing:.095em;
+  font-weight:800;
+  margin:24px 2px 9px;
+}
+.section-title.inner{
+  color:#516b87;
+  font-size:10px;
+  margin-top:18px;
+}
+.hint,.small,.airport-info{color:var(--pl-muted)}
+.hint{line-height:1.5}
+label{
+  color:#4d6077;
+  font-size:11px;
+  letter-spacing:.01em;
+  font-weight:720;
+}
+input,select,textarea{
+  border:1px solid var(--pl-line-strong);
+  background:var(--pl-field);
+  color:var(--pl-ink);
+  border-radius:9px;
+  padding:11px 12px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.75);
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:#6797c4;
+  background:#fff;
+  box-shadow:0 0 0 3px rgba(29,95,158,.11);
+}
+input[readonly]{
+  background:#f1f5f9;
+  color:#314761;
+  border-color:#d7e0ea;
+}
+.prefix-input{
+  border:1px solid var(--pl-line-strong);
+  border-radius:9px;
+  background:var(--pl-field);
+}
+.prefix-input:focus-within{
+  border-color:#6797c4;
+  box-shadow:0 0 0 3px rgba(29,95,158,.11);
+}
+.prefix-input span{
+  color:var(--pl-navy);
+  background:#edf3f8;
+  border-right:1px solid var(--pl-line);
+}
+button,.filebtn{
+  min-height:40px;
+  border-radius:9px;
+  letter-spacing:.005em;
+  transition:transform .12s ease,box-shadow .12s ease,background .12s ease,border-color .12s ease;
+}
+button:active,.filebtn:active{transform:translateY(1px)}
+.primary{
+  background:linear-gradient(180deg,#174d82,#0e3b6b);
+  color:#fff;
+  border:1px solid #0d3762;
+  box-shadow:0 3px 9px rgba(11,47,87,.16);
+}
+.primary:hover{background:linear-gradient(180deg,#1b568f,#124473)}
+.secondary{
+  background:#f1f5f9;
+  color:#243b56;
+  border:1px solid #d8e1eb;
+}
+.danger{
+  background:#fff2f2;
+  color:#9d2d2d;
+  border:1px solid #f0cece;
+}
+.totals,.formula{
+  background:#edf4fb;
+  color:#173c64;
+  border:1px solid #d7e5f2;
+  border-radius:10px;
+}
+.flight,.rowitem{
+  border-bottom:1px solid #e7edf4;
+  padding:13px 4px;
+}
+.flight:first-child,.rowitem:first-child{padding-top:5px}
+.route{color:var(--pl-navy);font-size:15px;letter-spacing:.01em}
+.meta{color:#31445d}
+.pill{
+  background:#edf2f7;
+  color:#53667c;
+  border:1px solid #e0e8f0;
+  padding:3px 7px;
+}
+.pill.green{border-color:#cde8d6}
+.pill.red{border-color:#f1cccc}
+.pill.amber,.pill.warning{border-color:#eadca8}
+.stat-row{border-bottom:1px solid #e7edf4;padding:10px 2px}
+.stat-row span{color:#51647a}
+.stat-row b{color:var(--pl-navy);font-variant-numeric:tabular-nums}
+.month-separator,.roster-month-separator{
+  color:var(--pl-navy);
+  font-size:14px;
+  letter-spacing:.01em;
+  margin-top:28px;
+}
+.month-separator::after,.roster-month-separator::after{background:#dce5ef}
+.duty-week-row{
+  grid-template-columns:100px minmax(0,1fr) auto;
+  gap:16px;
+  padding:16px 4px;
+  border-bottom:1px solid #e7edf4;
+}
+.duty-week-date b{color:var(--pl-navy);font-size:13px}
+.duty-week-main>b{color:#1f3550}
+.duty-week-time b{color:var(--pl-navy);font-variant-numeric:tabular-nums}
+.today-duty-row{
+  background:linear-gradient(90deg,rgba(29,95,158,.075),rgba(29,95,158,.018));
+  margin:0 -10px;
+  padding:15px 10px;
+  border-radius:10px;
+  border-bottom:0;
+}
+.roster-day-off{
+  background:rgba(36,122,69,.055);
+  border-radius:9px;
+  padding-left:10px;padding-right:10px;
+}
+.ftl-limit-row{border:1px solid transparent}
+.ftl-limit-row.ftl-green{background:#f0f8f3;border-color:#d8eadf}
+.ftl-limit-row.ftl-yellow{background:#fff9e9;border-color:#eee1b5}
+.ftl-limit-row.ftl-red{background:#fff2f2;border-color:#f0d0d0}
+.sync-status{
+  border-radius:10px;
+  border-color:var(--pl-line);
+}
+.smart-autocomplete{
+  border-color:var(--pl-line-strong);
+  border-radius:10px;
+  box-shadow:0 16px 38px rgba(15,39,65,.16);
+}
+.smart-autocomplete button{color:var(--pl-ink)}
+.view-toolbar{margin-bottom:12px}
+.view-add-btn{padding-inline:18px}
+.payroll-total b{color:var(--pl-navy)}
+.payroll-eur b{color:#264d77}
+.payroll-total-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+.payroll-source-total,.payroll-converted-total{min-width:0;padding:4px 8px}
+.payroll-converted-total{border-left:1px solid var(--pl-line)}
+.payroll-source-total b,.payroll-converted-total b{overflow-wrap:anywhere}
+.profile-photo-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.profile-photo-preview{width:62px;height:62px;flex:0 0 62px;border:1px solid var(--pl-line-strong);border-radius:50%;overflow:hidden;display:grid;place-items:center;background:var(--pl-field);color:var(--pl-muted);font-size:9px;text-align:center;padding:5px}
+.profile-photo-preview img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.aircraft-breakdown-values{display:flex;flex-direction:column;gap:3px;text-align:right;white-space:nowrap}
+.aircraft-breakdown-values span{font-size:12px;color:var(--pl-muted)}
+.expiry-row{
+  border-bottom:1px solid #e7edf4;
+  border-radius:9px;
+}
+.screenshot-preview-wrap{
+  background:#f8fafc;
+  border-color:#dce5ef;
+}
+.screenshot-review-table th{
+  background:#edf3f8;
+  color:#3e5873;
+}
+.screenshot-review-table th,.screenshot-review-table td{border-color:#dce5ef}
+
+/* Desktop / wide tablet: restrained navigation rail */
+.nav{
+  width:88px;
+  background:rgba(255,255,255,.97);
+  border-right:1px solid var(--pl-line);
+  box-shadow:2px 0 16px rgba(25,48,75,.025);
+  padding-left:7px;
+  padding-right:7px;
+}
+.nav button{
+  min-height:58px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  color:#718196;
+  background:transparent;
+  border:1px solid transparent;
+  border-radius:11px;
+  font-size:9px;
+  font-weight:650;
+  letter-spacing:.01em;
+}
+.nav button svg{
+  width:20px;height:20px;
+  fill:none;stroke:currentColor;stroke-width:1.6;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.nav button.active{
+  color:var(--pl-navy);
+  background:#eaf2fb;
+  border-color:#d8e6f3;
+  box-shadow:none;
+}
+.nav button:first-child{margin-top:63px}
+
+/* App-like bottom tab bar on phones and iPads in portrait/smaller widths */
+@media(max-width:900px){
+  body{
+    padding-left:0;
+    padding-bottom:calc(78px + env(safe-area-inset-bottom));
+  }
+  header{
+    margin-left:0;
+    padding-left:16px;
+    padding-right:16px;
+  }
+  .header-row{max-width:none}
+  main{
+    padding:16px 14px 24px;
+    max-width:760px;
+  }
+  .nav{
+    top:auto;
+    left:0;right:0;bottom:0;
+    width:100%;
+    height:calc(66px + env(safe-area-inset-bottom));
+    padding:6px 6px env(safe-area-inset-bottom);
+    display:grid;
+    grid-template-columns:repeat(7,minmax(0,1fr));
+    overflow:visible;
+    border-right:0;
+    border-top:1px solid rgba(190,204,219,.9);
+    background:rgba(255,255,255,.94);
+    backdrop-filter:blur(18px) saturate(145%);
+    -webkit-backdrop-filter:blur(18px) saturate(145%);
+    box-shadow:0 -6px 20px rgba(23,47,73,.065);
+  }
+  .nav button{
+    min-height:54px;
+    margin:0;
+    padding:4px 1px 3px;
+    border-radius:10px;
+    font-size:9px;
+    line-height:1;
+    gap:3px;
+  }
+  .nav button:first-child{margin-top:0}
+  .nav button svg{width:19px;height:19px}
+  .nav button.active{
+    background:transparent;
+    border-color:transparent;
+    color:#0e4f88;
+    box-shadow:none;
+  }
+  .nav button.active svg{stroke-width:1.9}
+  .card{border-radius:14px;box-shadow:0 5px 18px rgba(26,51,78,.045)}
+  .section-title{margin-top:21px}
+  .entries-next-duty-anchor,.roster-today-anchor{scroll-margin-top:12px}
+}
+@media(max-width:520px){
+  #appTitle{font-size:21px}
+  .brand-mark{width:38px;height:38px;flex-basis:38px}
+  .brand-mark svg{width:29px;height:29px}
+  #appTagline{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .version-badge{font-size:9px;padding:4px 6px}
+  .payroll-total-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .payroll-total b,.payroll-eur b{font-size:19px}
+  .payroll-source-total,.payroll-converted-total{padding:2px 5px}
+  .aircraft-breakdown-row{grid-template-columns:minmax(0,1fr) auto}
+  main{padding:12px 11px 22px}
+  .card{padding:13px}
+  .form-grid{gap:11px}
+  .duty-week-row{
+    grid-template-columns:78px minmax(0,1fr);
+    gap:10px;
+    padding:14px 2px;
+  }
+  .duty-week-time{grid-column:2;text-align:left;margin-top:-4px}
+  .nav{padding-left:2px;padding-right:2px}
+  .nav button{font-size:8px}
+}
+
+
+/* =====================================================================
+   v5.10.0 — Expiry workflow + Payroll cleanup
+   ===================================================================== */
+
+/* PAYROLL */
+.payroll-month-field input[type="month"]{
+  -webkit-appearance:auto;
+  appearance:auto;
+  border:0;
+  border-top:1px solid var(--pl-line-strong);
+  border-bottom:1px solid var(--pl-line-strong);
+  border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  text-align:center;
+  font-weight:760;
+  color:var(--pl-navy);
+  padding:16px 8px;
+}
+.payroll-month-field input[type="month"]::-webkit-calendar-picker-indicator{opacity:1;cursor:pointer}
+.payroll-month-field input[type="month"]:focus{
+  border-color:#8aa9c6;
+  box-shadow:none;
+  background:rgba(234,242,251,.28);
+}
+.payroll-control-card .payroll-head{align-items:end}
+.payroll-breakdown-card{padding:6px;overflow:hidden}
+.pay-breakdown-row{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 86px minmax(145px,auto);
+  gap:12px;
+  align-items:center;
+  padding:13px 14px;
+  border:0;
+  border-radius:8px;
+}
+.pay-breakdown-row.pay-breakdown-alt{background:#f0f5fa}
+.pay-breakdown-label{
+  color:#405671;
+  font-weight:720;
+  text-transform:uppercase;
+  letter-spacing:.015em;
+}
+.pay-breakdown-qty{
+  color:var(--pl-navy);
+  font-weight:800;
+  text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.pay-breakdown-amount{
+  color:var(--pl-navy);
+  text-align:right;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+
+/* EXPIRY — all visible text intentionally uppercase */
+#expiryView input[type="text"],
+#expiryView input:not([type]),
+#expiryView textarea{
+  text-transform:uppercase;
+}
+#expiryView .expiry-heading h3,
+#expiryView .expiry-main,
+#expiryView .expiry-meta,
+#expiryView .hint,
+#expiryView .small,
+#expiryView label{
+  text-transform:uppercase;
+}
+.expiry-title-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.expiry-lock-pill{
+  background:#e7eef6;
+  color:#3f5873;
+  border:1px solid #d1dde9;
+}
+.expiry-locked{
+  box-shadow:inset 0 0 0 1px rgba(85,105,128,.12);
+}
+.expiry-locked .expiry-main{opacity:.78}
+.expiry-single-add{
+  width:100%;
+  min-height:48px;
+  font-size:14px;
+}
+.expiry-add-wrap{margin:20px 0 6px}
+.expiry-sheet-backdrop,
+.expiry-photo-viewer{
+  position:fixed;
+  inset:0;
+  z-index:90;
+  background:rgba(12,29,48,.28);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:16px;
+}
+.expiry-sheet{
+  width:min(560px,100%);
+  background:#fff;
+  border:1px solid #d7e1ec;
+  border-radius:18px;
+  padding:12px;
+  box-shadow:0 24px 70px rgba(15,39,65,.22);
+}
+.expiry-sheet-title{
+  text-align:center;
+  color:#50677f;
+  font-size:11px;
+  font-weight:850;
+  letter-spacing:.09em;
+  padding:6px 8px 11px;
+}
+.expiry-sheet>button{
+  width:100%;
+  min-height:47px;
+  margin:3px 0;
+  background:#f5f8fb;
+  color:var(--pl-navy);
+  border:1px solid #e0e8f0;
+  text-align:left;
+  padding-left:16px;
+}
+.expiry-sheet>button.secondary{
+  text-align:center;
+  margin-top:8px;
+}
+.expiry-photo-actions{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.expiry-photo-link,.link-button{
+  display:inline;
+  width:auto;
+  min-height:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:#0e4f88;
+  font-weight:800;
+  text-decoration:underline;
+  cursor:pointer;
+}
+.danger-link{color:#a52b2b}
+.expiry-photo-viewer{align-items:center}
+.expiry-photo-dialog{
+  width:min(760px,100%);
+  max-height:88vh;
+  overflow:auto;
+  background:#fff;
+  border:1px solid #d7e1ec;
+  border-radius:16px;
+  padding:12px;
+  box-shadow:0 24px 70px rgba(15,39,65,.22);
+}
+.expiry-photo-dialog-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+  color:var(--pl-navy);
+}
+.expiry-photo-dialog img{
+  width:100%;
+  max-height:74vh;
+  object-fit:contain;
+  display:block;
+  background:#f4f7fb;
+  border-radius:10px;
+}
+.expiry-photo-field .small{margin-top:7px}
+
+@media(max-width:520px){
+  .pay-breakdown-row{
+    grid-template-columns:minmax(0,1fr) 58px 118px;
+    gap:7px;
+    padding:12px 9px;
+  }
+  .pay-breakdown-label{font-size:11px}
+  .pay-breakdown-qty{font-size:12px}
+  .pay-breakdown-amount{font-size:12px}
+}
+
+/* v5.10.2 roster editor / anchored return */
+#rosterEditorWrap{scroll-margin-top:14px}
+#entryBackBtn{white-space:nowrap}
+@media(max-width:520px){#flightForm .actions{display:grid;grid-template-columns:1fr 1fr}#entryBackBtn{grid-column:1/-1}}
+
+/* v6.0.3 — AeroLINE Connect additions only; v5.11.0 look & feel retained */
+.aeroline-title{margin-top:0}
+.aeroline-sync-grid{align-items:end}
+.aeroline-sync-action button{width:100%;min-height:44px}
+.aeroline-setup{margin-top:12px;border-top:1px solid #e5e7eb;padding-top:10px}
+.aeroline-setup summary{cursor:pointer;font-size:12px;font-weight:800;color:#475569}
+.aeroline-status{margin-top:12px;margin-bottom:8px}
+.aeroline-status[data-state="idle"]{background:#f8fafc}
+
+/* v8.2.0 — Roster completion state */
+.roster-sector-completed{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.roster-all-completed{background:rgba(34,197,94,.08);border-radius:10px;padding-left:10px;padding-right:10px}
+
+/* v8.3.0 — local unsaved-entry draft shelf */
+.draft-shelf{margin:0 0 14px;padding:10px;border:1px solid var(--pl-line);border-radius:14px;background:var(--pl-field,#f7f8fa)}
+.draft-shelf-title{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;font-size:.9rem}
+.draft-shelf-title span{font-size:.78rem;opacity:.7}
+.draft-shelf-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--pl-line);font-size:.82rem}
+.draft-shelf-row:first-of-type{border-top:0}
+.draft-shelf-row.active>span{font-weight:700}
+.draft-shelf-row>div{display:flex;gap:6px;flex-shrink:0}
+.draft-shelf-row button{padding:6px 9px;font-size:.76rem}
+@media(max-width:640px){.draft-shelf-row{align-items:flex-start;flex-direction:column}.draft-shelf-row>div{width:100%}.draft-shelf-row button{flex:1}}
+
+/* v9.3 — approved graphical Roster calendar only */
+#rosterView:not(.hidden){display:flex;flex-direction:column}
+#rosterView>.section-title{order:0}
+#rosterView>.roster-calendar-card{order:1}
+#rosterView>.card:not(.roster-calendar-card):not(.roster-aeroline-card){order:2}
+#rosterView>.roster-aeroline-card{order:3}
+.roster-calendar-card{padding:0;overflow:hidden}
+.roster-calendar-shell{padding:16px;background:#fff;touch-action:pan-y}
+.roster-month-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.roster-month-row label{font-size:12px;font-weight:750;color:#51657c}
+.roster-month-row input{width:100%}
+.roster-calendar-arrow{width:42px;height:42px;padding:0;border-radius:50%;background:#edf3f9;color:var(--pl-navy);font-size:27px;line-height:1}
+.roster-calendar-actions{display:flex;justify-content:flex-end;margin:12px 0 8px}
+.roster-calendar-actions button{padding:7px 12px}
+.roster-month-strip{display:flex;gap:7px;overflow-x:auto;padding:5px 1px 11px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.roster-month-strip::-webkit-scrollbar{display:none}
+.roster-month-chip{flex:0 0 auto;min-width:48px;padding:7px 9px;border-radius:999px;background:#eef3f8;color:#51657c;font-size:10px;font-weight:850}
+.roster-month-chip.active{background:var(--pl-navy);color:#fff}
+.roster-weekdays,.roster-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.roster-weekdays{border-top:1px solid #e4ebf2;border-left:1px solid #e4ebf2}
+.roster-weekdays span{padding:8px 2px;text-align:center;border-right:1px solid #e4ebf2;color:#6b7280;font-size:9px;font-weight:850;letter-spacing:.03em}
+.roster-calendar-viewport{width:100%;overflow:hidden;touch-action:pan-y;overscroll-behavior-x:contain}
+.roster-calendar-track{display:flex;width:100%;transform:translate3d(-100%,0,0);transition:transform 240ms cubic-bezier(.22,.61,.36,1);will-change:transform}
+.roster-calendar-track.dragging{transition:none}
+.roster-calendar-panel{flex:0 0 100%;min-width:0}
+.roster-calendar-grid{border-top:1px solid #e4ebf2;border-left:1px solid #e4ebf2}
+.roster-calendar-day{
+  min-width:0;
+  min-height:82px;
+  padding:6px 4px;
+  border-radius:0;
+  border-right:1px solid #e4ebf2;
+  border-bottom:1px solid #e4ebf2;
+  background:#fff;
+  color:#203750;
+  text-align:left;
+  overflow:hidden;
+}
+.roster-calendar-day.outside{background:#f8fafc;color:#a4afbb}
+.roster-calendar-day.today{box-shadow:inset 0 0 0 2px #3b82f6}
+.roster-calendar-day.selected{background:var(--pl-navy);color:#fff;box-shadow:inset 0 0 0 2px var(--pl-navy)}
+.roster-day-number{display:block;margin-bottom:5px;font-size:11px;font-weight:850}
+.roster-day-events{display:flex;flex-direction:column;gap:3px;min-width:0}
+.roster-event,.roster-event-more{display:block;overflow:hidden;padding:2px 3px;border-radius:4px;font-size:8px;font-weight:800;line-height:1.2;text-overflow:ellipsis;white-space:nowrap}
+.roster-event-flight{background:#dbeafe;color:#1d4ed8}
+.roster-event-off{background:#e5e7eb;color:#4b5563}
+.roster-event-stby{background:#ffedd5;color:#9a3412}
+.roster-event-sim{background:#ede9fe;color:#6d28d9}
+.roster-event-positioning{background:#dcfce7;color:#166534}
+.roster-event-ground{background:#cffafe;color:#155e75}
+.roster-event-duty{background:#e0e7ff;color:#3730a3}
+.roster-event-more{background:transparent;color:#64748b;padding-left:0}
+.roster-calendar-day.selected .roster-event,.roster-calendar-day.selected .roster-event-more{background:rgba(255,255,255,.18);color:#fff}
+.roster-agenda{border-top:1px solid #dce5ee;padding:16px;background:#fbfcfe;scroll-margin-top:12px}
+.roster-agenda-title{color:var(--pl-navy);font-size:15px;font-weight:850;margin-bottom:7px}
+.roster-agenda-list{background:#fff;border:1px solid #e1e8ef;border-radius:12px;padding:0 12px;overflow:hidden}
+.roster-agenda-row{margin:0;padding:13px 3px}
+.roster-agenda-clickable{cursor:pointer;transition:background .15s ease,transform .15s ease}
+.roster-agenda-clickable:hover,.roster-agenda-clickable:focus{background:#eef5fb;outline:none}
+.roster-agenda-clickable:active{transform:scale(.992)}
+#addView{touch-action:pan-y}
+@media(max-width:640px){
+  .roster-calendar-shell{padding:13px 9px}
+  .roster-calendar-day{min-height:65px;padding:5px 2px}
+  .roster-day-number{font-size:10px;margin-bottom:3px}
+  .roster-event,.roster-event-more{font-size:7px;padding:2px}
+  .roster-agenda{padding:13px 9px}
+  .roster-agenda-list{padding:0 9px}
+  .roster-agenda-row{align-items:flex-start}
+}
+
+
+/* v8.4.0 — Logbook search / bulk lock / import progress */
+.logbook-toolbar{gap:10px;align-items:center}.logbook-toolbar-actions{display:flex;gap:8px;flex-wrap:wrap}
+.logbook-search-card label{display:block;font-weight:700;margin-bottom:7px}.logbook-search-row{display:flex;gap:8px;align-items:center}.logbook-search-row input{flex:1;min-width:0}.logbook-search-stats{margin-top:10px;line-height:1.5}
+.logbook-entry-clickable{cursor:pointer;transition:background .15s ease,transform .15s ease}
+.logbook-entry-clickable:hover,.logbook-entry-clickable:focus{background:#eef5fb;outline:none}
+.logbook-entry-clickable:active{transform:scale(.992)}
+.logbook-auto-load-sentinel{height:1px;margin-top:1px}
+.import-progress-modal{position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.42);display:flex;align-items:center;justify-content:center;padding:22px}.import-progress-modal.hidden{display:none}.import-progress-card{width:min(520px,100%);background:#fff;border-radius:18px;padding:22px;box-shadow:0 24px 70px rgba(15,23,42,.28)}.import-progress-track{height:14px;background:#e7edf5;border-radius:999px;overflow:hidden;margin:14px 0 8px}.import-progress-bar{height:100%;width:0;background:#1f6feb;border-radius:999px;transition:width .18s ease}.import-progress-percent{font-size:24px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:640px){.logbook-search-row{align-items:stretch}.logbook-search-row input{width:100%}.logbook-toolbar{align-items:stretch}.logbook-toolbar-actions{flex:1}.logbook-toolbar-actions button{width:100%}}
+.entry-checkbox-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:10px 0 16px}
+.entry-checkbox-grid .check-option{display:flex;align-items:center;gap:9px;min-height:44px;padding:10px 12px;border:1px solid var(--line,#dbe3ec);border-radius:12px;background:var(--card,#fff);font-weight:700}
+.entry-checkbox-grid .check-option input{width:20px;height:20px;margin:0}
+.time-group-table-wrap{overflow-x:auto;margin-top:12px}
+.time-group-table{width:100%;border-collapse:collapse;min-width:560px}
+.time-group-table th,.time-group-table td{padding:10px 8px;border-bottom:1px solid var(--line,#dbe3ec);text-align:center;vertical-align:middle}
+.time-group-table th:first-child{text-align:left}
+.time-group-table tbody th{font-weight:700}
+.time-group-table input[type="checkbox"]{width:20px;height:20px}
+.roster-month-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.roster-month-totals>div{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 6px;border:1px solid var(--line,#dbe3ec);border-radius:12px;background:var(--card,#fff);text-align:center}
+.roster-month-totals span{font-size:.72rem;font-weight:800;letter-spacing:.04em;color:var(--muted,#607080)}
+.roster-month-totals b{font-size:1rem}
+@media(max-width:520px){.roster-month-totals{gap:5px}.roster-month-totals>div{padding:9px 3px}.roster-month-totals span{font-size:.64rem}}

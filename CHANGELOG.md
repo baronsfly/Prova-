@@ -1,3 +1,32 @@
+## v11.6
+- Simulator-specific AeroLINE reporting fallback: Start - 1:30; Off Duty remains End + 0:30.
+- If AeroLINE trainerName contains the logged-in/user profile among multiple trainers, only that matched self name is stored in Instructor Name and Simulator Instructor is selected.
+- No other duty, flight, LogTen, credit, or calculation rules changed.
+
+## v11.5
+- Data authority hardening: manual > trusted source > calculation, field by field.
+- LogTen closed/locked records remain COMPLETED; unlocked LogTen records remain OPEN without downgrading their source reliability.
+- LogTen source values are preserved against later AeroLINE/calculated replacement.
+- Zero and 0:00 are preserved as valid values.
+- SIC calculation requires explicit SIC role.
+- Ground Instruction no longer falls back to Block; absent source data stays open for manual entry.
+- Removed elapsed-time/source-based completion deductions from Totals and approach totals.
+
+## v11.4
+- Trusted historical LogTen SFI/SFE > 0 now qualifies that simulator as user Instructor/Examiner for the 5:00 Credit proposal and Simulator Allowance, without guessing which checkbox role applied.
+- Core duplicate and LogTen merges now respect manual authority field-by-field instead of using whole-record manualOverride protection.
+- Field-level manual authority: saving a record no longer turns every populated field into a manual override.
+- AeroLINE re-import updates only fields that were not manually taken over; explicit manual fields remain authoritative.
+- On Duty / Off Duty preserve exact precedence: manual > source > calculated Schedule OUT -1:00 / Schedule IN +0:30.
+- Simulator trainer credit recalculation restored: Instructor/Examiner simulator proposes 5:00 unless Credit was explicitly manually overridden/imported.
+- Added field provenance metadata without duplicating operational values.
+
+## v11.3
+- Multi Pilot automatic calculation now reads Aircraft Type only; legacy `multiCrew` is discarded.
+- Ground Course GI Credit Hours fixed at exactly 5:00; TNE remains 0:00; removed configurable generic Ground Course credit setting.
+- Flight INSTRUCTION now forces Dual Given = Block unless a manual Dual Given override exists, independent of Auto Sync.
+- README corrected to match STBY, GI, Multi Pilot and Dual Given rules.
+
 ## v11.2
 - Unified all activity editing into the single Duty / Activity editor; removed the separate Add Duty editor and its write path.
 - Totals now sum each activity's final Total Duty value directly; duty-session reconstruction remains only for FTL analysis.
