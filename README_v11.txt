@@ -1,7 +1,7 @@
-PILOTLOG v11.5
+PILOTLOG v11.9
 ===============
 
-This build keeps the supplied v10.9 files unchanged and uses separate v11.5 assets.
+This build keeps the supplied v10.9 files unchanged and uses separate v11.9 assets.
 
 AUTHORITATIVE TIME FIELDS
 -------------------------
@@ -76,18 +76,18 @@ DATA AUTHORITY v11.4
 - Off Duty: manual > source > Schedule IN + 0:30.
 
 
-v11.5 DATA AUTHORITY / LOGTEN STATUS
+v11.9 DATA AUTHORITY / LOGTEN STATUS
 - LogTen closed records remain locked and COMPLETED.
-- LogTen unclosed records remain OPEN; their imported values are still trusted source values.
+- LogTen unclosed records remain OPEN; their imported values are still trusted source values and remain included in Logbook, Totals, Payroll, exports and calculations.
 - Imported LogTen fields are preserved as imported and are not replaced by AeroLINE or calculated fallbacks.
 - Manual authority is field-by-field. A manual field overrides source/calculated values without turning every field in the record into manual data.
 - 0 and 0:00 are real values, never treated as blank.
 - SIC auto value requires the activity role to be explicitly SIC.
 - Ground Instruction has no Block fallback: use a source value when available, otherwise leave it open for manual entry.
-- Totals and approaches do not infer completion from elapsed time or from source=LogTen; they follow Core activity status.
+- LogTen locked/open state is never an inclusion filter. The lock is only an editing-protection flag; source values remain usable in either state.
 
 
-PilotLog v11.7 — AeroLINE Simulator reporting / trainer rule
+PilotLog v11.9 — AeroLINE Simulator reporting / trainer rule
 - Simulator On Duty fallback only when AeroLINE has no explicit reporting time: Simulator Start - 1:30.
 - Simulator Off Duty fallback remains Simulator End + 0:30, unchanged from the existing release rule.
 - When AeroLINE trainerName contains the user among multiple trainers, store only the user name in Instructor Name and select Simulator Instructor. Other trainer names are not copied into the same Instructor field.

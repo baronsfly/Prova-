@@ -1,0 +1,22 @@
+PilotLog v12 — aggiornamento del blocco concordato
+
+Base: PilotLog_v11.9.zip fornito dall’utente.
+
+Modifiche:
+- Roster: badge verdi per i voli locked, dettaglio del giorno circa a metà schermo, data del calendario fissa in alto a sinistra, Today accanto al mese, linee sopra/sotto il mese; totale Block Hours effettive con precedenza ai valori manuali.
+- Attività: scelta del tipo prima della compilazione, Core ID Base32 di 10 caratteri, creazione DRAFT immediata e autosalvataggio nello stesso Core. Nessun Save/Done né pannello separato delle bozze. Le bozze precedenti vengono migrate nel Core.
+- Registration: campi Type e Variant separati e modificabili; ricerca sul servizio adsbdb già utilizzato dall’app. Nessun campo Sharklet.
+- Logbook: Registration, Actual OUT e Actual IN sotto la rotta.
+- Duty: comandi ON/OFF, stato aperto persistente nel Core, gestione delle date oltre mezzanotte, chiusura da ultimo Block In +30 minuti. Se manca il Block In, popup e duty aperto con End vuoto.
+- Payroll: importi e valute allineati. Payslip AutoCheck rimane futuro.
+- Trip: campi modificabili; il valore cash a zero ripristina il calcolo in MAD. Protezione dalle risposte FX tardive dopo un cambio dei valori.
+- Expiry: Instructor 365 giorni, OPC/LPC 90, Medical 45, EPC un mese di calendario, altro 15 giorni.
+
+Verifiche eseguite:
+26 controlli automatici sulla logica, controllo sintattico JavaScript e controllo dei collegamenti tra pulsanti e codice. Test senza accesso ai dati personali.
+La ricerca registration è stata provata con una risposta API simulata: la connessione reale al servizio non era disponibile nell’ambiente. Non è stata eseguita una prova visiva in browser né con AeroLINE/LogTen collegati.
+
+Consegna:
+Sorgenti aggiornati in questo ZIP; nessuna pubblicazione o modifica alla tua installazione attuale. Restano invariati icone, manifest e documentazione storica.
+
+Correzione della consegna: versione interna 12, file pilotlog-12.js / pilotlog-12.css / sw-12.js, cache pilotlog-v12-core-duty-v1. Identificativi Core, chiavi dei dati e protocollo di sincronizzazione invariati.
