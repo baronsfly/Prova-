@@ -1,22 +1,26 @@
-PilotLog v12 — aggiornamento del blocco concordato
+NexA / PilotLog 12.3
+Base: pilotlog12.2 fornita dall'utente.
 
-Base: PilotLog_v11.9.zip fornito dall’utente.
+MODIFICHE
+- Logbook: schede delle attività locked in verde.
+- Lock/Unlock disponibile anche aprendo SIM, DHD, DHP, Ground e altre attività dal Roster. I campi restano protetti fino allo sblocco.
+- Aircraft ID: campo condiviso da tutti i form portato a 18 caratteri digitabili.
+- Nomi: gli spazi non vengono più rimossi durante la digitazione.
+- Remarks in Add: tre righe leggibili, con altezza regolabile.
+- Totals: ILS + CAT I = CAT I; AUTOLAND + CAT III = CAT III. CAT III e CAT I sono le prime due categorie, seguite dalle altre. Dati importati originali conservati.
+- Tipo aeromobile in Totals selezionabile: apre il Logbook filtrato per codice ICAO, incluse le varianti. Clear elimina il filtro.
+- Roster: eliminati i Delete duty duplicati sulle schede, lo spazio vuoto e i testi segnati nelle foto. La cancellazione resta nell'editor dell'attività.
+- Roster: tre righe di orari (Z), (MAR), (L). La riga L usa il fuso di ciascun aeroporto; MAR usa Africa/Casablanca. Eventuali cambi di data sono indicati con +1d/-1d. Se il fuso dell'aeroporto non è disponibile, L mostra --:--.
+- Payroll Settings: Tax % accanto a ogni importo/tariffa; salvataggio automatico e aggiornamento immediato del Payroll. Zero significa no tax. Ogni fascia oraria usa la propria percentuale. Anche Arrears / adjustments ha una percentuale sulla stessa riga.
+- Payroll: totale after tax, lordo, trattenute e dettaglio netto per componente. Il dettaglio MAD/DHM resta disponibile anche senza conversione valutaria online.
+- Versione e cache offline aggiornate a 12.3. Chiavi del database conservate.
 
-Modifiche:
-- Roster: badge verdi per i voli locked, dettaglio del giorno circa a metà schermo, data del calendario fissa in alto a sinistra, Today accanto al mese, linee sopra/sotto il mese; totale Block Hours effettive con precedenza ai valori manuali.
-- Attività: scelta del tipo prima della compilazione, Core ID Base32 di 10 caratteri, creazione DRAFT immediata e autosalvataggio nello stesso Core. Nessun Save/Done né pannello separato delle bozze. Le bozze precedenti vengono migrate nel Core.
-- Registration: campi Type e Variant separati e modificabili; ricerca sul servizio adsbdb già utilizzato dall’app. Nessun campo Sharklet.
-- Logbook: Registration, Actual OUT e Actual IN sotto la rotta.
-- Duty: comandi ON/OFF, stato aperto persistente nel Core, gestione delle date oltre mezzanotte, chiusura da ultimo Block In +30 minuti. Se manca il Block In, popup e duty aperto con End vuoto.
-- Payroll: importi e valute allineati. Payslip AutoCheck rimane futuro.
-- Trip: campi modificabili; il valore cash a zero ripristina il calcolo in MAD. Protezione dalle risposte FX tardive dopo un cambio dei valori.
-- Expiry: Instructor 365 giorni, OPC/LPC 90, Medical 45, EPC un mese di calendario, altro 15 giorni.
+INSTALLAZIONE
+Pubblicare tutti i file della cartella sullo stesso indirizzo dell'app esistente, sostituendo index.html e aggiungendo le risorse 12.3. Ricaricare e verificare il badge v12.3. L'archivio non contiene dati personali né un database sostitutivo.
 
-Verifiche eseguite:
-26 controlli automatici sulla logica, controllo sintattico JavaScript e controllo dei collegamenti tra pulsanti e codice. Test senza accesso ai dati personali.
-La ricerca registration è stata provata con una risposta API simulata: la connessione reale al servizio non era disponibile nell’ambiente. Non è stata eseguita una prova visiva in browser né con AeroLINE/LogTen collegati.
+VERIFICHE
+Superati 10 gruppi di controlli sul codice e sui calcoli, 4 confronti Payroll 12.2/12.3 senza tassazione e un confronto con attività miste e percentuali diverse. Controllo sintattico JavaScript e riferimenti delle risorse superato.
+La verifica visiva in browser non è stata completata: l'ambiente ha bloccato l'apertura dell'app locale. Nessun test effettuato sul dispositivo iPhone o sul servizio di sincronizzazione reale.
 
-Consegna:
-Sorgenti aggiornati in questo ZIP; nessuna pubblicazione o modifica alla tua installazione attuale. Restano invariati icone, manifest e documentazione storica.
-
-Correzione della consegna: versione interna 12, file pilotlog-12.js / pilotlog-12.css / sw-12.js, cache pilotlog-v12-core-duty-v1. Identificativi Core, chiavi dei dati e protocollo di sincronizzazione invariati.
+SVILUPPO FUTURO
+Payslip AutoCheck: lettura PDF/dati dal sito, confronto con NexA e segnalazione di differenze e mancanze. Non implementato in questa versione, come concordato.

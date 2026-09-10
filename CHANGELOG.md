@@ -1,3 +1,7 @@
+# v12.3
+
+Logbook locked in verde; lock esteso agli editor Roster; Aircraft ID 18 caratteri; spazi nei nomi; Remarks più ampio; categorie CAT accorpate; filtro ICAO dai Totals; Roster con Z/MAR/L e interfaccia semplificata; tassazione per componente con Payroll after tax. Vedere AGGIORNAMENTO.txt per verifiche e dettagli.
+
 ## v11.9
 - AeroLINE Simulator import now reads the simulator airport/location directly from trainingCrewScheduleInfoList.trainLocOrFlight; no airport deduction is used for Simulator activities.
 - Roster now exposes an explicit Delete duty action. Flight duties delete all sectors in the selected duty group together; SIM/STBY/DHD/DHP/Ground/OFF delete the selected Core activity.
