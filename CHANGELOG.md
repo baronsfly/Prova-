@@ -1,3 +1,9 @@
+## v12.5
+
+- Packaging fix: deployment ZIP now contains app files at ZIP root, not inside an extra PilotLog_v12.x folder.
+- Version references, visible badge, JS, CSS and Service Worker updated to v12.5.
+- MAC / IBC payroll regime implementation retained from v12.4.
+
 ## v12.4
 - Advanced the build/version after the 12.3 build; no version number is reused.
 - Updated visible app version badge to v12.4.
