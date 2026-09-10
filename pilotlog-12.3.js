@@ -843,9 +843,11 @@ function timeGroupFinalValue(entry,key,allEntries=null){
   return 0;
 }
 
-const APP_DEFAULTS={homeBase:'CMN',flightPrefix:'MAC',aircraftPrefix:'CN-NM',profileName:'',profileRole:'Captain',profilePhotoData:'',currency:'MAD',timeGroups:{}};
+const APP_DEFAULTS={homeBase:'CMN',flightPrefix:'MAC',aircraftPrefix:'CN-NM',profileName:'',profileRole:'Captain',profilePhotoData:'',currency:'MAD',payrollRegime:'IBC',macDependents:0,timeGroups:{}};
 function appSettings(){return {...APP_DEFAULTS,...loadObject(APP_SETTINGS_KEY,{})}}
 function saveAppSettings(v){saveObject(APP_SETTINGS_KEY,{...appSettings(),...v,_updatedAt:new Date().toISOString()})}
+function payrollRegime(){return upper(appSettings().payrollRegime||'IBC')==='MAC'?'MAC':'IBC'}
+function macDependents(){return Math.max(0,Math.min(6,Math.trunc(Number(appSettings().macDependents)||0)))}
 const ISO_CURRENCIES=['AED','AFN','ALL','AMD','ANG','AOA','ARS','AUD','AWG','AZN','BAM','BBD','BDT','BGN','BHD','BIF','BMD','BND','BOB','BOV','BRL','BSD','BTN','BWP','BYN','BZD','CAD','CDF','CHE','CHF','CHW','CLF','CLP','CNY','COP','COU','CRC','CUC','CUP','CVE','CZK','DJF','DKK','DOP','DZD','EGP','ERN','ETB','EUR','FJD','FKP','GBP','GEL','GHS','GIP','GMD','GNF','GTQ','GYD','HKD','HNL','HTG','HUF','IDR','ILS','INR','IQD','IRR','ISK','JMD','JOD','JPY','KES','KGS','KHR','KMF','KPW','KRW','KWD','KYD','KZT','LAK','LBP','LKR','LRD','LSL','LYD','MAD','MDL','MGA','MKD','MMK','MNT','MOP','MRU','MUR','MVR','MWK','MXN','MXV','MYR','MZN','NAD','NGN','NIO','NOK','NPR','NZD','OMR','PAB','PEN','PGK','PHP','PKR','PLN','PYG','QAR','RON','RSD','RUB','RWF','SAR','SBD','SCR','SDG','SEK','SGD','SHP','SLE','SLL','SOS','SRD','SSP','STN','SVC','SYP','SZL','THB','TJS','TMT','TND','TOP','TRY','TTD','TWD','TZS','UAH','UGX','USD','USN','UYI','UYU','UYW','UZS','VED','VES','VND','VUV','WST','XAF','XAG','XAU','XBA','XBB','XBC','XBD','XCD','XDR','XOF','XPD','XPF','XPT','XSU','XTS','XUA','XXX','YER','ZAR','ZMW','ZWL'];
 const QUICK_CASH_CURRENCIES=['USD','TRY','EUR'];
 function appCurrency(){const c=upper(appSettings().currency||'MAD');return ISO_CURRENCIES.includes(c)?c:'MAD'}
@@ -903,11 +905,11 @@ async function aircraftByRegistration(registration){
   }finally{if(timer)clearTimeout(timer)}
 }
 async function applyAircraftRegistrationLookup(){
-  if(formLoading||$('reg')?.disabled||canonicalDutyType($('dutyTypeFlight')?.value||'Flight')!=='Flight')return false;
+  if(formLoading||canonicalDutyType($('dutyTypeFlight')?.value||'Flight')!=='Flight')return false;
   const registration=composeAircraftId($('reg')?.value||'');if(!registration)return false;
   const seq=++aircraftLookupSeq,entryId=$('editId').value;
   try{
-    const aircraft=await aircraftByRegistration(registration);if($('reg')?.disabled||seq!==aircraftLookupSeq||!aircraft||entryId!==$('editId').value||registration!==composeAircraftId($('reg').value))return false;
+    const aircraft=await aircraftByRegistration(registration);if(seq!==aircraftLookupSeq||!aircraft||entryId!==$('editId').value||registration!==composeAircraftId($('reg').value))return false;
     // A manually edited Aircraft Type always remains authoritative. The online
     // database only pre-fills the existing editable field.
 
@@ -947,7 +949,7 @@ BGY:{iata:'BGY',icao:'LIME',name:'Milan Bergamo Airport',city:'Bergamo',country:
 MXP:{iata:'MXP',icao:'LIMC',name:'Milan Malpensa Airport',city:'Milan',country:'IT',lat:45.6306,lon:8.72811,tz:'Europe/Rome'},
 NAP:{iata:'NAP',icao:'LIRN',name:'Naples International Airport',city:'Naples',country:'IT',lat:40.886,lon:14.2908,tz:'Europe/Rome'},
 CTA:{iata:'CTA',icao:'LICC',name:'Catania Fontanarossa Airport',city:'Catania',country:'IT',lat:37.4668,lon:15.0664,tz:'Europe/Rome'},
-FCO:{iata:'FCO',icao:'LIRF',name:'Rome Fiumicino Airport',city:'Rome',country:'IT',lat:41.8003,lon:12.3389,tz:'Europe/Rome'},
+FCO:{iata:'FCO',icao:'LIRF',name:'Rome Fiumicino Airport',city:'Rome',country:'IT',lat:41.8003,lon:12.2389,tz:'Europe/Rome'},
 BSL:{iata:'BSL',icao:'LFSB',name:'EuroAirport Basel Mulhouse Freiburg',city:'Basel',country:'CH',lat:47.59,lon:7.52991,tz:'Europe/Zurich'},
 SAW:{iata:'SAW',icao:'LTFJ',name:'Istanbul Sabiha Gökçen Airport',city:'Istanbul',country:'TR',lat:40.8986,lon:29.3092,tz:'Europe/Istanbul'},
 IST:{iata:'IST',icao:'LTFM',name:'Istanbul Airport',city:'Istanbul',country:'TR',lat:41.2753,lon:28.7519,tz:'Europe/Istanbul'},
@@ -1631,24 +1633,6 @@ function rosterCarryDefaultsForItem(r){
   return null;
 }
 
-function rosterTimeInZone(date,time,zone,baseDate){
-  if(!time||!zone)return '--:--';
-  const instant=parseUtcForRoster(date,time);if(!instant||!Number.isFinite(instant.getTime()))return '--:--';
-  try{
-    const parts=new Intl.DateTimeFormat('en-GB',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(instant);
-    const v=Object.fromEntries(parts.map(p=>[p.type,p.value])),localDate=`${v.year}-${v.month}-${v.day}`;
-    const days=Math.round((Date.parse(localDate+'T00:00:00Z')-Date.parse(baseDate+'T00:00:00Z'))/86400000);
-    return `${v.hour}:${v.minute}${days?` (${days>0?'+':''}${days}d)`:''}`;
-  }catch{return '--:--'}
-}
-async function rosterTimeLines(date,start,end,dep,arr,endDate=''){
-  let arrivalDate=endDate||date;
-  if(!endDate&&start&&end&&end<start){const d=new Date(date+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+1);arrivalDate=d.toISOString().slice(0,10)}
-  const [departure,arrival]=await Promise.all([airport(dep),airport(arr||dep)]);
-  const line=(zoneStart,zoneEnd,label)=>`<div class="roster-time-line">${esc(rosterTimeInZone(date,start,zoneStart,date))} – ${esc(rosterTimeInZone(arrivalDate,end,zoneEnd,date))} <b>(${label})</b></div>`;
-  return line('UTC','UTC','Z')+line('Africa/Casablanca','Africa/Casablanca','MAR')+line(departure?.tz,arrival?.tz,'L');
-}
-
 async function rosterGroupHtml(groups,interactive=false){
   if(!groups.length)return'<div class="empty">No roster activities for this day.</div>';
   let html='';
@@ -1658,7 +1642,7 @@ async function rosterGroupHtml(groups,interactive=false){
 
     if(u==='DAY OFF'||u==='OFF'){
       const action=interactive&&g.dutyId?` data-edit-roster-duty="${g.dutyId}" role="button" tabindex="0"`:'';
-      const deleteAction='';
+      const deleteAction=interactive&&g.dutyId?`<button type="button" class="danger roster-delete-duty-btn" data-delete-roster-duty="${esc(g.dutyId)}">Delete duty</button>`:'';
       html+=`<div class="rowitem roster-agenda-row roster-day-off${action?' roster-agenda-clickable':''}"${action}><div><b>${esc(displayDate(g.date))} • Day OFF</b>${g.remarks?`<div class="small">${esc(g.remarks)}</div>`:''}</div><div class="meta"><span class="small">OFF</span>${deleteAction}</div></div>`;
       continue;
     }
@@ -1666,15 +1650,17 @@ async function rosterGroupHtml(groups,interactive=false){
     if(g.kind==='flight'){
       const dutyIds=(g.items||[]).map(x=>x.id).filter(Boolean).join(',');
       for(const r of [...g.items].sort(compareLogbookEntries)){
-        const times=await rosterTimeLines(r.date,r.std,r.sta,r.dep,r.arr,r.schedInDate||''),done=rosterSectorCompleted(r);
+        const start=r.std?await localTime(r.date,r.std,r.dep):'--:--',end=r.sta?await localTime(r.date,r.sta,r.arr||r.dep):'--:--',done=rosterSectorCompleted(r);
         const info=r.aerolineTrainingLabel||r.aerolineTrainingDesc||'';
         const action=interactive?` data-roster-action="${r.id}" role="button" tabindex="0"`:'';
-        html+=`<div class="rowitem roster-agenda-row${interactive?' roster-agenda-clickable':''}${done?' roster-all-completed':''}"${action}><div><b>${done?'✓ ':''}${esc(r.flightNo?rosterFlightLabel(r.flightNo):'Flight')}</b><div class="route">${esc(r.dep||'?')} → ${esc(r.arr||'?')}</div>${info?`<div class="small">${esc(info)}</div>`:''}</div><div class="meta">${times}${done?'<span class="small">completed</span>':''}</div></div>`;
+        html+=`<div class="rowitem roster-agenda-row${interactive?' roster-agenda-clickable':''}${done?' roster-all-completed':''}"${action}><div><b>${done?'✓ ':''}${esc(r.flightNo?rosterFlightLabel(r.flightNo):'Flight')}</b><div class="route">${esc(r.dep||'?')} → ${esc(r.arr||'?')}</div>${info?`<div class="small">${esc(info)}</div>`:''}</div><div class="meta"><b>${esc(start)} – ${esc(end)}</b><br><span class="small">local time${done?' • completed':''}</span></div></div>`;
       }
+      if(interactive&&dutyIds)html+=`<div class="roster-duty-delete-row"><button type="button" class="danger roster-delete-duty-btn" data-delete-roster-duty="${esc(dutyIds)}">Delete duty</button></div>`;
       continue;
     }
 
-    const times=await rosterTimeLines(g.date,g.start,g.end,g.dep,g.arr);
+    const start=g.start?await localTime(g.date,g.start,g.dep):'--:--';
+    const end=g.end?await localTime(g.date,g.end,g.arr||g.dep):'--:--';
 
     let detail='';
     if(u==='DHD'||u==='DHP'){
@@ -1692,8 +1678,8 @@ async function rosterGroupHtml(groups,interactive=false){
     if(interactive&&g.entryId)action=` data-edit-roster-entry="${g.entryId}" role="button" tabindex="0"`;
     else if(interactive&&g.dutyId)action=` data-edit-roster-duty="${g.dutyId}" role="button" tabindex="0"`;
 
-    const deleteAction='';
-    html+=`<div class="rowitem roster-agenda-row${action?' roster-agenda-clickable':''}"${action}><div><b>${esc(displayDate(g.date))} • ${esc(type)}</b>${detail?`<div class="small">${detail}</div>`:''}</div><div class="meta">${times}</div></div>`;
+    const deleteId=g.entryId||g.dutyId||'',deleteAction=interactive&&deleteId?`<button type="button" class="danger roster-delete-duty-btn" data-delete-roster-duty="${esc(deleteId)}">Delete duty</button>`:'';
+    html+=`<div class="rowitem roster-agenda-row${action?' roster-agenda-clickable':''}"${action}><div><b>${esc(displayDate(g.date))} • ${esc(type)}</b>${detail?`<div class="small">${detail}</div>`:''}</div><div class="meta"><b>${esc(start)} – ${esc(end)}</b><br><span class="small">local time</span>${deleteAction}</div></div>`;
   }
 
   return html;
@@ -3809,17 +3795,6 @@ function dayOffEventLabel(ev){
   return `${first.dutyType||'Duty'}${first.dep?' • '+first.dep:''}`;
 }
 
-function payrollTaxPercent(value){return Math.min(100,Math.max(0,Number(value)||0))}
-function payrollTaxLine(key,label,gross,st,quantity='',override=null){
-  const rate=payrollTaxPercent(override===null?st.taxRates?.[key]:override),amount=Number(gross)||0;
-  const tax=amount*rate/100;
-  return{key,label,quantity,gross:amount,rate,tax,net:amount-tax};
-}
-function payrollTierLines(hours,st){
-  const limits=[Math.max(0,Number(st.t1Max)||0)];limits.push(Math.max(limits[0],Number(st.t2Max)||limits[0]));limits.push(Math.max(limits[1],Number(st.t3Max)||limits[1]));limits.push(Infinity);
-  let left=Math.max(0,Number(hours)||0),previous=0;
-  return limits.map((limit,i)=>{const h=Math.min(left,limit-previous);left-=h;previous=limit;const key=`t${i+1}Rate`;return payrollTaxLine(key,`Credit H — Tier ${i+1}`,h*Number(st[key]||0),st,fmt(h*60))});
-}
 function calculatePayrollProjection(month){
   const st=paySettings(),
     rosterPrimary=rosterMonthAvailable(month),
@@ -3848,12 +3823,71 @@ function calculatePayrollProjection(month){
     arrears=Number(extras.arrears||0),
     total=fixed+flightPay+trainingPay+layoverPay+simPay+dayOffPay+arrears;
 
-  const fixedDefs=[['base','Base'],['allowance','Allowance'],['transport','Transport'],['pos','POS Allowance'],['telephone','Telephone'],['uniform','Uniform'],['meal','Meal'],['deduction','Deduction']];
-  const seniorKey=(()=>{if(!st.joinDate)return 'seniority2';const [y,m]=month.split('-').map(Number);return(new Date(Date.UTC(y,m,0,23,59,59))-new Date(st.joinDate+'T00:00:00Z'))/(365.2425*86400000)>12?'seniority12':'seniority2'})();
-  const taxLines=[...fixedDefs.map(([key,label])=>payrollTaxLine(key,label,st[key],st)),payrollTaxLine(seniorKey,'Seniority',seniority,st,money(seniorPct)+'%'),...payrollTierLines(creditMins/60,st),payrollTaxLine('trainingRate','Training sectors',trainingPay,st,String(training)),payrollTaxLine('layoverRate','Layover',layoverPay,st,fmt(layMins)),payrollTaxLine('simAllowance','Simulator allowance',simPay,st,String(sims)),payrollTaxLine('dayOffRate','Call from Day OFF',dayOffPay,st,String(dayOffCount)),payrollTaxLine('arrears','Arrears / adjustments',arrears,st,'',extras.arrearsTax||0)];
-  const taxTotal=taxLines.reduce((n,line)=>n+line.tax,0),netTotal=taxLines.reduce((n,line)=>n+line.net,0);
-  return{st,extras,sourceName,rosterPrimary,dayOffEvents,dayOffCount,creditMins,nonFlightCreditCount:nonFlightCredit.count,nonFlightCreditMins:nonFlightCredit.mins,training,sims,layMins,layHours,tripResults,seniorPct,seniority,fixed,flightPay,trainingPay,layoverPay,simPay,dayOffPay,arrears,grossTotal:total,taxLines,taxTotal,total:netTotal};
+  return{st,extras,sourceName,rosterPrimary,dayOffEvents,dayOffCount,creditMins,nonFlightCreditCount:nonFlightCredit.count,nonFlightCreditMins:nonFlightCredit.mins,training,sims,layMins,layHours,tripResults,seniorPct,seniority,fixed,flightPay,trainingPay,layoverPay,simPay,dayOffPay,arrears,total};
 }
+
+// v12.3 MAC payroll model.
+// IBC calculation above is intentionally unchanged. MAC starts from the same contractual
+// amounts, applies the taxability observed in 2026 Air Arabia Maroc payslips, and grosses
+// protected regular taxable pay so that its net target is preserved. Positive arrears /
+// adjustments are treated as taxable, non-protected extra pay.
+const MAC_TAX={cnssRate:.0448,cnssCap:6000,amoRate:.0226,healthRate:.0112,cimrRate:.0375,professionalExpenseMonthlyCap:2917,professionalExpenseRate:.45,companyTopIrRate:.37,companyTopIrDeduction:2272.92,familyDeductionMonthlyPerPerson:41.67};
+function macIrFromRni(rni,dependents=0){
+  rni=Math.max(0,Number(rni)||0);dependents=Math.max(0,Math.min(6,Math.trunc(Number(dependents)||0)));
+  let ir=0;
+  // The upper bracket reproduces the regular Jul/Aug 2026 company payslips supplied for validation.
+  // Lower brackets retain the 2025/2026 Moroccan progressive schedule.
+  if(rni<=3333.33)ir=0;
+  else if(rni<=5000)ir=rni*.10-333.33;
+  else if(rni<=6666.67)ir=rni*.20-833.33;
+  else if(rni<=8333.33)ir=rni*.30-1500;
+  else if(rni<=15000)ir=rni*.34-1833.33;
+  else ir=rni*MAC_TAX.companyTopIrRate-MAC_TAX.companyTopIrDeduction;
+  ir-=dependents*MAC_TAX.familyDeductionMonthlyPerPerson;
+  return Math.max(0,ir);
+}
+function macTaxFromGross(taxableGross,cimrBase,dependents=0){
+  taxableGross=Math.max(0,Number(taxableGross)||0);cimrBase=Math.max(0,Math.min(taxableGross,Number(cimrBase)||0));
+  const cnss=Math.min(taxableGross,MAC_TAX.cnssCap)*MAC_TAX.cnssRate;
+  const amo=taxableGross*MAC_TAX.amoRate;
+  const health=taxableGross*MAC_TAX.healthRate;
+  const cimr=cimrBase*MAC_TAX.cimrRate;
+  const contributions=cnss+amo+health+cimr;
+  const professionalExpense=Math.min(taxableGross*MAC_TAX.professionalExpenseRate,MAC_TAX.professionalExpenseMonthlyCap);
+  const netTaxable=Math.max(0,taxableGross-contributions-professionalExpense);
+  const ir=macIrFromRni(netTaxable,dependents);
+  return{cnss,amo,health,cimr,contributions,professionalExpense,netTaxable,ir};
+}
+function calculateMacPayrollProjection(p){
+  const st=p.st,dependents=macDependents();
+  // Confirmed/observed non-taxable categories in the supplied MAC payslips:
+  // transport, telephone, uniform/salissure, meal and layover/DHD allowance.
+  const nonTaxableRegular=Number(st.transport||0)+Number(st.telephone||0)+Number(st.uniform||0)+Number(st.meal||0)+Number(p.layoverPay||0);
+  const postTaxFixed=Number(st.deduction||0);
+  // Base + seniority are CIMR-bearing. Other regular protected pay is taxable but not CIMR-bearing.
+  const cimrTarget=Math.max(0,Number(st.base||0)+Number(p.seniority||0));
+  const otherTaxableTarget=Math.max(0,Number(st.allowance||0)+Number(st.pos||0)+Number(p.flightPay||0)+Number(p.trainingPay||0)+Number(p.simPay||0)+Number(p.dayOffPay||0));
+  const regularTarget=Number(p.total||0)-Number(p.arrears||0);
+  const factorCimr=1/((1-MAC_TAX.amoRate-MAC_TAX.healthRate-MAC_TAX.cimrRate)*(1-MAC_TAX.companyTopIrRate));
+  const factorOther=1/((1-MAC_TAX.amoRate-MAC_TAX.healthRate)*(1-MAC_TAX.companyTopIrRate));
+  const baseCimrGross0=cimrTarget*factorCimr,otherGross0=otherTaxableTarget*factorOther;
+  function regularAt(scale){
+    const cimrGross=baseCimrGross0*scale,otherGross=otherGross0*scale,taxableGross=cimrGross+otherGross;
+    const tax=macTaxFromGross(taxableGross,cimrGross,dependents);
+    const net=taxableGross+nonTaxableRegular+postTaxFixed-tax.contributions-tax.ir;
+    return{scale,cimrGross,otherGross,taxableGross,tax,net};
+  }
+  let lo=.25,hi=3;
+  for(let i=0;i<80;i++){const mid=(lo+hi)/2;if(regularAt(mid).net<regularTarget)lo=mid;else hi=mid}
+  const regular=regularAt((lo+hi)/2);
+  const taxableExtra=Math.max(0,Number(p.arrears||0)),postTaxExtra=Math.min(0,Number(p.arrears||0));
+  const taxableGross=regular.taxableGross+taxableExtra,cimrBase=regular.cimrGross;
+  const tax=macTaxFromGross(taxableGross,cimrBase,dependents);
+  const grossPayroll=taxableGross+nonTaxableRegular+postTaxFixed+postTaxExtra;
+  const netPayroll=grossPayroll-tax.contributions-tax.ir;
+  return{...p,regime:'MAC',dependents,contractTarget:p.total,regularTarget,nonTaxableRegular,postTaxFixed,cimrTarget,otherTaxableTarget,cimrGross:regular.cimrGross,otherTaxableGross:regular.otherGross,taxableExtra,postTaxExtra,taxableGross,cimrBase,grossPayroll,netPayroll,tax,grossUpScale:regular.scale};
+}
+
 function fxStore(){return loadObject(FX_KEY,{})}
 function payrollFxTargetDate(month){const [y,m]=month.split('-').map(Number),last=new Date(Date.UTC(y,m,0)).getUTCDate(),day=Math.min(30,last);return `${y}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}`}
 function payrollConversionCurrency(){const cur=appCurrency();return cur==='MAD'?'EUR':cur}
@@ -3865,26 +3899,36 @@ async function getMonthFx(month,target=appCurrency()){
   const got=await fxForDate('MAD',target,targetDateStr),locked={...got,locked:true,provisional:false,from:'MAD',to:target};store[key]=locked;saveObject(FX_KEY,store);return locked;
 }
 const PAY_MAP={setJoinDate:'joinDate',setBase:'base',setAllowance:'allowance',setTransport:'transport',setPos:'pos',setTelephone:'telephone',setUniform:'uniform',setMeal:'meal',setDeduction:'deduction',setSeniority2:'seniority2',setSeniority12:'seniority12',setT1Max:'t1Max',setT1Rate:'t1Rate',setT2Max:'t2Max',setT2Rate:'t2Rate',setT3Max:'t3Max',setT3Rate:'t3Rate',setT4Rate:'t4Rate',setTrainingRate:'trainingRate',setLayoverRate:'layoverRate',setSimAllowance:'simAllowance',setDayOffRate:'dayOffRate'};
-function fillPaySettings(){const st=paySettings();Object.entries(PAY_MAP).forEach(([id,k])=>{if($(id))$(id).value=st[k]});document.querySelectorAll('[data-pay-tax]').forEach(el=>el.value=payrollTaxPercent(st.taxRates?.[el.dataset.payTax]))}
-function readPaySettings(){const st={taxRates:{}};document.querySelectorAll('[data-pay-tax]').forEach(el=>st.taxRates[el.dataset.payTax]=payrollTaxPercent(el.value));Object.entries(PAY_MAP).forEach(([id,k])=>st[k]=k==='joinDate'?$(id).value:Number($(id).value||0));return st}
+function fillPaySettings(){const st=paySettings();Object.entries(PAY_MAP).forEach(([id,k])=>{if($(id))$(id).value=st[k]})}
+function readPaySettings(){const st={};Object.entries(PAY_MAP).forEach(([id,k])=>st[k]=k==='joinDate'?$(id).value:Number($(id).value||0));return st}
 let payrollRenderToken=0;
-function renderPayrollBreakdown(p,displayCur='MAD',rate=1){
-  const displayValue=v=>(Number(v)||0)*rate,unit=currencyOutputCode(displayCur);
-  $('payBreakdown').innerHTML=`<div class="hint">${esc(p.sourceName)} • Credit H ${fmt(p.creditMins)} • NF CH ${fmt(p.nonFlightCreditMins)}</div>`+p.taxLines.map((line,i)=>`<div class="pay-breakdown-row ${i%2?'pay-breakdown-alt':''}"><span class="pay-breakdown-label">${esc(line.label)}</span><span class="pay-breakdown-qty">${esc(line.quantity)}</span><b class="money pay-breakdown-amount">${money(displayValue(line.net))} ${unit}<span class="pay-tax-note">${line.rate?`Gross ${money(displayValue(line.gross))} • Tax ${money(line.rate)}%: ${money(displayValue(line.tax))}`:'No tax (0%)'}</span></b></div>`).join('');
-  const remarks=p.extras.dayOffRemarks||{};$('payDayOffDetails').innerHTML=p.dayOffEvents.length?p.dayOffEvents.map(ev=>{const remark=remarks[ev.date]||'',premium=payrollTaxLine('dayOffRate','',p.st.dayOffRate,p.st).net;return `<div class="pay-dayoff-row"><div class="pay-dayoff-main"><b>${esc(displayDate(ev.date))}</b><div class="small">${esc(dayOffEventLabel(ev))}</div><div class="small">${moneyCurrency(displayValue(premium),displayCur)} premium after tax</div></div><div class="pay-dayoff-remark-wrap"><label>Remark</label><input class="pay-dayoff-remark" data-dayoff-date="${esc(ev.date)}" value="${esc(remark)}" placeholder="e.g. Not paid / email sent"></div></div>`}).join(''):'<div class="empty">No Day OFF calls in this payroll month.</div>';
-}
 async function renderPayroll(){
   const token=++payrollRenderToken,month=$('payrollMonth').value||monthNow(),displayCur=appCurrency(),cur=payrollConversionCurrency();$('payrollMonth').value=month;updateCurrencyUI();
-  const ex=monthExtras(month),p=PilotLogEngine.payroll(month);$('payArrears').value=ex.arrears||0;
-  if(document.activeElement!==$('payArrearsTax'))$('payArrearsTax').value=payrollTaxPercent(ex.arrearsTax);
-  $('payTotalSource').textContent=moneyCurrency(p.total,'MAD');$('payTotalMain').textContent='…';$('payFxStatus').textContent='Loading FX conversion…';
-  $('payTaxSummary').textContent=`Gross ${moneyCurrency(p.grossTotal,'MAD')} • Tax ${moneyCurrency(p.taxTotal,'MAD')} • After tax ${moneyCurrency(p.total,'MAD')}`;
-  renderPayrollBreakdown(p);
-  let fx;try{fx=await getMonthFx(month,cur)}catch{if(token!==payrollRenderToken)return;$('payTotalMain').textContent='FX unavailable';$('payFxStatus').textContent='FX unavailable. Total and breakdown are shown in MAD/DHM.';return}
-  if(token!==payrollRenderToken)return;
-  $('payTotalMain').textContent=moneyCurrency(p.total*Number(fx.rate||1),cur);
-  renderPayrollBreakdown(p,displayCur,displayCur==='MAD'?1:Number(fx.rate||1));
-  $('payFxStatus').innerHTML=`Authoritative total: MAD (DHM) • MAD → ${esc(cur)} ${Number(fx.rate).toFixed(6)} • ${esc(displayDate(fx.date))} ${fx.locked?'<span class="fx-lock">LOCKED</span>':'<span class="fx-live">LIVE</span>'}${fx.provisional?' • provisional until payroll FX lock':''}`;
+  const regime=payrollRegime(),ex=monthExtras(month),baseProjection=PilotLogEngine.payroll(month),p=regime==='MAC'?calculateMacPayrollProjection(baseProjection):baseProjection;
+  if($('payrollRegimeBadge'))$('payrollRegimeBadge').textContent=regime;
+  $('payMacSummaryWrap')?.classList.toggle('hidden',regime!=='MAC');
+  $('payArrears').value=ex.arrears||0;
+  const sourceTotal=regime==='MAC'?p.netPayroll:p.total;
+  $('payTotalSource').textContent=moneyCurrency(sourceTotal,'MAD');$('payTotalMain').textContent='…';$('payFxStatus').textContent='Loading FX conversion…';
+  let fx;try{fx=await getMonthFx(month,cur)}catch{if(token!==payrollRenderToken)return;$('payTotalMain').textContent='FX unavailable';$('payFxStatus').textContent='FX unavailable. The authoritative Payroll total remains safely displayed in MAD/DHM.';return}
+  if(token!==payrollRenderToken)return;const cv=v=>(Number(v)||0)*Number(fx.rate||1),displayValue=v=>displayCur==='MAD'?(Number(v)||0):cv(v),unit=currencyOutputCode(displayCur);
+  $('payTotalMain').textContent=moneyCurrency(cv(sourceTotal),cur);
+  if(regime==='MAC'){
+    const t=p.tax;
+    $('payMacSummary').innerHTML=[
+      ['Contract / protected net target',p.contractTarget],['Estimated gross payroll',p.grossPayroll],['Taxable gross',p.taxableGross],['CIMR base',p.cimrBase],['CNSS',-t.cnss],['AMO',-t.amo],['CIMR',-t.cimr],['Ass. Maladie',-t.health],['Professional expense deduction',-t.professionalExpense],['Net imposable',t.netTaxable],['IR',-t.ir],['MAC net payroll',p.netPayroll]
+    ].map(([n,v])=>`<div class="mac-summary-row"><span>${esc(n)}</span><b>${money(displayValue(v))} ${unit}</b></div>`).join('')+`<div class="hint mac-summary-note">MAC uses the 2026 Air Arabia Maroc tax treatment reconstructed from the supplied payslips. Regular protected pay is grossed to preserve its contractual net target; positive arrears/adjustments are taxable and are not gross-protected.</div>`;
+    $('payBreakdown').innerHTML=[
+      ['Data source',p.sourceName,0],['Regime','MAC',0],['Contract fixed salary','',p.fixed],['Seniority',money(p.seniorPct)+'%',p.seniority],['Credit H',fmt(p.creditMins),p.flightPay],['NF CH',String(p.nonFlightCreditCount),fmt(p.nonFlightCreditMins),'credit-info'],['Training sectors',String(p.training),p.trainingPay],['Layover (non-taxable)',fmt(p.layMins),p.layoverPay],['Simulator allowance',String(p.sims),p.simPay],['Call from Day OFF',String(p.dayOffCount),p.dayOffPay],['Arrears / adjustments (taxable, not protected)','',p.arrears]
+    ].map(([n,q,v,kind],i)=>`<div class="pay-breakdown-row ${i%2?'pay-breakdown-alt':''}"><span class="pay-breakdown-label">${esc(n)}</span><span class="pay-breakdown-qty">${esc(q)}</span><b class="money pay-breakdown-amount">${kind==='credit-info'?esc(v):((n==='Data source'||n==='Regime')?'—':money(displayValue(v))+' '+unit)}</b></div>`).join('');
+  }else{
+    if($('payMacSummary'))$('payMacSummary').innerHTML='';
+    $('payBreakdown').innerHTML=[
+      ['Data source',p.sourceName,0],['Fixed salary','',p.fixed],['Seniority',money(p.seniorPct)+'%',p.seniority],['Credit H',fmt(p.creditMins),p.flightPay],['NF CH',String(p.nonFlightCreditCount),fmt(p.nonFlightCreditMins),'credit-info'],['Training sectors',String(p.training),p.trainingPay],['Layover',fmt(p.layMins),p.layoverPay],['Simulator allowance',String(p.sims),p.simPay],['Call from Day OFF',String(p.dayOffCount),p.dayOffPay],['Arrears / adjustments','',p.arrears]
+    ].map(([n,q,v,kind],i)=>`<div class="pay-breakdown-row ${i%2?'pay-breakdown-alt':''}"><span class="pay-breakdown-label">${esc(n)}</span><span class="pay-breakdown-qty">${esc(q)}</span><b class="money pay-breakdown-amount">${kind==='credit-info'?esc(v):(n==='Data source'?'—':money(displayValue(v))+' '+unit)}</b></div>`).join('');
+  }
+  const remarks=p.extras.dayOffRemarks||{};$('payDayOffDetails').innerHTML=p.dayOffEvents.length?p.dayOffEvents.map(ev=>{const remark=remarks[ev.date]||'';return `<div class="pay-dayoff-row"><div class="pay-dayoff-main"><b>${esc(displayDate(ev.date))}</b><div class="small">${esc(dayOffEventLabel(ev))}</div><div class="small">${moneyCurrency(displayValue(p.st.dayOffRate||0),displayCur)} premium</div></div><div class="pay-dayoff-remark-wrap"><label>Remark</label><input class="pay-dayoff-remark" data-dayoff-date="${esc(ev.date)}" value="${esc(remark)}" placeholder="e.g. Not paid / email sent"></div></div>`}).join(''):'<div class="empty">No Day OFF calls in this payroll month.</div>';
+  $('payFxStatus').innerHTML=`${regime} • Authoritative total: MAD (DHM) • MAD → ${esc(cur)} ${Number(fx.rate).toFixed(6)} • ${esc(displayDate(fx.date))} ${fx.locked?'<span class="fx-lock">LOCKED</span>':'<span class="fx-live">LIVE</span>'}${fx.provisional?' • provisional until payroll FX lock':''}`;
 }
 
 /* Expiry / validity tracking */
@@ -4743,7 +4787,7 @@ function flightHtml(fs,full=false,creditContext=null){
 
     const openAttrs=full?` data-edit-flight="${esc(f.id)}" role="button" tabindex="0" aria-label="Open logbook entry ${esc(displayDate(f.date))} ${esc(f.flightNo||'')}"`:'';
     const rolePill=f.instruction?'<span class="pill green">INSTRUCTION</span>':f.simInstructor?'<span class="pill green">INSTRUCTOR</span>':f.simExaminer?'<span class="pill green">EXAMINER</span>':'';
-    html+=`<div class="flight${f.locked?' logbook-entry-locked':''}${full?' logbook-entry-clickable':''}" data-logbook-entry-id="${esc(f.id)}"${openAttrs}><div><div class="route">${esc(isSim(f)?(f.dep||'Simulator'):(f.dep||f.dutyType||'Entry'))}${!isSim(f)&&f.arr?` → ${esc(f.arr)}`:''}</div>${isFlight(f)?`<div class="small logbook-actuals"><span>Aircraft Registration: ${esc(f.reg||'—')}</span><span>Actual OUT: ${esc(f.out||'—')}${f.out?' Z':''}</span><span>Actual IN: ${esc(f.in||'—')}${f.in?' Z':''}</span></div>`:''}<div class="small">${esc(displayDate(f.date))} ${esc(f.flightNo||'')}</div>${startInfo}${f.activityStatus==='DRAFT'?'<span class="pill">DRAFT</span>':''}${rolePill}${f.callFromDayOff?'<span class="pill warning">Day OFF call</span>':''}${d}</div><div class="meta">${entryTimeGroupCardHtml(f,creditContext?.get(String(f.date||''))||null)}${full&&!f.locked?`<div class="list-actions"><button class="danger" data-delete-flight="${esc(f.id)}">Delete</button></div>`:''}</div></div>`;
+    html+=`<div class="flight${full?' logbook-entry-clickable':''}" data-logbook-entry-id="${esc(f.id)}"${openAttrs}><div><div class="route">${esc(isSim(f)?(f.dep||'Simulator'):(f.dep||f.dutyType||'Entry'))}${!isSim(f)&&f.arr?` → ${esc(f.arr)}`:''}</div>${isFlight(f)?`<div class="small logbook-actuals"><span>Aircraft Registration: ${esc(f.reg||'—')}</span><span>Actual OUT: ${esc(f.out||'—')}${f.out?' Z':''}</span><span>Actual IN: ${esc(f.in||'—')}${f.in?' Z':''}</span></div>`:''}<div class="small">${esc(displayDate(f.date))} ${esc(f.flightNo||'')}</div>${startInfo}${f.activityStatus==='DRAFT'?'<span class="pill">DRAFT</span>':''}${rolePill}${f.callFromDayOff?'<span class="pill warning">Day OFF call</span>':''}${d}</div><div class="meta">${entryTimeGroupCardHtml(f,creditContext?.get(String(f.date||''))||null)}${full&&!f.locked?`<div class="list-actions"><button class="danger" data-delete-flight="${esc(f.id)}">Delete</button></div>`:''}</div></div>`;
   });
 
   if(full&&!nextAnchorAdded)html+='<div id="entriesNextDutyAnchor" class="entries-next-duty-anchor" aria-hidden="true"></div>';
@@ -4854,7 +4898,7 @@ async function migrateLegacyFlightSnapshots(){
     localStorage.removeItem(LEGACY_FLIGHT_BACKUP_KEY);
   }catch(e){console.warn('Legacy recovery snapshot migration deferred',e)}
 }
-let logbookAircraftFilter='',logbookSearchQuery='',logbookRenderLimit=400,logbookAutoLoadObserver=null;
+let logbookSearchQuery='',logbookRenderLimit=400,logbookAutoLoadObserver=null;
 const LOGBOOK_RENDER_STEP=400;
 function observeLogbookAutoLoad(remaining){
   if(logbookAutoLoadObserver){logbookAutoLoadObserver.disconnect();logbookAutoLoadObserver=null}
@@ -4874,7 +4918,6 @@ function logbookSearchText(f){
   return [f.flightNo,f.dep,f.arr,f.reg,f.type,f.location,f.picName,f.sicName,f.soName,f.instructorName,f.role,f.remarks,logbookAirportText(f.dep),logbookAirportText(f.arr),logbookAirportText(f.location)].filter(Boolean).join(' ').toUpperCase();
 }
 function logbookMatchesQuery(f,q){
-  if(logbookAircraftFilter&&aircraftIcaoType(f)!==logbookAircraftFilter)return false;
   const terms=String(q||'').trim().toUpperCase().split(/\s+/).filter(Boolean);if(!terms.length)return true;const hay=logbookSearchText(f);return terms.every(t=>hay.includes(t));
 }
 function entriesByDate(rows){
@@ -4892,7 +4935,7 @@ function calculateLogbookStats(rows,total){
 }
 function renderLogbookSearchStats(rows,total){
   const el=$('logbookSearchStats');if(!el)return;const stats=PilotLogEngine.logbookStats(rows,total);
-  const q=String(logbookSearchQuery||'').trim()||logbookAircraftFilter;el.innerHTML=`<b>${stats.entries.toLocaleString('en-US')}</b>${logbookAircraftFilter?` • Aircraft ${esc(logbookAircraftFilter)}`:''} ${q?'matching':'logbook'} entr${stats.entries===1?'y':'ies'} • <b>${stats.sectors.toLocaleString('en-US')}</b> sectors • Block <b>${fmt(stats.block)}</b> • Credit <b>${fmt(stats.credit)}</b>${stats.simulators?` • Simulator <b>${stats.simulators}</b>`:''}${q?` • from ${stats.total.toLocaleString('en-US')} total`:''}`;
+  const q=String(logbookSearchQuery||'').trim();el.innerHTML=`<b>${stats.entries.toLocaleString('en-US')}</b> ${q?'matching':'logbook'} entr${stats.entries===1?'y':'ies'} • <b>${stats.sectors.toLocaleString('en-US')}</b> sectors • Block <b>${fmt(stats.block)}</b> • Credit <b>${fmt(stats.credit)}</b>${stats.simulators?` • Simulator <b>${stats.simulators}</b>`:''}${q?` • from ${stats.total.toLocaleString('en-US')} total`:''}`;
 }
 async function lockAllLogbookEntries(){
   const rows=entryActivityRows(),targets=rows.filter(f=>isCompletedLogbookEntry(f)&&!f.locked),count=targets.length;if(!count){alert('All Logbook entries are already locked.');return}
@@ -5147,12 +5190,6 @@ function buildAircraftTypeBreakdown(flying,simulators){
   simulators.forEach(f=>{const code=aircraftIcaoType(f);if(!code||!rows.has(code))return;const r=rows.get(code);r.variants.add(upper(f.type||f.aircraftType||code));r.simulator+=timeGroupFinalValue(f,'simulatorTime');r.simInstruction+=simInstrMins(f)});
   return[...rows.values()].sort((a,b)=>b.flight-a.flight||a.code.localeCompare(b.code)).map(r=>({...r,variants:[...r.variants].filter(Boolean).sort()}));
 }
-function approachTotalType(value){
-  const type=upper(value),compact=type.replace(/[\s_-]/g,'');
-  if(['ILS','CATI','CAT1'].includes(compact))return 'CAT I';
-  if(['AUTOLAND','CATIII','CAT3'].includes(compact))return 'CAT III';
-  return type;
-}
 function normalizedApproaches(entry){
   let rows=Array.isArray(entry?.approaches)&&entry.approaches.some(a=>upper(a?.type||''))?entry.approaches.map(a=>({type:upper(a?.type||''),quantity:Math.max(1,Number(a?.quantity)||1)})).filter(a=>a.type):[];
   if(!rows.length){const type=upper(entry?.approachType||'');if(type)rows=[{type,quantity:1}]}
@@ -5179,10 +5216,10 @@ function buildTotalsProjection(entries,now=new Date()){
     ['Last 28 days — Flight',rolling(28)],['Last 90 days — Flight',rolling(90)],
     ['Last 6 months — Flight',sum(flying,f=>dateOnly(f.date)>=sixMonthsAgo?totalFlightMins(f):0)],['Last 365 days — Flight',rolling(365)]
   ];
-  const standardApproachTypes=['CAT III','CAT I','LOC','RNAV','RNAV AR','VOR','VOR/DME','NDB','CRCL','VIS','GOA'],approaches={};
+  const standardApproachTypes=['CAT3','ILS','LOC','RNAV','RNAV AR','VOR','VOR/DME','NDB','CRCL','VIS','GOA'],approaches={};
   // LogTen stores approaches as their own rows and can associate them with
   // flight or simulator activity, so totals must inspect the complete log.
-  all.forEach(f=>normalizedApproaches(f).forEach(a=>approaches[approachTotalType(a.type)]=(Number(approaches[approachTotalType(a.type)])||0)+a.quantity));
+  all.forEach(f=>normalizedApproaches(f).forEach(a=>approaches[a.type]=(Number(approaches[a.type])||0)+a.quantity));
   const recorded=Object.keys(approaches),approachTypes=[...standardApproachTypes.filter(x=>recorded.includes(x)),...recorded.filter(x=>!standardApproachTypes.includes(x)).sort()];
   const approachCount=Object.values(approaches).reduce((n,v)=>n+(Number(v)||0),0),dayTakeoffs=sum(all,f=>Number(f.dayTakeoffs)||0),nightTakeoffs=sum(all,f=>Number(f.nightTakeoffs)||0),dayLandings=sum(all,f=>Number(f.dayLandings)||0),nightLandings=sum(all,f=>Number(f.nightLandings)||0);
   return{...model,periods,approachTypes,approaches,approachCount,dayTakeoffs,nightTakeoffs,dayLandings,nightLandings};
@@ -5211,8 +5248,8 @@ async function renderTotals(){
   // LogTen locked/open state never excludes its approaches from Totals.
   const approachRows=coreRows.filter(f=>normalizedApproaches(f).length&&activityIncludedInResults(f));
   const approaches={};
-  approachRows.forEach(f=>normalizedApproaches(f).forEach(a=>approaches[approachTotalType(a.type)]=(Number(approaches[approachTotalType(a.type)])||0)+a.quantity));
-  const standardApproachTypes=['CAT III','CAT I','LOC','RNAV','RNAV AR','VOR','VOR/DME','NDB','CRCL','VIS','GOA'];
+  approachRows.forEach(f=>normalizedApproaches(f).forEach(a=>approaches[a.type]=(Number(approaches[a.type])||0)+a.quantity));
+  const standardApproachTypes=['CAT3','ILS','LOC','RNAV','RNAV AR','VOR','VOR/DME','NDB','CRCL','VIS','GOA'];
   const recorded=Object.keys(approaches);
   model.approaches=approaches;
   model.approachTypes=[...standardApproachTypes.filter(x=>recorded.includes(x)),...recorded.filter(x=>!standardApproachTypes.includes(x)).sort()];
@@ -5232,7 +5269,7 @@ async function renderTotals(){
   ].join('');
   $('aircraftBreakdown').innerHTML=model.aircraftTypes.length?model.aircraftTypes.map(r=>{
     const details=[`Total ${fmt(r.flight)}`];if(r.pic)details.push(`PIC ${fmt(r.pic)}`);if(r.sic)details.push(`SIC ${fmt(r.sic)}`);if(r.instruction)details.push(`Instruction ${fmt(r.instruction)}`);if(r.simulator)details.push(`Simulator ${fmt(r.simulator)} (separate)`);if(r.simInstruction)details.push(`Sim instruction ${fmt(r.simInstruction)}`);
-    return`<div class="stat-row aircraft-breakdown-row" role="button" tabindex="0" data-aircraft-filter="${esc(r.code)}" aria-label="Open Logbook filtered by ${esc(r.code)}"><span><b>${esc(r.code)}</b><div class="small">ICAO • ${r.variants.map(esc).join(', ')}</div></span><div class="aircraft-breakdown-values">${details.map((x,i)=>`<${i?'span':'b'}>${esc(x)}</${i?'span':'b'}>`).join('')}</div></div>`;
+    return`<div class="stat-row aircraft-breakdown-row"><span><b>${esc(r.code)}</b><div class="small">ICAO • ${r.variants.map(esc).join(', ')}</div></span><div class="aircraft-breakdown-values">${details.map((x,i)=>`<${i?'span':'b'}>${esc(x)}</${i?'span':'b'}>`).join('')}</div></div>`;
   }).join(''):'<div class="empty">No aircraft flight time recorded.</div>';
 }
 
@@ -5338,8 +5375,8 @@ function saveTimeGroupSettingsFromForm(){
   const values=emptyTimeGroupSettings();document.querySelectorAll('[data-time-setting][data-time-option]').forEach(el=>{const key=el.dataset.timeSetting,option=el.dataset.timeOption;if(values[key]&&option in values[key])values[key][option]=!!el.checked});
   saveAppSettings({timeGroups:values});setEntryTypeUI();calcEntry();renderTotals();renderRoster();return values;
 }
-function renderSettings(){const st=appSettings();$('setHomeBase').value=st.homeBase||'CMN';$('setFlightPrefix').value=st.flightPrefix||'MAC';$('setAircraftPrefix').value=st.aircraftPrefix||'CN-NM';$('setProfileName').value=st.profileName||'';$('setProfileRole').value=st.profileRole||'Captain';if($('setCurrency'))$('setCurrency').value=appCurrency();$('autoSyncEnabled').value=autoSyncEnabled()?'yes':'no';$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||$('cloudEmail').value||'';if($('logTenArchiveStatus'))$('logTenArchiveStatus').textContent=logTenArchiveStatusText();updatePrefixUI();updateAppHeader();updateProfilePhotoSettings();updateCurrencyUI();renderTimeGroupSettings();fillPaySettings();renderWeeklyBackupStatus();updateCloudStatus();renderReconciliationReview();ensureAirportDb(false)}
-function setEntryLockedUI(locked){$('flightForm').querySelectorAll('input:not(#editId),select,textarea').forEach(el=>el.disabled=!!locked);$('lockEntryBtn').disabled=false;$('lockEntryBtn').textContent=locked?'🔓 Unlock':'🔒 Lock';$('entryLockStatus').textContent=locked?'LOCKED • All entry data are protected from editing.':'Inputs autosave in Core. Lock the entry when all data are final.';$('entryLockStatus').classList.toggle('success',!!locked);if($('coreIdDisplay'))$('coreIdDisplay').textContent=$('editId').value||'';if($('entryDeleteBtn'))$('entryDeleteBtn').disabled=!!locked;document.querySelectorAll('[data-counter-shortcut]').forEach(b=>b.disabled=!!locked);['dutyOnBtn','dutyOffBtn'].forEach(id=>{if($(id))$(id).disabled=!!locked})}
+function renderSettings(){const st=appSettings();$('setHomeBase').value=st.homeBase||'CMN';$('setFlightPrefix').value=st.flightPrefix||'MAC';$('setAircraftPrefix').value=st.aircraftPrefix||'CN-NM';$('setProfileName').value=st.profileName||'';$('setProfileRole').value=st.profileRole||'Captain';if($('setCurrency'))$('setCurrency').value=appCurrency();if($('setPayrollRegime'))$('setPayrollRegime').value=payrollRegime();if($('setMacDependents'))$('setMacDependents').value=macDependents();$('macDependentsSetting')?.classList.toggle('hidden',payrollRegime()!=='MAC');$('autoSyncEnabled').value=autoSyncEnabled()?'yes':'no';$('cloudEmail').value=localStorage.getItem(LAST_EMAIL_KEY)||$('cloudEmail').value||'';if($('logTenArchiveStatus'))$('logTenArchiveStatus').textContent=logTenArchiveStatusText();updatePrefixUI();updateAppHeader();updateProfilePhotoSettings();updateCurrencyUI();renderTimeGroupSettings();fillPaySettings();renderWeeklyBackupStatus();updateCloudStatus();renderReconciliationReview();ensureAirportDb(false)}
+function setEntryLockedUI(locked){$('flightForm').querySelectorAll('input:not(#editId),select,textarea').forEach(el=>el.disabled=!!locked);$('lockEntryBtn').disabled=false;$('lockEntryBtn').textContent=locked?'🔓 Unlock':'🔒 Lock';$('entryLockStatus').textContent=locked?'LOCKED • All entry data are protected from editing.':'Inputs autosave in Core. Lock the entry when all data are final.';$('entryLockStatus').classList.toggle('success',!!locked);if($('coreIdDisplay'))$('coreIdDisplay').textContent=$('editId').value||'';if($('entryDeleteBtn'))$('entryDeleteBtn').disabled=!!locked;document.querySelectorAll('[data-counter-shortcut]').forEach(b=>b.disabled=!!locked)}
 const ENTRY_DRAFT_FIELDS=['approachCategory','variant','editId','rosterLinkId','entryDraftId','dutyTypeFlight','date','flightNo','reg','type','courseType','trainerTypeInput','dep','arr','schedOut','schedIn','onDuty','offDuty','out','off','on','in','blockDisplay','totalFlightTimeDisplay','multiPilotDisplay','picDisplay','picUSDisplay','sicDisplay','ifrTimeDisplay','airTimeDisplay','night','picNightDisplay','simulatorTimeDisplay','sfiSfeDisplay','dualGivenDisplay','dualReceivedDisplay','groundInstructionDisplay','stbyTimeDisplay','creditDisplay','totalDutyDisplay','rolePicCheck','pfCheck','instructionCheck','examinerCheck','simInstructorCheck','simExaminerCheck','rhsCheck','callFromDayOff','picName','sicName','soName','instructorName','examinerName','purserName','attendant1Name','attendant2Name','attendant3Name','approachType','goArounds','dayTakeoffs','nightTakeoffs','dayLandings','nightLandings','delayReason','pax','fuelAboard','fuelBurned','fuelMinimum','remarks'];
 let entryDraftTimer=null;
 function entryDraftPool(){return []}
@@ -5351,7 +5388,7 @@ function coreFormSignature(){return JSON.stringify([ENTRY_DRAFT_FIELDS.map(id=>{
 function saveEntryDraft(){
   if(formLoading||savingCoreInput||!$('editId')?.value)return null;
   const existing=coreActivityRows().find(x=>x.id===$('editId').value);
-  if(!existing||existing.locked)return existing;
+  if(!existing||existing.locked&&!entryRosterActivityContext)return existing;
   const signature=coreFormSignature();if(signature===lastCoreInputSignature)return existing;
   savingCoreInput=true;
   try{
@@ -5520,10 +5557,9 @@ function loadEntryToForm(f,options={}){
   const duty=controlledDuty(f);if(duty){$('onDuty').value=hhmm(new Date(duty.control.start));$('offDuty').value=duty.control.state==='CLOSED'?hhmm(new Date(duty.control.end)):''}
   if(f.coreInput&&f.activityStatus==='DRAFT')ENTRY_DRAFT_FIELDS.forEach(id=>{if(['editId','entryDraftId','rosterLinkId'].includes(id)||duty&&['onDuty','offDuty','totalDutyDisplay'].includes(id))return;const el=$(id);if(el&&f.coreInput[id]!==undefined){if(el.type==='checkbox')el.checked=!!f.coreInput[id];else el.value=f.coreInput[id]}});
   setEntryTypeUI();calcEntry();formLoading=false;
-  if(rosterActivity){entryRosterActivityContext={id:f.id,type:canonicalType};setRosterActivityEditorUI(canonicalType);}
-  $('entryTitle').textContent=f.locked?'View locked activity':rosterActivity?`Edit roster ${canonicalType}`:'Edit activity';
-  $('entryRosterDeleteBtn').classList.add('hidden');
-  $('lockEntryBtn').classList.remove('hidden');setEntryLockedUI(!!f.locked);
+  if(rosterActivity&&rosterCanEditLockedActivity({...f,dutyType:canonicalType})){
+    entryRosterActivityContext={id:f.id,type:canonicalType,preserveLocked:!!f.locked};setEntryLockedUI(false);$('dutyTypeFlight').disabled=false;$('lockEntryBtn').classList.add('hidden');$('entryRosterDeleteBtn').classList.remove('hidden');$('entryTitle').textContent=`Edit roster ${canonicalType}`;setRosterActivityEditorUI(canonicalType);
+  }else{$('entryTitle').textContent=f.locked?'View locked activity':'Edit activity';setEntryLockedUI(!!f.locked);if(rosterActivity&&f.locked){entryRosterActivityContext={id:f.id,typeOnly:true};$('dutyTypeFlight').disabled=false}}
   lastCoreInputSignature=coreFormSignature();updateAirportInfo();updateDelayUI();
 }
 
@@ -5537,7 +5573,7 @@ function confirmPossibleDayOffPaid(){
   r.dayOffPaidPromptDismissed=true;r._syncRev=recordRevision(r)+1;r._updatedAt=new Date().toISOString();upsertCoreActivity(r);markCloudEdited('activities',r,'edit');return true;
 }
 function collectEntry(lockedOverride=null){
-  const c=calcEntry(),dutyType=canonicalDutyType($('dutyTypeFlight').value||'Flight'),id=$('editId').value||makeActivityId(),existing=coreActivityRows().find(x=>x.id===id),delayMinutes=dutyType==='Flight'?formDelayMinutes():0;
+  const c=calcEntry(),dutyType=canonicalDutyType($('dutyTypeFlight').value||'Flight'),id=$('editId').value||makeActivityId(),existing=entryActivityRows().find(x=>x.id===id),delayMinutes=dutyType==='Flight'?formDelayMinutes():0;
   const sim=dutyType==='Simulator',flight=dutyType==='Flight',ground=dutyType==='Ground Course',standby=dutyType==='STBY';
   const timeValues={};TIME_GROUP_DEFS.forEach(({key})=>{const value=optionalDuration($(TIME_GROUP_INPUT_IDS[key])?.value);if(value!==null)timeValues[key]=value});
   const blockValue=optionalDuration($('blockDisplay')?.value),timeOverrides={...(existing?.timeOverrides||{}),...formTimeOverrides},manualFields={...(existing?.manualFields||{}),...formManualFields},fieldSources={...(existing?.fieldSources||{}),...formFieldSources};
@@ -5568,8 +5604,8 @@ function persistEntry(lockIt=false){
   const dutyType=canonicalDutyType($('dutyTypeFlight').value||'Flight');if(!$('date').value){alert('Please enter the date.');return false}
   if((dutyType==='Flight'||dutyType==='DHD'||dutyType==='DHP')&&(!$('dep').value.trim()||!$('arr').value.trim())){alert('Please enter From and To.');return false}
   if(dutyType==='Flight'&&!promptDelayReasonIfNeeded())return false;
-  const id=$('editId').value,fs=coreActivityRows(),existing=id?fs.find(x=>x.id===id):null,rosterEdit=!!(existing&&entryRosterActivityContext?.id===existing.id&&rosterCanEditLockedActivity(existing));
-  if(existing?.locked&&!lockIt){alert('This entry is locked. Unlock it before editing.');return false}
+  const id=$('editId').value,fs=entryActivityRows(),existing=id?fs.find(x=>x.id===id):null,rosterEdit=!!(existing&&entryRosterActivityContext?.id===existing.id&&rosterCanEditLockedActivity(existing));
+  if(existing?.locked&&!lockIt&&!rosterEdit){alert('This entry is locked. Unlock it before editing.');return false}
   const f=collectEntry(lockIt?true:(rosterEdit?null:false)),saved=upsertCoreActivity(f);$('editId').value=saved.id;markCloudEdited('activities',saved,lockIt?'lock':(existing?'edit':'create'));
   reconcileAllDuties();refreshEntrySuggestions();saveEntryDraft();scheduleAutoSync(lockIt?'lock-entry':'save-entry');return saved;
 }
@@ -5743,11 +5779,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
   $('entryDeleteBtn').addEventListener('click',async()=>{const id=$('editId').value,f=coreActivityRows().find(x=>x.id===id);if(!f||f.locked)return;if(!confirm('Delete this activity?'))return;markCloudDeleted('activities',f);removeCoreActivities(x=>x.id===id);$('editId').value='';await persistCoreActivities();show('flightsView');scheduleAutoSync('delete-activity')});
   $('dutyOnBtn').addEventListener('click',dutyOn);$('dutyOffBtn').addEventListener('click',dutyOff);
   document.addEventListener('keydown',e=>{if((e.key!=='Enter'&&e.key!==' ')||e.target.closest('button,input,select,textarea'))return;const row=e.target.closest('[data-edit-flight]');if(!row)return;e.preventDefault();row.click()});
-  const openAircraftLogbook=el=>{logbookAircraftFilter=el.dataset.aircraftFilter;logbookSearchQuery='';$('logbookSearch').value='';logbookRenderLimit=LOGBOOK_RENDER_STEP;show('flightsView');window.scrollTo({top:0,left:0,behavior:'auto'})};
-  $('aircraftBreakdown').addEventListener('click',e=>{const row=e.target.closest('[data-aircraft-filter]');if(row)openAircraftLogbook(row)});
-  $('aircraftBreakdown').addEventListener('keydown',e=>{const row=e.target.closest('[data-aircraft-filter]');if(row&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openAircraftLogbook(row)}});
   $('logbookSearch')?.addEventListener('input',e=>{logbookSearchQuery=e.target.value||'';logbookRenderLimit=LOGBOOK_RENDER_STEP;renderEntriesSafe();if(logbookSearchQuery.trim().length>=2&&!airportDbLoaded)ensureAirportDb(false).then(()=>renderEntriesSafe()).catch(()=>{})});
-  $('clearLogbookSearch')?.addEventListener('click',()=>{logbookAircraftFilter='';logbookSearchQuery='';logbookRenderLimit=LOGBOOK_RENDER_STEP;if($('logbookSearch'))$('logbookSearch').value='';renderEntriesSafe();$('logbookSearch')?.focus()});
+  $('clearLogbookSearch')?.addEventListener('click',()=>{logbookSearchQuery='';logbookRenderLimit=LOGBOOK_RENDER_STEP;if($('logbookSearch'))$('logbookSearch').value='';renderEntriesSafe();$('logbookSearch')?.focus()});
   $('lockAllEntriesBtn')?.addEventListener('click',()=>lockAllLogbookEntries().catch(err=>alert('Lock all entries failed: '+err.message)));
   $('entryBackBtn').addEventListener('click',()=>{
     saveEntryDraft();
@@ -5758,7 +5791,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   });
   $('entryRosterDeleteBtn')?.addEventListener('click',deleteRosterEntryActivity);
   bindExpiryEvents();
-  document.querySelectorAll('[data-upper]').forEach(el=>el.addEventListener('input',()=>{const p=el.selectionStart;el.value=el.value.toUpperCase();try{el.setSelectionRange(p,p)}catch{}}));
+  document.querySelectorAll('[data-upper]').forEach(el=>el.addEventListener('input',()=>{const p=el.selectionStart;el.value=upper(el.value);try{el.setSelectionRange(p,p)}catch{}}));
   $('flightForm').addEventListener('click',e=>{const button=e.target.closest('[data-counter-shortcut]');if(!button)return;const input=$(button.dataset.counterShortcut);if(!input||input.disabled)return;input.value=Number(input.value||0)>0?'0':'1';input.dispatchEvent(new Event('input',{bubbles:true}));calcEntry();});
   $('flightForm').addEventListener('input',silentAutosaveExisting);
   $('flightForm').addEventListener('change',silentAutosaveExisting);
@@ -5896,7 +5929,8 @@ document.addEventListener('DOMContentLoaded',async()=>{
     if(!confirm('REMOVE THE PERSONAL PHOTO AND RESTORE THE PILOTLOG LOGO?'))return;
     saveAppSettings({profilePhotoData:''});updateAppHeader();updateProfilePhotoSettings();scheduleAutoSync('profile-photo-remove');
   });
-  $('appSettingsForm').addEventListener('submit',async e=>{e.preventDefault();const previousCurrency=appCurrency(),nextCurrency=upper($('setCurrency')?.value||'MAD');saveAppSettings({homeBase:upper($('setHomeBase').value)||'CMN',flightPrefix:cleanPrefix($('setFlightPrefix').value)||'MAC',aircraftPrefix:cleanPrefix($('setAircraftPrefix').value)||'CN-NM',profileName:$('setProfileName').value.trim(),profileRole:$('setProfileRole').value||'Captain',currency:ISO_CURRENCIES.includes(nextCurrency)?nextCurrency:'MAD'});setAutoSyncEnabled($('autoSyncEnabled').value==='yes');if(previousCurrency!==appCurrency())await refreshTripFxForCurrency(appCurrency());renderSettings();renderTrips();renderPayroll();if(!$('editId').value)applyProfileDefaultsToEntry();refreshEntrySuggestions();scheduleAutoSync('settings');alert('Settings saved.')});
+  $('setPayrollRegime')?.addEventListener('change',()=>{$('macDependentsSetting')?.classList.toggle('hidden',upper($('setPayrollRegime').value)!=='MAC')});
+  $('appSettingsForm').addEventListener('submit',async e=>{e.preventDefault();const previousCurrency=appCurrency(),nextCurrency=upper($('setCurrency')?.value||'MAD');saveAppSettings({homeBase:upper($('setHomeBase').value)||'CMN',flightPrefix:cleanPrefix($('setFlightPrefix').value)||'MAC',aircraftPrefix:cleanPrefix($('setAircraftPrefix').value)||'CN-NM',profileName:$('setProfileName').value.trim(),profileRole:$('setProfileRole').value||'Captain',currency:ISO_CURRENCIES.includes(nextCurrency)?nextCurrency:'MAD',payrollRegime:upper($('setPayrollRegime')?.value||'IBC')==='MAC'?'MAC':'IBC',macDependents:Math.max(0,Math.min(6,Math.trunc(Number($('setMacDependents')?.value)||0)))});setAutoSyncEnabled($('autoSyncEnabled').value==='yes');if(previousCurrency!==appCurrency())await refreshTripFxForCurrency(appCurrency());renderSettings();renderTrips();renderPayroll();if(!$('editId').value)applyProfileDefaultsToEntry();refreshEntrySuggestions();scheduleAutoSync('settings');alert('Settings saved.')});
   $('saveTimeGroupSettings')?.addEventListener('click',()=>{saveTimeGroupSettingsFromForm();scheduleAutoSync('time-group-settings');alert('Time Group settings saved. Past activities now use the selected Auto Sync rules.')});
   $('refreshAirportsBtn').addEventListener('click',()=>ensureAirportDb(true));
   $('cloudEmail').addEventListener('change',()=>localStorage.setItem(LAST_EMAIL_KEY,$('cloudEmail').value.trim()));
@@ -5908,13 +5942,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
   $('restoreWeeklyBackupBtn').addEventListener('click',()=>restoreWeeklyBackup().catch(e=>alert('Restore failed: '+e.message)));
   $('autoSyncEnabled').addEventListener('change',()=>{setAutoSyncEnabled($('autoSyncEnabled').value==='yes');if(autoSyncEnabled())scheduleAutoSync('enabled',300)});
 
-  $('payrollMonth').addEventListener('change',renderPayroll);$('recalcPayroll').addEventListener('click',()=>{const month=$('payrollMonth').value||monthNow(),ex=monthExtras(month);saveMonthExtras(month,{...ex,dayOffCount:0,arrears:Number($('payArrears').value||0)});scheduleAutoSync('payroll-month');renderPayroll()});
-  $('paySettingsForm').addEventListener('input',e=>{
-    if(!e.target.matches('input')||!e.target.checkValidity())return;
-    saveObject(PAY_SETTINGS_KEY,{...paySettings(),...readPaySettings(),_updatedAt:new Date().toISOString()});
-    renderPayroll();scheduleAutoSync('payroll-settings');
-  });
-  $('payArrearsTax').addEventListener('input',e=>{if(!e.target.checkValidity())return;const month=$('payrollMonth').value||monthNow();saveMonthExtras(month,{...monthExtras(month),arrears:Number($('payArrears').value||0),arrearsTax:payrollTaxPercent(e.target.value)});renderPayroll();scheduleAutoSync('payroll-tax')});
+  $('payrollMonth').addEventListener('change',renderPayroll);$('recalcPayroll').addEventListener('click',()=>{const month=$('payrollMonth').value||monthNow(),ex=monthExtras(month);saveMonthExtras(month,{...ex,dayOffCount:0,arrears:Number($('payArrears').value||0),regime:payrollRegime()});scheduleAutoSync('payroll-month');renderPayroll()});
   $('paySettingsForm').addEventListener('submit',e=>{e.preventDefault();saveObject(PAY_SETTINGS_KEY,{...readPaySettings(),_updatedAt:new Date().toISOString()});setEntryTypeUI();renderPayroll();scheduleAutoSync('payroll-settings');alert('Payroll settings saved.')});
   $('resetPaySettings').addEventListener('click',()=>{if(confirm('Restore default rates?')){saveObject(PAY_SETTINGS_KEY,PAY_DEFAULTS);fillPaySettings();renderPayroll()}});
   $('deleteAll').addEventListener('click',async()=>{if(confirm('Delete ALL saved log entries? This cannot be undone.')){const targets=coreActivityRows().filter(isCompletedLogbookEntry),ids=new Set(targets.map(x=>x.id));targets.forEach(x=>markCloudDeleted('activities',x,{includeSource:false}));removeCoreActivities(x=>ids.has(x.id));await persistCoreActivities();clearAllEntryDrafts();await render();scheduleAutoSync('delete-all-entries')}});

@@ -914,14 +914,14 @@ button:active,.filebtn:active{transform:translateY(1px)}
 .roster-event.roster-event-locked{background:#dcfce7;color:#166534;border:1px solid #86efac}
 .roster-calendar-day{position:relative;align-content:start}
 .roster-day-number{position:absolute;top:6px;left:5px}
-.roster-agenda{padding-bottom:13px}
+.roster-agenda{padding-bottom:45vh}
 .logbook-actuals{display:flex;flex-direction:column;gap:3px;margin:5px 0}
 .activity-type-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .duty-control{display:block;margin:4px 0;color:#166534}
 .payroll-total-card{align-items:end}
 .payroll-source-total>b,.payroll-converted-total>b{white-space:nowrap;font-size:clamp(14px,3.7vw,24px)}
 
-/* v12.3 — flight card arranged from the supplied photograph. */
+/* v12.2 — flight card arranged from the supplied photograph. */
 body:has(#addView:not(.hidden)) {background:#fff}
 body:has(#addView:not(.hidden)) header {display:none}
 body:has(#addView:not(.hidden)) main {max-width:760px;padding-top:12px}
@@ -972,7 +972,7 @@ body:has(#addView:not(.hidden)) main {max-width:760px;padding-top:12px}
 #flightForm .entry-crew-rows input::placeholder {font-size:12px}
 #flightForm .entry-fuel-rows {margin-top:14px;border-top:1px solid var(--entry-line)}
 #flightForm .entry-fuel-rows>div,#flightForm #remarksWrap {grid-template-columns:minmax(0,29%) minmax(0,1fr)}
-#flightForm #remarks {min-height:78px;height:78px;line-height:1.5;resize:vertical}
+#flightForm #remarks {min-height:34px;height:34px;resize:vertical}
 #flightForm .entry-additional {margin-top:14px;color:var(--entry-muted);font-size:13px}
 #flightForm .entry-additional summary {padding:8px 0;cursor:pointer}
 #flightForm .entry-extra-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -997,7 +997,7 @@ body:has(#addView:not(.hidden)) main {max-width:760px;padding-top:12px}
 #flightForm .entry-approach-row label{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 #flightForm .entry-approach-row select{width:100%}
 
-/* 12.3: full-width approach row. */
+/* 12.2: full-width approach row. */
 #flightForm .entry-approach-row{grid-template-columns:minmax(0,1fr)}
 #flightForm .entry-approach-row>div{display:grid;grid-template-columns:46% 1fr;align-items:center;gap:10px}
 #flightForm .entry-approach-row label{position:static;width:auto;height:auto;overflow:visible;clip-path:none}
@@ -1006,16 +1006,14 @@ body:has(#addView:not(.hidden)) main {max-width:760px;padding-top:12px}
 #flightForm .ga-counter{display:flex;align-items:center;justify-content:space-evenly;gap:3px;font-size:12px;color:var(--entry-ink)}
 #flightForm .ga-counter input{width:38px;min-width:0;text-align:center;border-radius:50%;background:#f1f3f8;padding:3px;font-size:15px}
 
-/* v12.3 */
-.flight.logbook-entry-locked{background:#e5f5e9;border-color:#9acba7}
-.flight.logbook-entry-locked .route{color:#176534}
-.aircraft-breakdown-row[role="button"]{cursor:pointer}
-.aircraft-breakdown-row[role="button"]:hover,.aircraft-breakdown-row[role="button"]:focus-visible{background:#edf5fb;outline:2px solid #3976a5;outline-offset:3px}
-.roster-time-line{font-size:13px;line-height:1.65;white-space:nowrap}
-.roster-agenda-row>div:first-child{min-width:0;overflow-wrap:anywhere}
-.roster-agenda-row .meta{flex-shrink:0}
-@media(max-width:420px){.roster-time-line{font-size:11px}.roster-agenda-row{gap:8px}}
-.pay-rate-tax{display:grid;grid-template-columns:minmax(0,1fr) 88px;gap:8px;align-items:end}
-.pay-rate-tax input{min-width:0;width:100%}
-.pay-tax-field label{font-size:11px}
-.pay-tax-note{display:block;font-size:11px;font-weight:400;color:#64748b;margin-top:4px}
+
+/* v12.3 — selectable MAC / IBC payroll regimes. */
+.payroll-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.payroll-regime-badge{display:inline-flex;align-items:center;justify-content:center;min-width:54px;padding:5px 10px;border:1px solid var(--pl-line,#dce5ef);border-radius:999px;background:#fff;color:var(--pl-navy,#0b2f57);font-size:.76rem;font-weight:800;letter-spacing:.06em}
+.payroll-mac-summary{padding:0;overflow:hidden}
+.mac-summary-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:18px;align-items:center;padding:11px 14px;border-bottom:1px solid rgba(120,120,128,.13)}
+.mac-summary-row:last-of-type{border-bottom:0}
+.mac-summary-row span{color:var(--pl-muted,#6a7a8f)}
+.mac-summary-row b{text-align:right;font-variant-numeric:tabular-nums}
+.mac-summary-note{margin:12px 14px 14px}
+@media(max-width:520px){.mac-summary-row{grid-template-columns:1fr;gap:3px}.mac-summary-row b{text-align:left}}

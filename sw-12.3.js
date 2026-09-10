@@ -1,17 +1,5 @@
-const CACHE='pilotlog-v12.3-logten-fields-v2';
-const ROOT=new URL('./',self.location).href;
-const INDEX=new URL('./index.html',self.location).href;
-const CORE=[ROOT,INDEX,new URL('./pilotlog-12.3.css',self.location).href,new URL('./pilotlog-12.3.js',self.location).href,new URL('./manifest.webmanifest',self.location).href,new URL('./nexa-apple-touch-icon-180.png',self.location).href,new URL('./nexa-icon-192.png',self.location).href,new URL('./nexa-icon-512.png',self.location).href];
-self.addEventListener('install',event=>{event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)).then(()=>self.skipWaiting()))});
-self.addEventListener('activate',event=>{event.waitUntil((async()=>{for(const key of await caches.keys())if(key!==CACHE&&key.startsWith('pilotlog-'))await caches.delete(key);await self.clients.claim()})())});
-self.addEventListener('fetch',event=>{
-  const req=event.request;if(req.method!=='GET')return;
-  const url=new URL(req.url);if(url.origin!==self.location.origin)return;
-  if(req.mode==='navigate'){
-    event.respondWith((async()=>{try{const res=await fetch(req);if(res?.ok){const cache=await caches.open(CACHE);cache.put(INDEX,res.clone())}return res}catch{return (await caches.match(INDEX))||(await caches.match(ROOT))}})());
-    return;
-  }
-  const immutable=CORE.includes(url.href)&&url.href!==INDEX&&url.href!==ROOT;
-  if(immutable){event.respondWith(caches.match(req).then(hit=>hit||fetch(req).then(async res=>{if(res?.ok)(await caches.open(CACHE)).put(req,res.clone());return res})));return}
-  event.respondWith((async()=>{try{const res=await fetch(req);if(res?.ok)(await caches.open(CACHE)).put(req,res.clone());return res}catch{return caches.match(req)}})());
-});
+const CACHE='pilotlog-12.3';
+const ASSETS=['./','./index.html','./pilotlog-12.3.js','./pilotlog-12.3.css','./manifest.webmanifest','./nexa-icon-192.png','./nexa-icon-512.png','./nexa-apple-touch-icon-180.png'];
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(CACHE).then(x=>x.put('./index.html',c));return r}).catch(()=>caches.match('./index.html')));return}e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(n=>{const c=n.clone();caches.open(CACHE).then(x=>x.put(e.request,c));return n})));});

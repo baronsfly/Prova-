@@ -1,26 +1,11 @@
-NexA / PilotLog 12.3
-Base: pilotlog12.2 fornita dall'utente.
+PilotLog 12.3 — Payroll Regime MAC / IBC
 
-MODIFICHE
-- Logbook: schede delle attività locked in verde.
-- Lock/Unlock disponibile anche aprendo SIM, DHD, DHP, Ground e altre attività dal Roster. I campi restano protetti fino allo sblocco.
-- Aircraft ID: campo condiviso da tutti i form portato a 18 caratteri digitabili.
-- Nomi: gli spazi non vengono più rimossi durante la digitazione.
-- Remarks in Add: tre righe leggibili, con altezza regolabile.
-- Totals: ILS + CAT I = CAT I; AUTOLAND + CAT III = CAT III. CAT III e CAT I sono le prime due categorie, seguite dalle altre. Dati importati originali conservati.
-- Tipo aeromobile in Totals selezionabile: apre il Logbook filtrato per codice ICAO, incluse le varianti. Clear elimina il filtro.
-- Roster: eliminati i Delete duty duplicati sulle schede, lo spazio vuoto e i testi segnati nelle foto. La cancellazione resta nell'editor dell'attività.
-- Roster: tre righe di orari (Z), (MAR), (L). La riga L usa il fuso di ciascun aeroporto; MAR usa Africa/Casablanca. Eventuali cambi di data sono indicati con +1d/-1d. Se il fuso dell'aeroporto non è disponibile, L mostra --:--.
-- Payroll Settings: Tax % accanto a ogni importo/tariffa; salvataggio automatico e aggiornamento immediato del Payroll. Zero significa no tax. Ogni fascia oraria usa la propria percentuale. Anche Arrears / adjustments ha una percentuale sulla stessa riga.
-- Payroll: totale after tax, lordo, trattenute e dettaglio netto per componente. Il dettaglio MAD/DHM resta disponibile anche senza conversione valutaria online.
-- Versione e cache offline aggiornate a 12.3. Chiavi del database conservate.
-
-INSTALLAZIONE
-Pubblicare tutti i file della cartella sullo stesso indirizzo dell'app esistente, sostituendo index.html e aggiungendo le risorse 12.3. Ricaricare e verificare il badge v12.3. L'archivio non contiene dati personali né un database sostitutivo.
-
-VERIFICHE
-Superati 10 gruppi di controlli sul codice e sui calcoli, 4 confronti Payroll 12.2/12.3 senza tassazione e un confronto con attività miste e percentuali diverse. Controllo sintattico JavaScript e riferimenti delle risorse superato.
-La verifica visiva in browser non è stata completata: l'ambiente ha bloccato l'apertura dell'app locale. Nessun test effettuato sul dispositivo iPhone o sul servizio di sincronizzazione reale.
-
-SVILUPPO FUTURO
-Payslip AutoCheck: lettura PDF/dati dal sito, confronto con NexA e segnalazione di differenze e mancanze. Non implementato in questa versione, come concordato.
+- Settings > Payroll Regime: IBC or MAC.
+- IBC module and formulas remain unchanged.
+- MAC adds the 2026 Air Arabia Maroc employee-tax calculation reconstructed from supplied payslips.
+- MAC separates observed taxable/non-taxable components, CNSS, AMO, CIMR, Ass. Maladie, professional expense deduction, net imposable and IR.
+- Regular MAC pay is tax-protected/grossed to preserve the contractual net target. Positive arrears/adjustments are taxable and not gross-protected.
+- MAC family deduction count is editable in Settings.
+- Payroll opens according to the regime selected in Settings.
+- Recalculate stores the selected regime in the monthly Payroll extras snapshot.
+- No automatic fallback between MAC and IBC.

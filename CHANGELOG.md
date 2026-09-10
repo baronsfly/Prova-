@@ -1,7 +1,3 @@
-# v12.3
-
-Logbook locked in verde; lock esteso agli editor Roster; Aircraft ID 18 caratteri; spazi nei nomi; Remarks più ampio; categorie CAT accorpate; filtro ICAO dai Totals; Roster con Z/MAR/L e interfaccia semplificata; tassazione per componente con Payroll after tax. Vedere AGGIORNAMENTO.txt per verifiche e dettagli.
-
 ## v11.9
 - AeroLINE Simulator import now reads the simulator airport/location directly from trainingCrewScheduleInfoList.trainLocOrFlight; no airport deduction is used for Simulator activities.
 - Roster now exposes an explicit Delete duty action. Flight duties delete all sectors in the selected duty group together; SIM/STBY/DHD/DHP/Ground/OFF delete the selected Core activity.
@@ -925,3 +921,13 @@ Logbook locked in verde; lock esteso agli editor Roster; Aircraft ID 18 caratter
 - Removed legacy duplicate `flight` operational field in favor of `airTime`.
 - Removed stored `trainingSector`, `instructionType`, and `instructorFlightTime` fields; Flight instruction uses the single `instruction` flag and `dualGiven` time group.
 - Removed the duplicate `scheduleTotal` field. `schedBlock` is the single Schedule Block value; legacy `scheduleTotal` is migrated into it only when `schedBlock` is absent.
+
+
+## v12.3
+- Added Settings > Payroll Regime with exactly two choices: MAC and IBC.
+- Kept the existing IBC payroll calculation unchanged.
+- Added MAC tax-protected payroll calculation based on the supplied 2026 Air Arabia Maroc payslips: taxable/non-taxable components, CNSS, AMO, CIMR, Assurance Maladie, professional-expense deduction, net imposable and IR.
+- MAC gross-up preserves the contractual regular-pay net target; positive arrears/adjustments are taxable and not gross-protected.
+- Added editable MAC family-deduction count.
+- Payroll automatically renders the selected regime and stores the regime when the month is recalculated.
+- No fallback between MAC and IBC.
