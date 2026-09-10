@@ -1,3 +1,9 @@
+## v12.4
+- Advanced the build/version after the 12.3 build; no version number is reused.
+- Updated visible app version badge to v12.4.
+- Renamed runtime CSS/JS/Service Worker assets to 12.4 and updated cache registration.
+- Keeps the MAC / IBC Payroll Regime selector in Settings; IBC behavior remains unchanged.
+
 ## v11.9
 - AeroLINE Simulator import now reads the simulator airport/location directly from trainingCrewScheduleInfoList.trainLocOrFlight; no airport deduction is used for Simulator activities.
 - Roster now exposes an explicit Delete duty action. Flight duties delete all sectors in the selected duty group together; SIM/STBY/DHD/DHP/Ground/OFF delete the selected Core activity.

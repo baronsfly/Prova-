@@ -1,11 +1,10 @@
-PilotLog 12.3 — Payroll Regime MAC / IBC
+PilotLog 12.4 — Payroll Regime MAC / IBC
 
-- Settings > Payroll Regime: IBC or MAC.
-- IBC module and formulas remain unchanged.
-- MAC adds the 2026 Air Arabia Maroc employee-tax calculation reconstructed from supplied payslips.
-- MAC separates observed taxable/non-taxable components, CNSS, AMO, CIMR, Ass. Maladie, professional expense deduction, net imposable and IR.
-- Regular MAC pay is tax-protected/grossed to preserve the contractual net target. Positive arrears/adjustments are taxable and not gross-protected.
-- MAC family deduction count is editable in Settings.
-- Payroll opens according to the regime selected in Settings.
-- Recalculate stores the selected regime in the monthly Payroll extras snapshot.
-- No automatic fallback between MAC and IBC.
+- Version number advanced to 12.4.
+- All runtime asset names advanced to 12.4.
+- Service Worker/cache advanced to 12.4.
+- Visible app version badge advanced to v12.4.
+- Settings: Payroll Regime selector IBC / MAC.
+- IBC payroll module remains unchanged.
+- MAC opens the Morocco tax calculation.
+- No automatic fallback between regimes.
