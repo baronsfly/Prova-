@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="nexa-apple-touch-icon-180.png">
 <link rel="icon" type="image/png" sizes="192x192" href="nexa-icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="nexa-icon-512.png">
-<link rel="stylesheet" href="pilotlog-12.5.css">
+<link rel="stylesheet" href="pilotlog-13.8.css">
 </head>
 <body>
 <header>
@@ -30,7 +30,7 @@
         <p id="appTagline">PilotLog — your personal LogBook</p>
       </div>
     </div>
-    <span class="version-badge">v12.5</span>
+    <span class="version-badge">v13.8</span>
   </div>
 </header>
 <main>
@@ -83,22 +83,25 @@
         <div data-flight-counter><label>Night landings</label><input id="nightLandings" type="number" min="0" step="1" value="0"></div>
       </div>
 
-      <div class="entry-approach-row"><div data-entry-field="approachType"><label for="approachType">Type of approach</label><select id="approachType"><option value="">—</option><option>CAT3</option><option>ILS</option><option>LOC</option><option>RNAV</option><option>RNAV AR</option><option>VOR</option><option>VOR/DME</option><option>NDB</option><option>CRCL</option><option>VIS</option><option>GOA</option></select></div><input id="approachCategory" type="hidden"></div><div class="entry-counter-strip"><button type="button" data-counter-shortcut="dayTakeoffs" aria-label="Day take-offs"><span>D T/O</span><b>0</b></button><button type="button" data-counter-shortcut="nightTakeoffs" aria-label="Night take-offs"><span>N T/O</span><b>0</b></button><button type="button" data-counter-shortcut="dayLandings" aria-label="Day landings"><span>D LND</span><b>0</b></button><button type="button" data-counter-shortcut="nightLandings" aria-label="Night landings"><span>N LND</span><b>0</b></button><label class="ga-counter"><span>GA</span><input id="goArounds" type="number" min="0" step="1" aria-label="Go Arounds"></label></div><div class="section-title inner" id="checkboxTitle">Tick box area</div>
+      <div class="entry-approach-row"><div data-entry-field="approachType"><label for="approachType">Type of approach</label><select id="approachType"><option value="">—</option><option value="CAT3">CAT III</option><option value="ILS">CAT I</option><option value="LOC">LOC</option><option value="RNAV">RNAV</option><option value="VOR">VOR</option><option value="NDB">NDB</option><option value="CRCL">CIRC</option><option value="GOA">Go Around</option></select></div><input id="approachCategory" type="hidden"></div><div class="section-title inner" id="checkboxTitle">Tick box area</div>
       <div class="entry-checkbox-grid" id="checkboxGrid">
         <label class="check-option" data-entry-check="pic"><input id="rolePicCheck" type="checkbox"> PIC</label>
         <label class="check-option" data-entry-check="pf"><input id="pfCheck" type="checkbox"> PF</label>
         <label class="check-option" data-entry-check="rhs"><input id="rhsCheck" type="checkbox"> RHS</label><label class="check-option" data-entry-check="instruction"><input id="instructionCheck" type="checkbox"> INST</label>
         <label class="check-option" data-entry-check="examiner"><input id="examinerCheck" type="checkbox"> EXAM</label>
-        <label class="check-option" data-entry-check="simInstructor"><input id="simInstructorCheck" type="checkbox"> INSTRUCTOR</label>
-        <label class="check-option" data-entry-check="simExaminer"><input id="simExaminerCheck" type="checkbox"> EXAM</label>
+        <label class="check-option hidden" data-entry-check="simTrainer"><input id="simTrainerCheck" type="checkbox"> INSTRUCTOR/EXAMINER</label>
+        <input id="simInstructorCheck" type="checkbox" class="hidden" aria-hidden="true" tabindex="-1">
+        <input id="simExaminerCheck" type="checkbox" class="hidden" aria-hidden="true" tabindex="-1">
         <label class="check-option"><input id="callFromDayOff" type="checkbox"> CALL DOFF</label>
         
       </div>
 
-      <div class="entry-crew-rows"><div data-entry-field="picName"><label>PIC</label><input id="picName" placeholder="CAPTAIN NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="sicName"><label>SIC</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="instructorName"><label>Instructor</label><input id="instructorName" placeholder="INSTRUCTOR NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="examinerName"><label>Examiner</label><input id="examinerName" placeholder="EXAMINER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="purserName"><label>Purser</label><input id="purserName" placeholder="PURSER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="attendant1Name"><label>Cabin Crew 1</label><input id="attendant1Name" placeholder="ATTENDANT 1" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="attendant2Name"><label>Cabin Crew 2</label><input id="attendant2Name" placeholder="ATTENDANT 2" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="attendant3Name"><label>Cabin Crew 3</label><input id="attendant3Name" placeholder="ATTENDANT 3" data-upper list="crewNameSuggestions" autocomplete="off"></div></div><div class="entry-fuel-rows"><div data-entry-field="pax"><label>PAX</label><input id="pax" type="number" min="0" step="1"></div><div data-entry-field="fuelAboard"><label>Fuel Aboard</label><input id="fuelAboard" type="number" min="0" step="0.1"></div><div data-entry-field="fuelBurned"><label>Fuel Burned</label><input id="fuelBurned" type="number" min="0" step="0.1"></div><div data-entry-field="fuelMinimum"><label>Minimum Fuel</label><input id="fuelMinimum" type="number" min="0" step="0.1"></div></div><div class="full" id="remarksWrap"><label>Remarks</label><textarea id="remarks"></textarea></div>
-      <details class="entry-additional"><summary>Additional details</summary><div class="entry-extra-grid"><div><label>Source</label><input id="entrySourceDisplay" readonly value="Manual"></div><div data-entry-field="courseType" class="hidden"><label>Course type</label><input id="courseType" placeholder="GRT MOD 3 / CRM / SEP..." data-upper></div><div data-entry-field="trainerType" class="hidden"><label>Trainer Type</label><select id="trainerTypeInput"><option value="">—</option><option value="GI">GI</option><option value="TNE">TNE</option></select></div><div data-entry-field="schedBlock"><label>Schedule Block</label><input id="schedBlockDisplay" readonly></div><div data-entry-field="delayReason" class="hidden"><label id="delayReasonLabel">Delay reason</label><input id="delayReason" placeholder="ATC / WEATHER / TECH / GROUND..." data-upper autocomplete="off"></div><div data-entry-field="block"><label>Block</label><input id="blockDisplay" type="time" step="60"></div><div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><datalist id="crewNameSuggestions"></datalist></div></details><div class="totals" id="calcPreview">Schedule Block 0:00 • Actual Block 0:00 • Flight 0:00 • Credit 0:00</div>
+      <div class="entry-crew-rows"><div data-entry-field="picName"><label>PIC</label><input id="picName" placeholder="CAPTAIN NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="sicName"><label>SIC</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div>
+          
+          <div data-entry-field="instructorName"><label>Instructor</label><input id="instructorName" placeholder="INSTRUCTOR NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="purserName"><label>Purser</label><input id="purserName" placeholder="PURSER NAME" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="attendant1Name"><label>Cabin Crew 1</label><input id="attendant1Name" placeholder="ATTENDANT 1" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="attendant2Name"><label>Cabin Crew 2</label><input id="attendant2Name" placeholder="ATTENDANT 2" data-upper list="crewNameSuggestions" autocomplete="off"></div><div data-entry-field="attendant3Name"><label>Cabin Crew 3</label><input id="attendant3Name" placeholder="ATTENDANT 3" data-upper list="crewNameSuggestions" autocomplete="off"></div></div><div class="entry-fuel-rows"><div data-entry-field="pax"><label>PAX</label><input id="pax" type="number" min="0" step="1"></div><div data-entry-field="fuelAboard"><label>Fuel Aboard</label><input id="fuelAboard" type="number" min="0" step="0.1"></div><div data-entry-field="fuelBurned"><label>Fuel Burned</label><input id="fuelBurned" type="number" min="0" step="0.1"></div><div data-entry-field="fuelMinimum"><label>Minimum Fuel</label><input id="fuelMinimum" type="number" min="0" step="0.1"></div></div><div class="full" id="remarksWrap"><label>Remarks</label><textarea id="remarks"></textarea></div>
+      <details class="entry-additional"><summary>Additional details</summary><div class="entry-extra-grid"><div><label>Source</label><input id="entrySourceDisplay" readonly value="Manual"></div><div data-entry-field="courseType" class="hidden"><label>Course type</label><input id="courseType" placeholder="GRT MOD 3 / CRM / SEP..." data-upper></div><div data-entry-field="trainerType" class="hidden"><label>Trainer Type</label><select id="trainerTypeInput"><option value="">—</option><option value="GI">GI</option><option value="TNE">TNE</option></select></div><div data-entry-field="schedBlock"><label>Schedule Block</label><input id="schedBlockDisplay" readonly></div><div data-entry-field="delayReason" class="hidden"><label id="delayReasonLabel">Delay reason</label><input id="delayReason" placeholder="ATC / WEATHER / TECH / GROUND..." data-upper autocomplete="off"></div><div data-entry-field="block"><label>Block</label><input id="blockDisplay" type="time" step="60"></div></div></details><div class="totals" id="calcPreview">Schedule Block 0:00 • Actual Block 0:00 • Flight 0:00 • Credit 0:00</div>
       <div class="hint" id="nightStatus">Night time uses airport coordinates, solar ephemerides and the OUT–IN interval.</div>
-      <div class="actions"><button class="secondary hidden" type="button" id="entryBackBtn">← Back</button><span class="small" id="coreIdDisplay"></span><button class="danger" type="button" id="entryDeleteBtn">Delete activity</button><button class="primary lock-button" type="button" id="lockEntryBtn">🔒 Lock</button><button class="danger hidden" type="button" id="entryRosterDeleteBtn">Delete duty</button><button class="secondary" type="button" id="returnFlight">Return Flight</button><button class="secondary" type="button" id="clearForm">Add activity</button></div>
+      <div class="actions"><button class="secondary hidden" type="button" id="entryBackBtn">← Back</button><span class="small" id="coreIdDisplay"></span><button class="danger" type="button" id="entryDeleteBtn">Delete activity</button><button class="primary lock-button" type="button" id="lockEntryBtn">🔒 Lock</button><button class="danger hidden" type="button" id="entryRosterDeleteBtn">Delete duty</button><button class="secondary" type="button" id="returnFlight">Return Flight</button></div>
       <div class="hint" id="entryLockStatus">Inputs autosave in Core. Lock the entry when all data are final.</div>
     </form>
   </div>
@@ -109,7 +112,7 @@
     <div class="logbook-toolbar-actions"><button class="secondary" id="lockAllEntriesBtn" type="button">🔒 Lock all entries</button></div>
     <button class="primary view-add-btn" id="logbookAddBtn" type="button">＋ Add entry</button>
   </div>
-  <div class="card"><div class="hint">Logbook shows completed flights and simulator entries. Roster-only duties remain in Roster/Payroll/Trips.</div></div>
+</div>
   <div class="card spaced logbook-search-card">
     <label for="logbookSearch">Search Logbook</label>
     <div class="logbook-search-row"><input id="logbookSearch" type="search" placeholder="Flight no., airport/city, route, crew…" autocomplete="off"><button class="secondary" id="clearLogbookSearch" type="button">Clear</button></div>
@@ -292,9 +295,9 @@
           <option value="ATPL"><option value="CPL"><option value="TRI"><option value="SFI"><option value="CRMI"><option value="TRE">
           <option value="CRM"><option value="SMS"><option value="GRT"><option value="DGR"><option value="AVSEC"><option value="SEP"><option value="FIRST AID"><option value="UPRT"><option value="EBT/CBTA">
         </datalist>
-        <div class="actions">
-          <button class="primary" type="submit">SAVE</button>
-          <button class="secondary" id="expiryCancelBtn" type="button">CANCEL</button>
+        <div class="actions expiry-editor-actions">
+          <button class="secondary" id="expiryToggleLockBtn" type="button">LOCK</button>
+          <button class="danger" id="expiryDeleteBtn" type="button">DELETE</button>
         </div>
       </form>
     </div>
@@ -317,7 +320,7 @@
     <div><label>Home Base</label><input id="setHomeBase" maxlength="4" placeholder="CMN" data-upper></div>
     <div><label>Flight Number Prefix</label><input id="setFlightPrefix" maxlength="6" placeholder="MAC" data-upper></div>
     <div><label>Aircraft ID Prefix</label><input id="setAircraftPrefix" maxlength="10" placeholder="CN-NM" data-upper></div>
-    <div><label>Your name</label><input id="setProfileName" placeholder="Andrea Barone" autocomplete="name"></div>
+    <div><label>Your name</label><input id="setProfileName" placeholder="Crew name" autocomplete="name"></div>
     <div><label>Your role</label><select id="setProfileRole"><option>Captain</option><option>First Officer</option><option>Senior Cabin Crew</option><option>Cabin Crew</option></select></div>
     <div><label>Currency</label><select id="setCurrency"></select></div>
     <div><label>Payroll Regime</label><select id="setPayrollRegime"><option value="IBC">IBC</option><option value="MAC">MAC</option></select></div>
@@ -544,9 +547,9 @@
   <button data-view="flightsView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h5.5a3.5 3.5 0 0 1 3.5 3.5v12H8a3 3 0 0 0-3 3z"/><path d="M19 4.5h-5.5A3.5 3.5 0 0 0 10 8v12h6a3 3 0 0 1 3 3z"/></svg><span>Logbook</span></button>
   <button data-view="payrollView"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6" width="17" height="13" rx="2"/><path d="M3.5 10h17M15 14h2.5"/></svg><span>Payroll</span></button>
   <button data-view="expiryView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19 6v5.2c0 4.5-2.9 7.7-7 9.3-4.1-1.6-7-4.8-7-9.3V6z"/><path d="m9.3 12.2 1.8 1.8 3.8-4"/></svg><span>Expiry</span></button>
-  <button data-view="tripsView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15.5 20 8.5M8.5 13.5 6 8l2-1 4 4M15 10.9l2.5 5.5-2 1-4-4"/><path d="M3 20.5h18"/></svg><span>Trips</span></button>
+  <button data-view="tripsView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15.5 20 8.5M8.5 13.6 6 8l2-1 4 4M15 10.9l2.5 5.5-2 1-4-4"/><path d="M3 20.5h18"/></svg><span>Trips</span></button>
   <button data-view="dashboardView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.9 19.5V7h3v12.5M17 19.5V4h3v15.5M3 20.5h18"/></svg><span>Totals</span></button>
   <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
 </nav>
-<script src="pilotlog-12.5.js" defer></script>
+<script src="pilotlog-13.8.js" defer></script>
 </body></html>
