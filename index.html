@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="PilotLog">
+<title>PilotLog Airline</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="nexa-apple-touch-icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="nexa-icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="nexa-icon-512.png">
+<link rel="stylesheet" href="pilotlog-16.12.css">
+</head>
+<body>
+<header>
+  <div class="header-row">
+    <div class="brand-shell">
+      <div class="brand-mark" aria-hidden="true">
+        <img id="profileHeaderPhoto" class="profile-header-photo hidden" alt="">
+        <svg viewBox="0 0 44 44" role="img">
+          <circle cx="22" cy="22" r="18"></circle>
+          <path d="M22 9v26M15.6 20.5 22 17l6.5 3.5M17.5 29 22 26l4.5 3"></path>
+          <path d="M7 22h7M30 22h7"></path>
+        </svg>
+      </div>
+      <div class="brand-copy">
+        <h1 id="appTitle">PilotLog</h1>
+        <p id="appTagline">PilotLog — your personal LogBook</p>
+      </div>
+    </div>
+    <span class="version-badge">17.0.0-dev.4</span>
+  </div>
+</header>
+<div id="nexaBoot" role="status" aria-live="polite" aria-label="Loading NexA">
+  <svg class="nexa-boot-mark" viewBox="0 0 44 44" aria-hidden="true">
+    <circle cx="22" cy="22" r="18"></circle>
+    <path d="M22 9v26M15.6 20.5 22 17l6.5 3.5"></path>
+    <path class="nexa-tail" d="M17.5 29 22 26l4.5 3"></path>
+    <path d="M7 22h7M30 22h7"></path>
+  </svg>
+</div>
+<main>
+<section id="dashboardView">
+  <div class="section-title">Today Duty</div>
+  <div class="card" id="dashboardTodayDuty"></div>
+  <div class="section-title">Next Duties</div>
+  <div class="card" id="dashboardNextDuties"></div>
+  <div class="section-title">EASA FTL limits</div>
+  <div class="hint">Duty rolling limits are rebuilt from the actual operational sequence. Future duty time is excluded.</div>
+  <div class="card" id="dashboardFtl"></div>
+</section>
+
+<section id="addView" class="hidden">
+  <div class="section-title" id="entryTitle">Add Duty / Activity</div>
+  <div class="card">
+    <div id="activityTypePicker" class="hidden"><p>Choose activity type</p><div class="activity-type-options"><button type="button" class="secondary" data-new-activity="Flight">Flight</button><button type="button" class="secondary" data-new-activity="Simulator">Simulator</button><button type="button" class="secondary" data-new-activity="Ground Course">Ground Course</button><button type="button" class="secondary" data-new-activity="STBY">STBY</button><button type="button" class="secondary" data-new-activity="DHD">DHD</button><button type="button" class="secondary" data-new-activity="DHP">DHP</button><button type="button" class="secondary" data-new-activity="Day OFF">Day OFF</button><button type="button" class="secondary" data-new-activity="Sick Leave">Sick Leave</button><button type="button" class="secondary" data-new-activity="Annual Leave">Annual Leave</button><button type="button" class="secondary" data-new-activity="Flight Duty">Flight Duty</button><button type="button" class="secondary" data-new-activity="Duty">Duty</button></div></div>
+    <div class="actions hidden" id="completeEntryScreenshotWrap"><button type="button" class="secondary" id="completeEntryScreenshot">📷 entry</button></div><form id="flightForm">
+      <input type="hidden" id="editId">
+      <input type="hidden" id="rosterLinkId">
+      <input type="hidden" id="entryDraftId">
+      <input type="hidden" id="simLocation">
+      <input type="hidden" id="role">
+      <input type="hidden" id="seatPosition">
+            <input type="hidden" id="ifr">
+      <input type="hidden" id="pf">
+<div class="duty-management"><label for="dutyTarget">Duty to correct</label><select id="dutyTarget"></select><span id="dutyState" role="status"></span></div><div class="entry-primary-grid"><div data-photo-cell="dutyTypeFlight"><label>Duty type</label><select id="dutyTypeFlight" aria-label="Type of Duty" title="Type of Duty"><option>Flight</option><option>Simulator</option><option>Ground Course</option><option>STBY</option><option>DHD</option><option>DHP</option><option>Day OFF</option><option>Sick Leave</option><option>Annual Leave</option><option>Flight Duty</option><option>Duty</option></select></div><div data-photo-cell="flightNo" data-entry-field="flightNo"><label>Flight number</label><div class="prefix-input"><span id="flightPrefixLabel">MAC</span><input id="flightNo" aria-label="Flight number" title="Flight number" placeholder="457" autocomplete="off"></div></div><div data-photo-cell="date"><label>Date (Zulu)</label><input id="date" aria-label="Date (Zulu)" title="Date (Zulu)" type="date" required></div><div data-photo-cell="type" data-entry-field="type"><label id="typeLabel">Aircraft type</label><input id="type" aria-label="Aircraft type" title="Aircraft type" placeholder="A320" data-upper list="aircraftTypeSuggestions" autocomplete="off"><datalist id="aircraftTypeSuggestions"></datalist></div><div data-photo-cell="reg" data-entry-field="reg"><label id="regLabel">Aircraft ID</label><div class="prefix-input"><span id="aircraftPrefixLabel">CN-NM</span><input id="reg" aria-label="Aircraft registration" title="Aircraft registration" maxlength="10" placeholder="Q" autocomplete="off"></div></div><div data-photo-cell="variant" data-entry-field="variant"><label>Aircraft Variant</label><input id="variant" aria-label="Aircraft variant" title="Aircraft variant" placeholder="A320-214" data-upper autocomplete="off"></div><div data-photo-cell="dep" data-entry-field="dep"><label id="depLabel">From — IATA/ICAO</label><input id="dep" aria-label="From" title="From" maxlength="20" placeholder="CMN" data-upper><div class="airport-info" id="depInfo"></div></div><div data-photo-cell="out" data-entry-field="out"><label>OUT (Z)</label><input id="out" aria-label="Actual OUT (Zulu)" title="Actual OUT (Zulu)" type="time"></div><div data-photo-cell="schedOut" data-entry-field="schedOut"><label id="schedOutLabel">Schedule OUT (Z)</label><input id="schedOut" aria-label="Scheduled departure (Zulu)" title="Scheduled departure (Zulu)" type="time"></div><div data-photo-cell="off" data-entry-field="off"><label>OFF / Take-off (Z)</label><input id="off" aria-label="Actual take-off (Zulu)" title="Actual take-off (Zulu)" type="time"></div><div data-photo-cell="arr" data-entry-field="arr"><label>To — IATA/ICAO</label><input id="arr" aria-label="To" title="To" maxlength="4" placeholder="BGY" data-upper><div class="airport-info" id="arrInfo"></div></div><div data-photo-cell="on" data-entry-field="on"><label>ON / Landing (Z)</label><input id="on" aria-label="Actual landing (Zulu)" title="Actual landing (Zulu)" type="time"></div><div data-photo-cell="schedIn" data-entry-field="schedIn"><label id="schedInLabel">Schedule IN (Z)</label><input id="schedIn" aria-label="Scheduled arrival (Zulu)" title="Scheduled arrival (Zulu)" type="time"></div><div data-photo-cell="in" data-entry-field="in"><label>IN (Z)</label><input id="in" aria-label="Actual IN (Zulu)" title="Actual IN (Zulu)" type="time"></div><div data-photo-cell="onDuty" data-entry-field="onDuty"><label id="onDutyLabel">On Duty (Z)</label><input id="onDuty" aria-label="Duty start (Zulu)" title="Duty start (Zulu)" type="time"><button type="button" class="secondary duty-control" id="dutyOnBtn">▶ DUTY ON</button><input id="dutyStartDate" type="date" aria-label="Duty start date" hidden></div><div data-photo-cell="offDuty" data-entry-field="offDuty"><label id="offDutyLabel">Off Duty (Z)</label><input id="offDuty" aria-label="Duty end (Zulu)" title="Duty end (Zulu)" type="time"><button type="button" class="secondary duty-control" id="dutyOffBtn">■ DUTY OFF</button><input id="dutyEndDate" type="date" aria-label="Duty end date" hidden></div></div>
+      <div class="section-title inner" id="breakdownTitle">Time groups</div>
+      <div class="entry-time-rows" id="breakdownGrid">
+        <div data-time-group="totalFlightTime"><label>Total Flight Time</label><input id="totalFlightTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="multiPilot"><label>Multi-pilot</label><input id="multiPilotDisplay" type="time" step="60"></div>
+        <div data-time-group="pic"><label>PIC</label><input id="picDisplay" type="time" step="60"></div>
+        <div data-time-group="picUS"><label>PIC U/S</label><input id="picUSDisplay" type="time" step="60"></div>
+        <div data-time-group="sic"><label>SIC</label><input id="sicDisplay" type="time" step="60"></div>
+        <div data-time-group="ifrTime"><label>IFR</label><input id="ifrTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="airTime"><label>Air Time</label><input id="airTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="night"><label>Night</label><input id="night" type="time" step="60"></div>
+        <div data-time-group="picNight"><label>PIC Night</label><input id="picNightDisplay" type="time" step="60"></div>
+        <div data-time-group="simulatorTime"><label>Simulator Time</label><input id="simulatorTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="sfiSfe"><label>SFI/SFE</label><input id="sfiSfeDisplay" type="time" step="60"></div>
+        <div data-time-group="dualGiven"><label>Dual Given</label><input id="dualGivenDisplay" type="time" step="60"></div>
+        <div data-time-group="dualReceived"><label>Dual Received</label><input id="dualReceivedDisplay" type="time" step="60"></div>
+        <div data-time-group="groundInstruction"><label>Ground Instruction</label><input id="groundInstructionDisplay" type="time" step="60"></div>
+        <div data-time-group="stbyTime"><label>STBY</label><input id="stbyTimeDisplay" type="time" step="60"></div>
+        <div data-time-group="credit"><label>Credit Hours</label><input id="creditDisplay" type="time" step="60"></div>
+        <div data-time-group="totalDuty"><label>Total Duty</label><input id="totalDutyDisplay" type="time" step="60"></div>
+        <div data-flight-counter><label>Day take-offs</label><input id="dayTakeoffs" type="number" min="0" step="1" value="0"></div>
+        <div data-flight-counter><label>Night take-offs</label><input id="nightTakeoffs" type="number" min="0" step="1" value="0"></div>
+        <div data-flight-counter><label>Day landings</label><input id="dayLandings" type="number" min="0" step="1" value="0"></div>
+        <div data-flight-counter><label>Night landings</label><input id="nightLandings" type="number" min="0" step="1" value="0"></div>
+      </div>
+
+      <div class="entry-approach-row"><div data-entry-field="approachType"><label for="approachType">Type of approach</label><select id="approachType"><option value="">—</option><option value="CAT3">CAT III</option><option value="ILS">CAT I</option><option value="LOC">LOC</option><option value="RNAV">RNAV</option><option value="VOR">VOR</option><option value="NDB">NDB</option><option value="CRCL">CIRC</option><option value="GOA">Go Around</option></select></div><input id="approachCategory" type="hidden"></div><div class="section-title inner" id="checkboxTitle">Tick box area</div>
+      <div class="entry-checkbox-grid" id="checkboxGrid">
+        <label class="check-option" data-entry-check="pic"><input id="rolePicCheck" type="checkbox"> PIC</label>
+        <label class="check-option" data-entry-check="pf"><input id="pfCheck" type="checkbox"> PF</label>
+        <label class="check-option" data-entry-check="rhs"><input id="rhsCheck" type="checkbox"> RHS</label><label class="check-option" data-entry-check="instruction"><input id="instructionCheck" type="checkbox"> INST</label>
+        <label class="check-option" data-entry-check="examiner"><input id="examinerCheck" type="checkbox"> EXAM</label>
+        <label class="check-option hidden" data-entry-check="simTrainer"><input id="simTrainerCheck" type="checkbox"> INSTRUCTOR/EXAMINER</label>
+        <input id="simInstructorCheck" type="checkbox" class="hidden" aria-hidden="true" tabindex="-1">
+        <input id="simExaminerCheck" type="checkbox" class="hidden" aria-hidden="true" tabindex="-1">
+        <label class="check-option"><input id="callFromDayOff" type="checkbox"> CALL DOFF</label>
+        
+      </div>
+
+      <div class="entry-crew-rows"><div data-entry-field="picName"><label>PIC</label><input id="picName" placeholder="CAPTAIN NAME" data-upper autocorrect="off" spellcheck="false" autocomplete="off"></div><div data-entry-field="sicName"><label>SIC</label><input id="sicName" placeholder="FIRST OFFICER NAME" data-upper autocorrect="off" spellcheck="false" autocomplete="off"></div>
+          
+          <div data-entry-field="instructorName"><label>Instructor</label><input id="instructorName" placeholder="INSTRUCTOR NAME" data-upper autocorrect="off" spellcheck="false" autocomplete="off"></div><div data-entry-field="soName"><label>SO Name</label><input id="soName" placeholder="SECOND OFFICER NAME" data-upper autocorrect="off" spellcheck="false" autocomplete="off"></div><div data-entry-field="purserName"><label>Purser</label><input id="purserName" placeholder="PURSER NAME" data-upper autocorrect="off" spellcheck="false" autocomplete="off"></div><div data-entry-field="attendant1Name"><label>Cabin Crew 1</label><input id="attendant1Name" placeholder="ATTENDANT 1" data-upper autocorrect="off" spellcheck="false" autocomplete="off"></div><div data-entry-field="attendant2Name"><label>Cabin Crew 2</label><input id="attendant2Name" placeholder="ATTENDANT 2" data-upper autocorrect="off" spellcheck="false" autocomplete="off"></div><div data-entry-field="attendant3Name"><label>Cabin Crew 3</label><input id="attendant3Name" placeholder="ATTENDANT 3" data-upper autocorrect="off" spellcheck="false" autocomplete="off"></div></div><div class="entry-fuel-rows"><div data-entry-field="pax"><label>PAX</label><input id="pax" type="number" min="0" step="1"></div><div data-entry-field="fuelAboard"><label>Fuel Aboard</label><input id="fuelAboard" type="number" min="0" step="0.1"></div><div data-entry-field="fuelBurned"><label>Fuel Burned</label><input id="fuelBurned" type="number" min="0" step="0.1"></div><div data-entry-field="fuelMinimum"><label>Minimum Fuel</label><input id="fuelMinimum" type="number" min="0" step="0.1"></div></div><div class="full" id="remarksWrap"><label>Remarks</label><textarea id="remarks"></textarea></div>
+      <div data-entry-field="trainerType" class="hidden"><label>Ground role</label><select id="trainerTypeInput"><option value="">—</option><option value="GI">Instructor (GI)</option><option value="SOD">SOD / Office</option><option value="TNE">Trainee (TNE)</option></select></div><details class="entry-additional"><summary>Additional details</summary><div class="entry-extra-grid"><div><label>Source</label><input id="entrySourceDisplay" readonly value="Manual"></div><div data-entry-field="courseType" class="hidden"><label>Course type</label><input id="courseType" placeholder="GRT MOD 3 / CRM / SEP..." data-upper></div><div data-entry-field="schedBlock"><label>Schedule Block</label><input id="schedBlockDisplay" readonly></div><div data-entry-field="block"><label>Block</label><input id="blockDisplay" type="time" step="60"></div></div></details><div class="totals" id="calcPreview">Schedule Block 0:00 • Actual Block 0:00 • Flight 0:00 • Credit 0:00</div>
+      <div class="hint" id="nightStatus">Night time uses airport coordinates, solar ephemerides and the OUT–IN interval.</div>
+      <div class="actions"><button class="secondary hidden" type="button" id="entryBackBtn">← Back</button><span class="small" id="coreIdDisplay"></span><button class="danger" type="button" id="entryDeleteBtn">Delete activity</button><button class="primary lock-button" type="button" id="lockEntryBtn">🔒 Lock</button><button class="danger hidden" type="button" id="entryRosterDeleteBtn">Delete duty</button><button class="secondary" type="button" id="returnFlight">Return Flight</button></div>
+      <div class="hint" id="entryLockStatus">Inputs autosave in Core. Lock the entry when all data are final.</div>
+    </form>
+  </div>
+</section>
+
+<section id="flightsView" class="hidden">
+  <div class="view-toolbar logbook-toolbar">
+    <div class="logbook-toolbar-actions"><button class="secondary" id="lockAllEntriesBtn" type="button">🔒 Lock all entries</button></div>
+    <button class="primary view-add-btn" id="logbookAddBtn" aria-expanded="false" type="button">＋ Add Flight</button>
+  </div>
+</div>
+  <div class="card spaced logbook-search-card">
+    <label for="logbookSearch">Search Logbook</label>
+    <div class="logbook-search-row"><input id="logbookSearch" type="search" placeholder="Date, flight no., airport, route, crew…" autocomplete="off"><button class="secondary" id="clearLogbookSearch" type="button">Clear</button></div>
+    <div class="hint logbook-search-stats" id="logbookSearchStats">Search statistics will appear here.</div>
+  </div>
+  <div class="card spaced" id="allFlights"></div>
+</section>
+
+<section id="rosterView" class="hidden">
+  <div class="card roster-calendar-card" id="rosterList"></div>
+</section>
+
+
+
+<section id="totalsView" class="hidden">
+  <div class="section-title">Total Statistics</div>
+  <div class="card total-statistics-column" id="timeGroupTotals"></div>
+  <div class="section-title">Annual Leave used</div><div class="card" id="annualLeaveTotals"></div>
+  <div class="section-title">Periods / logbook hours</div><div class="card" id="periodTotals"></div>
+  <div class="section-title">Fuel Burned</div><div class="card" id="fuelBurnedTotal"></div><div class="section-title">Approaches</div><div class="card" id="approachTotals"></div>
+  <div class="section-title">Aircraft Breakdown by ICAO Type</div><div class="card" id="aircraftBreakdown"></div>
+</section>
+
+<section id="tripsView" class="hidden">
+  <button class="secondary" type="button" id="addTripButton" aria-expanded="false" aria-controls="tripFormWrap">＋ Add Trip</button>
+  <div id="tripFormWrap" class="card spaced hidden"><form id="tripForm"><input type="hidden" id="tripEditId"><div class="form-grid">
+    <div><label>Layover station(s)</label><input id="tripStations" placeholder="TNG, SAW..." data-upper></div>
+    <div><label>Trip Start</label><input id="tripStart" type="datetime-local" required></div>
+    <div><label>Trip End</label><input id="tripEnd" type="datetime-local" required></div>
+    <div><label>Paid Layover Hours</label><input id="tripLayover" placeholder="0:00"></div>
+    <div><label id="tripAllowanceLabel">Total Layover Allowance (DHM)</label><input id="tripAllowance" inputmode="decimal"></div>
+    <div><label>Positioning cash received</label><input id="tripCashAmount" type="number" min="0" step="0.01" placeholder="0.00"></div>
+    <div><label>Cash currency</label><select id="tripCashCurrency"></select></div>
+    <div><label id="tripCashConvertedLabel">Cash value in DHM</label><input id="tripCashConverted" inputmode="decimal" placeholder="—"></div>
+    <div class="full"><label>Remarks</label><textarea id="tripRemarks"></textarea></div>
+  </div><div class="formula">Paid Layover = Trip Time − flight/ground chargeable duty − DHP Credit Hours. DHD is excluded from duty subtraction. If Cash Received is greater than zero, Layover Pay is zero. Future trips use a remembered exchange rate when available. Missing rates do not prevent saving and update automatically online while the app is open. Provisional rates are updated to the Trip Start date when available.</div>
+  <div class="actions"><button class="secondary" type="button" id="calcTrip">Calculate</button><button class="primary" type="submit">Save Trip</button><button class="secondary" type="button" id="clearTrip">Clear</button></div></form></div>
+  <div class="section-title">Saved trips</div><div class="card" id="tripList"></div>
+</section>
+
+<section id="payrollView" class="hidden">
+  <div class="roster-month-row"><input id="payrollMonth" aria-label="Payroll month" type="month"></div>
+  <div id="payMacSummaryWrap" class="hidden">
+    <div class="section-title">MAC tax calculation</div>
+    <div class="card payroll-mac-summary" id="payMacSummary"></div>
+  </div>
+  <div class="card payroll-breakdown-card"><div id="payBreakdown"></div>
+    <div class="payroll-sum"><b id="payTotalMain"></b><b id="payTotalSource"></b></div></div>
+
+  <div class="card" id="payTripCash"></div>
+  <div class="card" id="payDayOffDetails"><div class="empty">No Day OFF calls in this payroll month.</div></div>
+  <div class="card payslip-card">
+    <h3>Payslips · selected month</h3>
+    <p id="payslipCompareHint" class="small"></p>
+    <div class="actions"><label class="filebtn secondary" for="payslipFile">Import PDF / photo</label><input id="payslipFile" class="hidden" type="file" accept="application/pdf,image/jpeg,image/png,image/webp"><label class="filebtn secondary" for="payslipCamera">Camera</label><input id="payslipCamera" class="hidden" type="file" accept="image/*" capture="environment"></div>
+    <p id="payslipStatus" role="status" aria-live="polite"></p>
+    <div id="payslipReview" class="hidden">
+      <p id="payslipFileSummary"></p>
+      <label for="payslipDocumentMonth">Payslip month</label><input id="payslipDocumentMonth" type="month">
+      <label id="payslipOriginalChoice" class="hidden"><input id="payslipKeepOriginal" type="checkbox">Keep original image</label>
+      <details><summary>Read text</summary><textarea id="payslipText" readonly aria-label="Extracted payslip text"></textarea></details>
+      <div class="actions"><button id="payslipPreviewDraft" type="button" class="secondary">Preview</button><button id="payslipSave" type="button" class="primary">Save</button><button id="payslipCancel" type="button" class="secondary">Cancel</button></div>
+    </div>
+    <div class="actions"><button id="payslipSync" type="button" class="secondary">Refresh / upload local copies</button></div><div id="payslipArchive"></div>
+  <details id="payslipChecks"><summary>Payslip review</summary>
+    <div class="actions"><button id="payslipCompare" type="button" class="secondary">Compare next month's payslip</button></div>
+    <div id="payslipComparison" role="status" aria-live="polite"></div>
+</details>
+    <div class="actions payroll-check"><button class="primary" type="button" id="validatePayroll">Checked</button><button class="secondary hidden" type="button" id="unlockPayroll">Unlock payslip</button><span id="payrollValidationStatus" role="status"></span></div>
+  </div>
+</section>
+
+<section id="expiryView" class="hidden">
+  <div class="section-title">EXPIRY</div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>LICENCES</h3></div>
+    <div class="card" id="expiryLicences"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>MEDICAL</h3></div>
+    <div class="card" id="expiryMedicals"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>INSTRUCTOR RATINGS</h3></div>
+    <div class="card" id="expiryInstructorRatings"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>RECURRENT COURSES</h3></div>
+    <div class="hint">CRM • SMS • GRT • DGR • AVSEC • SEP • FIRST AID • UPRT • EBT/CBTA</div>
+    <div class="card" id="expiryCourses"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>AIRCRAFT ENDORSED</h3></div>
+    <div class="card" id="expiryAircraft"></div>
+  </div>
+
+  <div class="expiry-section">
+    <div class="expiry-heading"><h3>LPC ENGLISH</h3></div>
+    <div class="card" id="expiryEnglish"></div>
+  </div>
+
+  <div class="expiry-add-wrap">
+    <button class="primary expiry-single-add" type="button" id="expiryAddBtn">＋ ADD</button>
+  </div>
+
+  <div id="expiryAddMenu" class="expiry-sheet-backdrop hidden" aria-hidden="true">
+    <div class="expiry-sheet" role="dialog" aria-modal="true" aria-label="ADD EXPIRY ITEM">
+      <div class="expiry-sheet-title">ADD EXPIRY ITEM</div>
+      <button type="button" data-add-expiry="license">LICENCE</button>
+      <button type="button" data-add-expiry="medical">MEDICAL</button>
+      <button type="button" data-add-expiry="instructor">INSTRUCTOR RATING</button>
+      <button type="button" data-add-expiry="course">RECURRENT COURSE</button>
+      <button type="button" data-add-expiry="aircraft">AIRCRAFT ENDORSED</button>
+      <button type="button" data-add-expiry="english">LPC ENGLISH</button>
+      <button class="secondary" type="button" id="expiryAddCancel">CANCEL</button>
+    </div>
+  </div>
+
+  <div id="expiryEditorWrap" class="hidden">
+    <div class="section-title" id="expiryEditorTitle">ADD EXPIRY</div>
+    <div class="card">
+      <form id="expiryForm">
+        <input type="hidden" id="expiryEditId">
+        <input type="hidden" id="expiryCategory" value="license">
+        <div class="form-grid">
+          <div data-expiry-field><label id="expiryNameLabel">LICENCE / TYPE</label><input id="expiryName" data-upper list="expiryNameSuggestions" placeholder="ATPL"></div>
+          <div data-expiry-field><label>AUTHORITY</label><input id="expiryAuthority" data-upper list="expiryAuthoritySuggestions" placeholder="EASA / GCAA / OTHER"></div>
+          <div data-expiry-field><label id="expiryNumberLabel">LICENCE / CERTIFICATE NUMBER</label><input id="expiryNumber" data-upper></div>
+          <div data-expiry-field><label id="expiryLastCheckLabel">LAST CHECK</label><input id="expiryLastCheck" type="date"></div>
+          <div data-expiry-field><label id="expiryCourseDateLabel">COURSE DATE</label><input id="expiryCourseDate" type="date"></div>
+          <div data-expiry-field><label>MEDICAL CLASS</label><select id="expiryMedicalClass"><option value="">SELECT</option><option value="CLASS 1">CLASS 1</option><option value="CLASS 2">CLASS 2</option></select></div>
+          <div data-expiry-field><label>ENGLISH LEVEL</label><select id="expiryEnglishLevel"><option value="">SELECT</option><option value="4">LEVEL 4</option><option value="5">LEVEL 5</option><option value="6">LEVEL 6</option></select></div>
+          <div data-expiry-field><label>AIRCRAFT ENDORSED</label><input id="expiryAircraftType" data-upper list="aircraftTypeSuggestions" placeholder="A320"></div>
+          <div data-expiry-field><label>ENDORSED BY</label><input id="expiryEndorsedBy" data-upper autocorrect="off" spellcheck="false" autocomplete="off" placeholder="NAME"></div>
+          <div data-expiry-field><label>EXPIRY DATE</label><input id="expiryExpiry" type="date" required><div class="small" id="expiryExpiryHint"></div></div>
+          <div data-expiry-field><label id="expiryIssuerLabel">ISSUED BY</label><input id="expiryIssuer" data-upper></div>
+          <div data-expiry-field class="full expiry-photo-field">
+            <label>PHOTO / DOCUMENT</label>
+            <input id="expiryPhotoInput" type="file" accept="application/pdf,.pdf,image/*" class="hidden">
+            <div class="expiry-photo-actions">
+              <label class="expiry-photo-link" for="expiryPhotoInput">Add PDF / photo</label>
+              <button class="link-button hidden" id="expiryFormPhotoViewBtn" type="button">VIEW</button>
+              <button class="link-button danger-link hidden" id="expiryFormPhotoRemoveBtn" type="button">REMOVE</button>
+            </div>
+            <div id="expiryArchiveActions" class="expiry-photo-actions hidden">
+              <button type="button" class="link-button" data-expiry-archive="save">Save private copy</button>
+              <button type="button" class="link-button" data-expiry-archive="open">Open private copy</button>
+              <button type="button" class="link-button danger-link" data-expiry-archive="remove">Remove private copy</button>
+            </div>
+            <div id="expiryArchiveStatus" role="status"></div>
+            <div class="small">One attachment per item. Choose a PDF (up to 2 MiB) or a photo.</div>
+          </div>
+          <div data-expiry-field class="full"><label>REMARKS</label><input id="expiryRemarks" data-upper></div>
+        </div>
+        <datalist id="expiryAuthoritySuggestions"><option value="EASA"><option value="GCAA"></datalist>
+        <datalist id="expiryNameSuggestions">
+          <option value="ATPL"><option value="CPL"><option value="TRI"><option value="SFI"><option value="CRMI"><option value="TRE">
+          <option value="CRM"><option value="SMS"><option value="GRT"><option value="DGR"><option value="AVSEC"><option value="SEP"><option value="FIRST AID"><option value="UPRT"><option value="EBT/CBTA">
+        </datalist>
+        <div class="actions expiry-editor-actions">
+          <button class="secondary" id="expiryToggleLockBtn" type="button">LOCK</button>
+          <button class="danger" id="expiryDeleteBtn" type="button">DELETE</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="expiryPhotoViewer" class="expiry-photo-viewer hidden" aria-hidden="true">
+    <div class="expiry-photo-dialog" role="dialog" aria-modal="true" aria-label="EXPIRY DOCUMENT">
+      <div class="expiry-photo-dialog-head">
+        <b>EXPIRY DOCUMENT</b>
+        <button class="secondary" id="expiryPhotoCloseBtn" type="button">CLOSE</button>
+      </div>
+      <div id="expiryPdfViewer" class="hidden">
+        <div><button type="button" id="expiryPdfPrevious">Previous</button> <span id="expiryPdfPage" role="status"></span> <button type="button" id="expiryPdfNext">Next</button></div>
+        <div id="expiryPdfCanvas"></div>
+      </div>
+      <img id="expiryPhotoViewerImg" alt="EXPIRY ATTACHMENT">
+    </div>
+  </div>
+</section>
+
+<section id="settingsView" class="hidden">
+  <div class="section-title">Settings</div>
+  <details class="settings-group" name="pilotlog-settings" data-settings-group="account">
+    <summary>Account Settings</summary>
+  <div class="card"><form id="appSettingsForm"><div class="form-grid">
+    <div class="full profile-photo-setting">
+      <label>Personal photo</label>
+      <div class="hint">Your photo is included in account sync and appears on other devices after sign-in.</div>
+      <div class="profile-photo-controls">
+        <div class="profile-photo-preview"><img id="profilePhotoPreview" class="hidden" alt="Personal profile photo"><span id="profilePhotoFallback">PilotLog logo</span></div>
+        <label class="filebtn secondary" for="profilePhotoInput">Add / change photo</label>
+        <input id="profilePhotoInput" type="file" accept="image/*" class="hidden">
+        <button class="secondary hidden" id="removeProfilePhoto" type="button">Remove photo</button>
+      </div>
+    </div>
+    <div><label>Your name</label><input id="setProfileName" placeholder="Crew name" autocomplete="name"></div>
+    <div><label>Your role</label><select id="setProfileRole"><option>Captain</option><option>First Officer</option><option>Senior Cabin Crew</option><option>Cabin Crew</option></select></div>
+    <div class="full"><label>Email</label><input id="cloudEmail" type="email" autocomplete="email" placeholder="your@email.com"></div>
+      <div class="full"><label>Password</label><input id="cloudPassword" type="password" autocomplete="current-password" minlength="6" placeholder="PilotLog database password"></div>
+    <div class="actions"><button class="primary" id="cloudSignInBtn" type="button">Sign in</button><button class="secondary" id="cloudSignUpBtn" type="button">Create account</button><button class="secondary" id="cloudSignOutBtn" type="button">Sign out</button></div>
+    <div class="sync-status" id="cloudStatus">Cloud status loading…</div>
+    <div><label>Flight Number Prefix</label><input id="setFlightPrefix" maxlength="6" placeholder="MAC" data-upper></div>
+    <div><label>Aircraft ID Prefix</label><input id="setAircraftPrefix" maxlength="10" placeholder="CN-NM" data-upper></div>
+    </div><div class="actions"><button class="primary" type="submit">Save Settings</button><button class="secondary" type="button" id="refreshAirportsBtn">Refresh airport database</button></div>
+  <div class="hint" id="airportDbStatus">Airport database: checking…</div></form></div>
+  <details id="equipmentPanel" class="card"><summary>Aircraft &amp; Simulator directory</summary>
+    <form id="equipmentForm" class="form-grid">
+      <label>Category<select id="equipmentKind"><option>Aircraft</option><option>Simulator</option></select></label>
+      <label>Registration or Simulator ID<input id="equipmentReg" required></label>
+      <label>Type<input id="equipmentType"></label><label>Variant<input id="equipmentVariant"></label>
+      <div class="actions"><button type="submit" class="primary">Save</button><button type="submit" value="remove" class="secondary">Remove</button></div>
+    </form><div id="equipmentList"></div>
+  </details>
+  <details id="crewDirectory" class="card crew-directory"><summary>Crew directory</summary>
+    <form id="crewDirectoryForm" class="crew-directory-controls">
+      <label for="crewDirectoryName">Find or add a name</label>
+      <input id="crewDirectoryName" type="search" autocomplete="off" autocorrect="off" spellcheck="false">
+      <button type="submit" class="secondary">Add name</button>
+    </form>
+    <div id="crewDirectoryList"></div>
+    <button id="crewDirectoryMore" type="button" class="secondary hidden">Show more</button>
+  </details>
+  </details>
+  <details class="settings-group" name="pilotlog-settings" data-settings-group="time-groups">
+    <summary>Time Group Settings</summary>
+  <div class="card time-group-settings-card">
+    <div class="hint">No option is selected by default. Auto Sync uses the approved rule for that group and applies to past activities too. A manually saved value always has priority.</div>
+    <div class="time-group-table-wrap">
+      <table class="time-group-table">
+        <thead><tr><th>Time Group</th><th>Show on Total</th><th>Show on Card</th><th>Auto Sync</th></tr></thead>
+        <tbody id="timeGroupSettingsBody"></tbody>
+      </table>
+    </div>
+    <div class="actions"><button class="primary" id="saveTimeGroupSettings" type="button">Save Time Groups</button></div>
+  </div>
+  </details>
+<details class="settings-group" name="pilotlog-settings" data-settings-group="import-export"><summary>Import / Export</summary>
+<details class="settings-submenu"><summary>Import</summary>
+<label class="filebtn secondary" for="aerolineRosterFile">Monthly Roster Import</label><input id="aerolineRosterFile" type="file" accept=".json,application/json,text/json" class="hidden"><div id="aerolineImportStatus" class="hint" role="status"></div><details class="settings-submenu"><summary>Import from Screenshot</summary>
+<div class="hint">Choose a roster, LogTen or generic operational screenshot. PilotLog performs OCR in your browser, then shows an editable review. Nothing is saved until you press <b>Import Reviewed</b>.</div><div class="form-grid screenshot-import-controls">
+      <div>
+        <label>Screenshot type</label>
+        <select id="screenshotSource">
+          <option value="auto">Auto detect</option>
+          <option value="roster">Roster</option>
+          <option value="logten">LogTen / logbook</option>
+          <option value="generic">Generic flight / duty</option>
+        </select>
+      </div>
+      <div>
+        <label>Default import target</label>
+        <select id="screenshotTarget">
+          <option value="auto">Auto</option>
+          <option value="roster">Roster</option>
+          <option value="entries">Entries</option>
+        </select>
+      </div>
+      <div class="full">
+        <label class="filebtn primary screenshot-filebtn" for="screenshotFile">Choose Screenshot</label>
+        <input id="screenshotFile" type="file" accept="image/*" class="hidden">
+      </div>
+    </div><div id="screenshotImportStatus" class="hint">No screenshot selected.</div><div id="screenshotPreviewWrap" class="screenshot-preview-wrap hidden">
+      <img id="screenshotPreview" alt="Screenshot preview">
+    </div><div id="screenshotOcrWrap" class="hidden">
+      <label>Recognized text — editable</label>
+      <textarea id="screenshotOcrText" class="screenshot-ocr-text" placeholder="OCR text will appear here. You can correct it before parsing."></textarea>
+      <div class="actions">
+        <button class="secondary" id="parseScreenshotText" type="button">Parse / Re-parse</button>
+      </div>
+    </div><div id="screenshotReviewWrap" class="hidden">
+      <div class="section-title inner">Review Import</div>
+      <div class="hint">PilotLog fills what it can read. Yellow fields need your confirmation or completion. If a roster cell cannot be interpreted it is kept as <b>To complete</b> with the original OCR text in Remarks. Nothing incomplete is imported until you complete it or uncheck that row.</div>
+      <div id="screenshotReviewSummary" class="screenshot-review-summary"></div>
+      <div class="screenshot-review-scroll">
+        <table class="screenshot-review-table">
+          <thead><tr>
+            <th>✓</th><th>Target</th><th>Date</th><th>Type</th><th>Flight</th><th>From</th><th>To</th><th>Start</th><th>End</th><th>Remarks / Course</th>
+          </tr></thead>
+          <tbody id="screenshotReviewBody"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button class="primary" id="importScreenshotReviewed" type="button">Import Reviewed</button>
+        <button class="secondary" id="clearScreenshotReview" type="button">Clear Review</button>
+      </div>
+    </div>
+</details>
+<label class="filebtn primary" for="logTenFullFile">Import Complete LogTen Logbook</label><input id="logTenFullFile" type="file" multiple accept=".pilotlog-logten,.sql,.sql-wal,.sql-shm,application/octet-stream" class="hidden"><label class="filebtn secondary" for="logTenFile">Import LogTen Tab</label><input id="logTenFile" type="file" accept=".txt,.tsv,text/plain,text/tab-separated-values" class="hidden"><div class="hint" id="logTenImportStatus">Complete migration imports the usable logbook fields and keeps the original LogTen SQLite database byte-for-byte in local archive storage. Flight Credit H is always calculated from Scheduled Block Hours; imported LogTen Custom Time does not override it. The archive is not uploaded to Cloud Sync.</div><label class="filebtn primary" for="calendarFile">Import Calendar (.ics)</label><input id="calendarFile" type="file" accept=".ics,text/calendar" class="hidden"><div class="hint" id="calendarImportStatus">No calendar imported yet.</div><label class="filebtn secondary" for="rosterFile">Import roster CSV</label><input id="rosterFile" type="file" accept=".csv,text/csv" class="hidden">
+</details>
+<details class="settings-submenu"><summary>Export</summary>
+<button class="secondary" id="exportRoster">Export roster CSV</button>
+<button class="secondary" id="exportCsv">Export Operational CSV</button>
+<button class="secondary" id="exportLogTenArchive" type="button">Export archived LogTen database</button>
+<button class="secondary" id="exportLogTen">Export for LogTen Pro</button>
+<div class="hint" id="logTenArchiveStatus">No complete LogTen database archived yet.</div>
+</details>
+<details class="settings-submenu"><summary>Backup &amp; Restore</summary>
+<button class="secondary" id="exportBackupJson" type="button">Export Full Backup JSON</button><label class="filebtn secondary" for="restoreBackupJsonFile">Restore Full Backup JSON</label><input id="restoreBackupJsonFile" type="file" accept=".json,application/json" class="hidden">
+</details>
+<details class="settings-submenu"><summary>Data Integrity</summary>
+<button class="secondary" id="runIntegrityCheckBtn" type="button">Run Data Integrity Check</button>
+<div class="sync-status" id="integrityStatus">Not checked yet.</div>
+<div id="integrityResults" class="hint spaced"></div><button type="button" id="reviewDuplicates">Review Possible Duplicates</button><details class="settings-submenu"><summary>Review Ambiguous Flight Links</summary>
+<div id="reconciliationReview" class="hint spaced"></div>
+</details>
+<details class="settings-submenu"><summary>Data Maintenance</summary>
+<button class="danger" id="clearRoster" type="button">Clear roster</button>
+<button class="danger" id="deleteAll" type="button">Delete all entries</button><div class="hint">Clear roster removes the complete imported/planned roster, including OFF, DHD/DHP, standby and training activities, while preserving locked Logbook entries. Delete all entries removes the saved log entries. If Cloud Sync is enabled, the deletion is remembered on this device and propagated to your other devices at the next Sync; deleted records should not return.</div>
+</details>
+
+</details>
+
+</details>
+<details class="settings-group" name="pilotlog-settings" data-settings-group="experience"><summary>Professional Experience</summary>
+<details class="settings-submenu"><summary>EASA Logbook PDF</summary>
+<div class="form-grid logbook-export-grid">
+      <div>
+        <label>EASA-style PDF selection</label>
+        <select id="easaExportMode">
+          <option value="last2">Last 2 A/B pairs</option>
+          <option value="last1">Last 1 A/B pair</option>
+          <option value="last3">Last 3 A/B pairs</option>
+          <option value="last5">Last 5 A/B pairs</option>
+          <option value="period">Custom date range</option>
+          <option value="all">All A/B pairs</option>
+        </select>
+      </div>
+      <div><label>From</label><input id="easaFrom" type="date"></div>
+      <div><label>To</label><input id="easaTo" type="date"></div>
+      <div><label>FSTD / Simulator</label><select id="easaIncludeSim"><option value="yes">Include in EASA pages</option><option value="no">Exclude</option></select></div>
+    </div><button class="primary" id="exportEasaPdf" type="button">Export EASA-style PDF</button>
+</details>
+<details class="settings-submenu"><summary>Experience PDF</summary>
+<button class="secondary" id="exportExperiencePdf" type="button">Export Experience PDF</button>
+</details>
+
+</details>
+  <details class="settings-group" name="pilotlog-settings" data-settings-group="payroll">
+    <summary>Payroll Settings</summary>
+  <div class="card"><form id="paySettingsForm">
+    <div class="form-grid"><div><label>Home Base</label><input id="setHomeBase" maxlength="4" placeholder="CMN" data-upper></div>
+    <div><label>Contract</label><select id="setPayrollRegime"><option value="IBC">IBC</option><option value="MAC">MAC</option></select></div>
+    <div id="macDependentsSetting" class="hidden"><label>MAC family deductions</label><input id="setMacDependents" type="number" min="0" max="6" step="1" value="0"><div class="hint">Number of payroll family deductions used by the MAC tax calculation.</div></div>
+    <div class="pay-currencies"><label for="setCurrency">Currency</label><select id="setCurrency" aria-label="Primary currency"></select><select id="setCurrency2" aria-label="Currency 2 — converted payroll total"></select></div>
+    <div><label>Employment start</label><input id="setJoinDate" type="date"></div>
+      </div><div class="section-title inner">Fix salary · <output id="fixedSalarySum"></output></div>
+    <div class="form-grid">
+      <div><label>Basic</label><input id="setBase" type="number" step="0.01"></div>
+      <div><label>Allowance</label><input id="setAllowance" type="number" step="0.01"></div>
+      <div><label>Transport</label><input id="setTransport" type="number" step="0.01"></div>
+      <div><label>POS Allowance</label><input id="setPos" type="number" step="0.01"></div>
+      <div><label>Telephone</label><input id="setTelephone" type="number" step="0.01"></div>
+      <div><label>Uniform</label><input id="setUniform" type="number" step="0.01"></div>
+      <div><label>Meal</label><input id="setMeal" type="number" step="0.01"></div>
+      <div class="full pay-inline"><div><label>2y (%)</label><input id="setSeniority2" type="number" step="0.01"></div>
+      <div class=""><label for="setSeniority5">5y (%)</label><input id="setSeniority5" type="number" step="0.01"></div><div><label>12y (%)</label><input id="setSeniority12" type="number" step="0.01"></div>
+    <div class=""><label for="setSeniority25">25y (%)</label><input id="setSeniority25" type="number" step="0.01"></div></div><div class="full pay-inline"><div><label>Deduction</label><input id="setDeduction" type="number" step="0.01"></div>
+      <div class=""><label for="setDeductionMemo">Deduction · reference only</label><input id="setDeductionMemo" type="number" step="0.01"></div></div></div>
+    <div class="section-title inner">Variable salary</div>
+    <div class="form-grid">
+      <div class="full pay-inline"><div><label>Tier 1 up to (h)</label><input id="setT1Max" type="number" step="0.5"></div>
+      <div><label>Tier 1 rate DHM/h</label><input id="setT1Rate" type="number" step="0.01"></div>
+      </div><div class="full pay-inline"><div><label>Tier 2 up to (h)</label><input id="setT2Max" type="number" step="0.5"></div>
+      <div><label>Tier 2 rate DHM/h</label><input id="setT2Rate" type="number" step="0.01"></div>
+      </div><div class="full pay-inline"><div><label>Tier 3 up to (h)</label><input id="setT3Max" type="number" step="0.5"></div>
+      <div><label>Tier 3 rate DHM/h</label><input id="setT3Rate" type="number" step="0.01"></div>
+      </div><div class="full pay-inline"><div><label for="tier4Above">Tier 4 above (h)</label><output id="tier4Above"></output></div><div><label for="setT4Rate">Tier 4 rate DHM/h</label><input id="setT4Rate" type="number" step="0.01"></div>
+    </div><div><label>Layover DHM/h</label><input id="setLayoverRate" type="number" step="0.01"></div>
+      <div class="full pay-inline"><div><label for="setNightStart">Night window (Morocco local)</label><div class="night-window"><input id="setNightStart" type="time" required value="18:00"> <span>–</span> <input aria-label="Night window end" id="setNightEnd" type="time" required value="05:00"></div></div>
+    <div><label>Night credit premium (%)</label><input id="setNightPremiumPct" type="number" min="0" max="1000" step="0.01" required value="50"></div>
+    </div><div><label>Day OFF premium DHM</label><input id="setDayOffRate" type="number" step="0.01"></div>
+    </div>
+    <div class="section-title inner">Training salary</div>
+    <div class="form-grid">
+      <div><label>Training per sector DHM</label><input id="setTrainingRate" type="number" step="0.01"></div>
+      <div><label>Simulator allowance DHM</label><input id="setSimAllowance" type="number" step="0.01"></div>
+      <div class=""><label for="setGroundCredit">Ground course / SOD credit (h)</label><input id="setGroundCredit" type="number" step="0.01" min="0" max="23.98" required></div><div class=""><label for="setSimCredit">Simulator trainer credit (h)</label><input id="setSimCredit" type="number" step="0.01" min="0" max="23.98" required></div></div>
+    <div class="actions"><button class="primary" type="submit">Save Payroll Settings</button><button class="secondary" type="button" id="resetPaySettings">Restore defaults</button></div>
+    <div class="hint">Payroll contract rates remain stored in MAD/DHM. The optional second currency converts the payroll total.</div>
+  </form></div>
+  </details>
+  <details class="settings-group" name="pilotlog-settings" data-settings-group="backup">
+    <summary>Auto Sync &amp; Weekly Backup</summary>
+  <div class="card">
+    <div class="form-grid">
+      <div>
+        <label>Auto Sync</label>
+        <select id="autoSyncEnabled">
+          <option value="yes">Enabled</option>
+          <option value="no">Disabled</option>
+        </select>
+      </div>
+      <div>
+        <label>Last weekly backup</label>
+        <input id="weeklyBackupStatus" readonly value="No backup yet">
+      </div>
+    </div>
+    <div class="hint">PilotLog keeps one local weekly backup only. Fresh/reset devices start with Auto Sync disabled. Large imports always stay local and also disable Auto Sync until you deliberately re-enable it. Passwords and cloud session tokens are never included.</div>
+    <div class="actions">
+      <button class="secondary" id="backupNowBtn" type="button">Backup now</button>
+      <button class="secondary" id="restoreWeeklyBackupBtn" type="button">Restore weekly backup</button>
+    <div id="syncState" role="status"></div><details><summary>Sync Log</summary><pre id="syncLog"></pre></details><button class="primary" id="syncCloudBtn" type="button">Sync now</button><button class="danger" id="deepResetBtn" type="button">Erase Old Database • Start Clean</button><button class="secondary" id="deepLocalResetBtn" type="button">Reset Local Cache Only</button></div>
+  </div>
+  </details>
+
+  </section>
+
+<div id="importProgressModal" class="import-progress-modal hidden" role="dialog" aria-modal="true" aria-labelledby="importProgressTitle">
+  <div class="import-progress-card">
+    <div class="section-title inner" id="importProgressTitle">Importing data…</div>
+    <div class="import-progress-track"><div id="importProgressBar" class="import-progress-bar"></div></div>
+    <div class="import-progress-percent" id="importProgressPercent">0%</div>
+    <div class="hint" id="importProgressDetail">Preparing…</div>
+  </div>
+</div>
+</main>
+
+<nav class="nav" aria-label="Primary navigation">
+  <button data-view="rosterView" class="active"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M7 3.5v4M17 3.5v4M3.5 9.5h17M8 13h3M13 13h3M8 16.7h3"/></svg><span>Roster</span></button>
+  <button data-view="flightsView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h5.5a3.5 3.5 0 0 1 3.5 3.5v12H8a3 3 0 0 0-3 3z"/><path d="M19 4.5h-5.5A3.5 3.5 0 0 0 10 8v12h6a3 3 0 0 1 3 3z"/></svg><span>Logbook</span></button>
+  <button data-view="payrollView"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6" width="17" height="13" rx="2"/><path d="M3.5 10h17M15 14h2.5"/></svg><span>Payroll</span></button>
+  <button data-view="expiryView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5 19 6v5.2c0 4.5-2.9 7.7-7 9.3-4.1-1.6-7-4.8-7-9.3V6z"/><path d="m9.3 12.2 1.8 1.8 3.8-4"/></svg><span>Expiry</span></button>
+  <button data-view="tripsView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 15.6 20 8.5M8.5 13.6 6 8l2-1 4 4M15 10.9l2.5 5.5-2 1-4-4"/><path d="M3 20.5h18"/></svg><span>Trips</span></button>
+  <button data-view="dashboardView"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5V12h3v7.5M10.9 19.5V7h3v12.5M17 19.5V4h3v15.6M3 20.5h18"/></svg><span>Totals</span></button>
+  <button data-view="settingsView"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1-2.8 2.8-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21h-4v-.2a1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1-2.8-2.8.1-.1A1.6 1.6 0 0 0 4.6 15a1.6 1.6 0 0 0-1.5-1H3v-4h.1a1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1 2.8-2.8.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3h4v.2a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1 2.8 2.8-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2v4h-.2a1.6 1.6 0 0 0-1.3 1z"/></svg><span>Settings</span></button>
+</nav>
+<script src="native.js" defer></script>
+<script type="module" src="pilotlog-16.12.js"></script>
+<dialog id="rosterScreenshotDialog" aria-labelledby="rosterScreenshotTitle" style="width:min(94vw,820px);max-height:90vh;overflow:auto;border:1px solid #555;border-radius:16px;padding:20px;background:#fff;color:#111827">
+<h2 id="rosterScreenshotTitle">Entry from screenshots</h2>
+<p>Select Flight Info and Crew screenshots. Review the entries before adding them to your roster.</p>
+<div class="actions"><label class="filebtn secondary" for="rosterScreenshotFiles">Add screenshots</label><input id="rosterScreenshotFiles" class="hidden" type="file" accept="image/*" multiple><button type="button" class="secondary" id="rosterScreenshotAnalyze">Analyze</button><button type="button" class="secondary" id="rosterScreenshotCancel">Cancel</button></div>
+<p id="rosterScreenshotStatus" role="status"></p><div id="rosterScreenshotReview"></div>
+<div class="actions"><button type="button" class="primary hidden" id="rosterScreenshotConfirm">Confirm import</button></div>
+</dialog><div id="payslipViewer" class="payslip-viewer hidden" role="dialog" aria-modal="true" aria-labelledby="payslipViewerTitle">
+  <div class="payslip-viewer-body"><div class="actions"><b id="payslipViewerTitle"></b><button id="payslipViewerClose" class="secondary" type="button">Close</button><button id="payslipViewerExport" class="secondary" type="button">Export</button></div>
+  <div id="payslipPageControls" class="actions"><button id="payslipPrev" type="button" class="secondary">Previous</button><span id="payslipPage"></span><button id="payslipNext" type="button" class="secondary">Next</button></div>
+  <div id="payslipPreviewContent"></div><details><summary>Read text</summary><pre id="payslipViewerText"></pre></details></div>
+</div>
+
+<dialog id="tripConflictDialog" aria-labelledby="tripConflictTitle"><h3 id="tripConflictTitle">Review conflicting versions</h3><p id="tripConflictId"></p><div id="tripConflictComparison"></div><p>Using this device will overwrite the cloud version.</p><form method="dialog" class="actions"><button class="secondary" value="later" autofocus>Decide later</button><button class="secondary" value="local">Use this device</button><button class="primary" value="central">Use cloud</button></form></dialog>
+<dialog id="integrityDialog"><h3>Data Integrity Check</h3><div id="integrityIssueList"></div><button type="button" id="integrityClose">Close</button></dialog>
+</body></html>
